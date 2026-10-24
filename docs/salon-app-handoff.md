@@ -482,12 +482,23 @@ Reviewed on 24 October 2026 from founder-supplied screenshots of the customer we
 
 | # | Milestone | Status |
 | --- | --- | --- |
-| 0 | Alert test app for Android (`apps/alert-test`), built by GitHub Actions and published as a pre-release | Delivered; waiting for the founder's test on real phones. iOS needs an Apple Developer account. |
+| 0 | Alert test app for Android (`apps/alert-test`), built by GitHub Actions and published as a pre-release | Test 1 done on the founder's Android phone (results below); test 2 adds the full-screen alert. iOS needs an Apple Developer account. |
 | 1 | Backend core (`apps/api`): shop separation, subscription gating, SMS-code sign-in, service list, staff services and durations, availability, booking (including “Fark etmez” and booking for someone else), pending/confirmed rules with the 10-minute reminder and 15-minute automatic confirmation, staff actions, walk-ins, blocked time, staff absence, outgoing-message queue | Delivered; automated tests cover the acceptance scenarios in Section 9. SMS and push print to the server log until real providers are connected. |
 | 2 | Customer website | Next |
 | 3 | Staff/owner app | Planned |
 | 4 | Real SMS, push, map, and iyzico | Planned; needs the founder's accounts |
 | 5 | Admin panel and launch | Planned |
+
+**Alert test 1 results (founder's Android phone, 24 October 2026):**
+
+| Check | Result |
+| --- | --- |
+| Sound with the screen off | Plays |
+| Arrives after the app is swiped away | Yes |
+| Onayla / Reddet buttons on the notification | Shown and working |
+| Full-screen view while locked | No (test 1 had none; test 2 adds it) |
+| Details read aloud while locked | No (speech needs the app on screen; test 2 opens it over the lock screen) |
+| Ringing in silent mode | No (to repeat with the alarm-sound option on) |
 
 **Correction made during the build:** the last-minute reminder rule in 4.4 said “skip if the window is under 4 minutes”, which contradicted its own example (a 5-minute window with no reminder). The threshold is now 6 minutes, matching the example.
 
