@@ -1,9 +1,9 @@
 # Salon Booking Platform — Handoff & Planning Baseline
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Baseline date:** 24 October 2026  
-**Previous version:** 1.0 (6 October 2026)  
-**Status:** Product planning; no application code authorized yet  
+**Previous versions:** 1.1 (24 October 2026), 1.0 (6 October 2026)  
+**Status:** Build in progress. The founder authorized application code on 24 October 2026 (Section 12).  
 **Working market:** Istanbul, Türkiye  
 **Product name:** To be decided
 
@@ -17,7 +17,7 @@ This document is the reference point for continuing product design and handing t
 - **Proposed** — a recommendation recorded for design review; it needs the founder's confirmation before it becomes agreed.
 - **Open** — not yet decided.
 
-Rows and sections new or changed in this version are marked *(v1.1)*. The change record at the end summarises them.
+Rows and sections new or changed in version 1.1 are marked *(v1.1)*; version 1.2 adds Section 12. The change record at the end summarises both.
 
 ## 1. Product purpose
 
@@ -62,7 +62,7 @@ Initial customers are men's barbershops and women's salons in Istanbul. Initial 
 | Earliest appointment | As early as availability permits; no fixed minimum booking lead time. |
 | Service location | At the shop only. Home visits have been removed. |
 
-The shop's subscription payment process is separate from the customer's payment for salon services. Subscription prices, billing-seat definition, and billing policies remain open. *(v1.1)* **iyzico** is the founder's preferred candidate for collecting subscriptions; it is to be confirmed during feasibility (Phase 3).
+The shop's subscription payment process is separate from the customer's payment for salon services. Subscription prices, billing-seat definition, and billing policies remain open; the founder will set the monthly fee per staff member later. *(v1.1)* **iyzico** is the founder's preferred candidate for collecting subscriptions; it is to be confirmed during feasibility (Phase 3).
 
 ### 2.1 Proposed for confirmation *(v1.1)*
 
@@ -147,7 +147,7 @@ If no response arrives by that deadline, confirm automatically and update both s
 | Request at 14:00 for a 14:05 appointment | *(Proposed)* None | Automatically confirmed at 14:05. |
 | Request during automatic-confirmation hours | None | Confirmed immediately. |
 
-*(Proposed)* **Last-minute reminder rule:** when the deadline is the appointment start and comes before request + 15 minutes, send the reminder halfway through the remaining response window, and skip it if that window is under 4 minutes.
+*(Proposed)* **Last-minute reminder rule:** when the deadline is the appointment start and comes before request + 15 minutes, send the reminder halfway through the remaining response window, and skip it if that window is under 6 minutes.
 
 The customer must see whether the appointment is pending or confirmed and the precise automatic-confirmation deadline. *(v1.1)* The customer receives an SMS with the final result (confirmed or declined). No customer message is sent at the reminder. *(Proposed)* On-screen pending wording: “Salon onayı bekleniyor — 14:15'e kadar yanıt gelmezse otomatik onaylanır.”
 
@@ -397,9 +397,9 @@ Exact alert-delivery acceptance criteria must be added after platform feasibilit
 
 **Not part of the agreed baseline unless added later:** Ratings and reviews, in-app chat, loyalty programs, advertising, retail checkout, and multi-branch management.
 
-No product name, technology stack, hosting provider, budget, or delivery date has been selected. The product-level platforms are agreed (customer web; native staff/owner app on Android and iOS), but no order between Android and iOS and no development technology has been chosen. No Notion page or external project has been created for this plan.
+No product name, hosting provider, budget, or delivery date has been selected. The product-level platforms are agreed (customer web; native staff/owner app on Android and iOS), and the development technology is agreed (Section 12). No order between Android and iOS has been chosen. No Notion page or external project has been created for this plan.
 
-**Next action:** Confirm or adjust the proposals in 2.1, 4.7, 4.8, and 5.1, resolve the remaining first-priority decisions in Section 8, then produce the screen flows. Continue product and workflow planning before writing application code.
+**Next action:** Test the alert app on real phones (Section 12), then build the customer website (milestone 2). Proposals are built as adjustable defaults; confirm or adjust them as each screen is reviewed.
 
 **Handoff instruction:** Read this document as the current planning baseline. Preserve the founder's decisions, particularly automatic confirmation at the earlier deadline with a reminder at 10 minutes, the special alert for every new appointment, map discovery in the first release, web-only customers with a native staff/owner app, a shop-level service list that shops can extend and rename, owner-defined cancellation cutoffs, payment at the shop, and the removal of home visits and contact matching. Advance open items without presenting proposals as already agreed.
 
@@ -463,9 +463,38 @@ Reviewed on 24 October 2026 from founder-supplied screenshots of the customer we
 | Out today | Bugün yokum |
 | This time was just taken | Bu saat az önce doldu |
 
+## 12. Build status *(v1.2)*
+
+**Authorized:** The founder authorized application code on 24 October 2026, approved the technology below, and asked for the proposals in this document to be built as adjustable defaults rather than waiting on each decision.
+
+**Business model reflected in the build:** one shared system sold to many shops on monthly subscriptions. Every shop's data is separated in the database and the API; review and subscription status decide whether a shop is visible and bookable; our team's back office creates, reviews, and activates shops.
+
+**Technology (agreed):**
+
+| Part | Technology |
+| --- | --- |
+| Backend | Node.js and TypeScript (Fastify), PostgreSQL. Reminders and automatic confirmations run in a worker inside the backend. |
+| Customer website | Next.js (milestone 2). |
+| Staff/owner app | React Native with Expo, one codebase for Android and iOS. |
+| Hosting | A European region (to be chosen; KVKK review in Phase 3). |
+
+**Milestones:**
+
+| # | Milestone | Status |
+| --- | --- | --- |
+| 0 | Alert test app for Android (`apps/alert-test`), built by GitHub Actions and published as a pre-release | Delivered; waiting for the founder's test on real phones. iOS needs an Apple Developer account. |
+| 1 | Backend core (`apps/api`): shop separation, subscription gating, SMS-code sign-in, service list, staff services and durations, availability, booking (including “Fark etmez” and booking for someone else), pending/confirmed rules with the 10-minute reminder and 15-minute automatic confirmation, staff actions, walk-ins, blocked time, staff absence, outgoing-message queue | Delivered; automated tests cover the acceptance scenarios in Section 9. SMS and push print to the server log until real providers are connected. |
+| 2 | Customer website | Next |
+| 3 | Staff/owner app | Planned |
+| 4 | Real SMS, push, map, and iyzico | Planned; needs the founder's accounts |
+| 5 | Admin panel and launch | Planned |
+
+**Correction made during the build:** the last-minute reminder rule in 4.4 said “skip if the window is under 4 minutes”, which contradicted its own example (a 5-minute window with no reminder). The threshold is now 6 minutes, matching the example.
+
 ## Change record
 
 | Version | Date | Change |
 | --- | --- | --- |
 | 1.0 | 6 October 2026 | Consolidated planning decisions and created the initial handoff. Included 45 services; removed home visits; preserved the last-minute confirmation rule. |
 | 1.1 | 24 October 2026 | Founder decisions: customers on the web only, with one native staff/owner app on Android and iOS; contact matching removed; shop-level service list from the platform template, with custom and renamed services; staff select their services and durations; customer phone numbers visible to owner and staff; reminder alert at 10 minutes with automatic confirmation unchanged at 15; customer SMS with the final result; booking for someone else; special alert kept for every booking; shop tablet mode not pursued; iyzico preferred for subscriptions. Added proposals for prices, verification, abuse protection, late cancellation, booking groups, staff absence, scheduling, appointment states, women's catalog coverage, and Turkey-specific feasibility checks. Added catalog items to confirm, a risk register, a competitor review, and interface wording. |
+| 1.2 | 24 October 2026 | Founder authorized application code, approved the technology, and asked for proposals to be built as adjustable defaults; per-staff monthly fee to be set later. Added Section 12 (build status). Corrected the last-minute reminder threshold to 6 minutes to match the 4.4 example. |
