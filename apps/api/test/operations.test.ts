@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { at, book, PHONES, setupShop, useTestApp } from './helpers.js';
 
 const t = useTestApp();
-const customer = () => t.login(PHONES.customer, { firstName: 'Ahmet', lastName: 'Yılmaz' });
+const customer = () => t.login(PHONES.customer, { names: { firstName: 'Ahmet', lastName: 'Yılmaz' } });
 const userId = async (phone: string) =>
   (await t.db.query<{ id: string }>('SELECT id FROM users WHERE phone = $1', [phone])).rows[0]!.id;
 const appointment = async (id: string) => (await t.db.query('SELECT * FROM appointments WHERE id = $1', [id])).rows[0];
@@ -32,7 +32,7 @@ describe('shops are kept apart (one system, many paying shops)', () => {
     const shop = await setupShop(t);
     const r = await book(t, shop, await customer(), { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('16:00') });
     const id = r.body.appointments[0].id;
-    const tahir = await t.login(PHONES.tahir);
+    const tahir = await t.login(PHONES.tahir, { portal: 'staff' });
     expect((await t.call('POST', `${shop.base}/appointments/${id}/confirm`, { token: tahir })).status).toBe(403);
     const tahirView = await t.call('GET', `${shop.base}/appointments?from=${at('00:00')}&to=${at('23:59')}`, { token: tahir });
     expect(tahirView.body).toHaveLength(0);
@@ -43,7 +43,7 @@ describe('shops are kept apart (one system, many paying shops)', () => {
 
   it('a removed staff member loses access immediately', async () => {
     const shop = await setupShop(t);
-    const cumali = await t.login(PHONES.cumali);
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
     await t.call('PATCH', `${shop.base}/members/${shop.staff.cumali}`, { token: shop.tokens.owner, body: { active: false } });
     const r = await t.call('GET', `${shop.base}/appointments?from=${at('00:00')}&to=${at('23:59')}`, { token: cumali });
     expect(r.status).toBe(403);
@@ -85,7 +85,7 @@ describe('subscription and review control visibility (scenario 11)', () => {
 describe('daily operations (scenario 12)', () => {
   it('walk-ins and blocked time remove those times from online booking', async () => {
     const shop = await setupShop(t);
-    const cumali = await t.login(PHONES.cumali);
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
     t.clock.set(at('12:00'));
     const walkIn = await t.call('POST', `${shop.base}/appointments`, {
       token: cumali,
@@ -161,7 +161,7 @@ describe('shop service list (scenario 13)', () => {
 
   it('only the owner sets prices; staff set their own services and durations', async () => {
     const shop = await setupShop(t);
-    const cumali = await t.login(PHONES.cumali);
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
     const price = await t.call('PATCH', `${shop.base}/services/${shop.services.haircut}`, {
       token: cumali,
       body: { priceKurus: 1 },
@@ -192,7 +192,7 @@ describe('unexpected staff absence (handoff 4.8)', () => {
   it('suggests replacements, reassigns or cancels, and texts customers', async () => {
     const shop = await setupShop(t);
     const c1 = await customer();
-    const c2 = await t.login(PHONES.customer2, { firstName: 'Mehmet', lastName: 'Kaya' });
+    const c2 = await t.login(PHONES.customer2, { names: { firstName: 'Mehmet', lastName: 'Kaya' } });
     // c1 chose Cumali; c2 chose "Fark etmez" and was given Cumali (Salih is busy then, Tahir cannot do beards).
     const r1 = await book(t, shop, c1, { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('15:00') });
     await t.call('POST', `${shop.base}/appointments`, {
@@ -202,7 +202,7 @@ describe('unexpected staff absence (handoff 4.8)', () => {
     const r2 = await book(t, shop, c2, { serviceIds: [shop.services.beard], staffId: null, startsAt: at('17:00') });
     expect(r2.body.appointments[0].staffId).toBe(shop.staff.cumali);
 
-    const cumali = await t.login(PHONES.cumali);
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
     const mark = await t.call('POST', `${shop.base}/absences`, {
       token: cumali,
       body: { staffId: shop.staff.cumali, startsAt: at('12:00'), endsAt: at('21:00') },
@@ -277,5 +277,60 @@ describe('SMS codes', () => {
     t.clock.advance(6);
     const r = await t.call('POST', '/auth/otp/verify', { body: { phone: PHONES.customer, code } });
     expect(r.body.error).toBe('OTP_INVALID');
+  });
+});
+
+describe('separate sign-in for owners and staff', () => {
+  it('each entrance only accepts its own people, before any SMS is sent', async () => {
+    await setupShop(t);
+    t.sms.messages = [];
+    const staffAsOwner = await t.call('POST', '/auth/otp/request', { body: { phone: PHONES.cumali, portal: 'owner' } });
+    expect(staffAsOwner.body.error).toBe('NOT_OWNER');
+    const ownerAsStaff = await t.call('POST', '/auth/otp/request', { body: { phone: PHONES.owner, portal: 'staff' } });
+    expect(ownerAsStaff.body.error).toBe('NOT_STAFF');
+    const stranger = await t.call('POST', '/auth/otp/request', { body: { phone: PHONES.customer, portal: 'staff' } });
+    expect(stranger.body.error).toBe('NOT_STAFF');
+    await t.tick();
+    expect(t.sms.messages).toHaveLength(0);
+  });
+
+  it('a code requested for one entrance cannot open another', async () => {
+    await setupShop(t);
+    t.clock.advance(5);
+    await t.call('POST', '/auth/otp/request', { body: { phone: PHONES.cumali, portal: 'staff' } });
+    await t.tick();
+    const code = t.sms.to(PHONES.cumali).at(-1)!.match(/(\d{6})/)![1];
+    const asOwner = await t.call('POST', '/auth/otp/verify', { body: { phone: PHONES.cumali, code, portal: 'owner' } });
+    expect(asOwner.body.error).toBe('NOT_OWNER');
+  });
+
+  it('website sessions cannot reach shop data, even for staff phones', async () => {
+    const shop = await setupShop(t);
+    const web = await t.login(PHONES.cumali);
+    const r = await t.call('GET', `${shop.base}/appointments?from=${at('00:00')}&to=${at('23:59')}`, { token: web });
+    expect(r.status).toBe(403);
+    expect((await t.call('GET', '/staff/shops', { token: web })).status).toBe(403);
+  });
+
+  it('owner powers need owner sign-in', async () => {
+    const shop = await setupShop(t);
+    // Salih owns this shop and is also staff at another one, so he can use both entrances.
+    const other = await setupShop(t, { slug: 'other-shop', ownerPhone: '+905320000099' });
+    await t.call('POST', `${other.base}/members`, { token: other.tokens.owner, body: { phone: PHONES.owner, displayName: 'Salih' } });
+
+    const asStaff = await t.login(PHONES.owner, { portal: 'staff' });
+    const shops = await t.call('GET', '/staff/shops', { token: asStaff });
+    expect(shops.body.every((s: { role: string }) => s.role === 'staff')).toBe(true);
+    const price = await t.call('PATCH', `${shop.base}/services/${shop.services.haircut}`, {
+      token: asStaff,
+      body: { priceKurus: 1 },
+    });
+    expect(price.status).toBe(403);
+
+    const ok = await t.call('PATCH', `${shop.base}/services/${shop.services.haircut}`, {
+      token: shop.tokens.owner,
+      body: { priceKurus: 50000 },
+    });
+    expect(ok.status).toBe(204);
   });
 });

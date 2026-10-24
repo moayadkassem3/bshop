@@ -11,15 +11,20 @@ export type Membership = {
   bookable: boolean;
 };
 
-/** The caller's active membership in a shop, or 403. This is the shop-separation gate. */
+/**
+ * The caller's active membership in a shop, or 403. This is the shop-separation gate.
+ * Customer-website sessions never reach shop data, and owner powers need a session
+ * started through owner sign-in: through staff sign-in, everyone acts as staff.
+ */
 export async function requireMember(q: Queryable, user: User, shopId: string): Promise<Membership> {
+  if (user.portal === 'customer') throw forbidden('Sign in through staff or owner sign-in');
   const { rows } = await q.query<Membership>(
     `SELECT id, shop_id, user_id, role, display_name, bookable FROM shop_members
      WHERE shop_id = $1 AND user_id = $2 AND active`,
     [shopId, user.id],
   );
   if (!rows[0]) throw forbidden('Not a member of this shop');
-  return rows[0];
+  return user.portal === 'owner' ? rows[0] : { ...rows[0], role: 'staff' };
 }
 
 export async function requireOwner(q: Queryable, user: User, shopId: string): Promise<Membership> {

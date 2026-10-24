@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { at, book, PHONES, setupShop, useTestApp } from './helpers.js';
 
 const t = useTestApp();
-const customer = () => t.login(PHONES.customer, { firstName: 'Ahmet', lastName: 'Yılmaz' });
+const customer = () => t.login(PHONES.customer, { names: { firstName: 'Ahmet', lastName: 'Yılmaz' } });
 
 async function userId(phone: string) {
   return (await t.db.query<{ id: string }>('SELECT id FROM users WHERE phone = $1', [phone])).rows[0]!.id;
@@ -38,7 +38,7 @@ describe('acceptance scenarios (handoff Section 9)', () => {
     const shop = await setupShop(t);
     await book(t, shop, await customer(), { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('16:00') });
 
-    const other = await t.login(PHONES.customer2, { firstName: 'Mehmet', lastName: 'Kaya' });
+    const other = await t.login(PHONES.customer2, { names: { firstName: 'Mehmet', lastName: 'Kaya' } });
     const overlap = await book(t, shop, other, { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('16:15') });
     expect(overlap.status).toBe(409);
     expect(overlap.body.error).toBe('SLOT_TAKEN');
@@ -58,7 +58,7 @@ describe('acceptance scenarios (handoff Section 9)', () => {
 
   it('3. two customers tapping the same time at once: exactly one gets it', async () => {
     const shop = await setupShop(t);
-    const [a, b] = [await customer(), await t.login(PHONES.customer2, { firstName: 'Mehmet', lastName: 'Kaya' })];
+    const [a, b] = [await customer(), await t.login(PHONES.customer2, { names: { firstName: 'Mehmet', lastName: 'Kaya' } })];
     const item = { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('17:00') };
     const results = await Promise.all([book(t, shop, a, item), book(t, shop, b, item)]);
     expect(results.map((r) => r.status).sort()).toEqual([201, 409]);
@@ -114,7 +114,7 @@ describe('acceptance scenarios (handoff Section 9)', () => {
     t.clock.set(at('14:00'));
     const res = await book(t, shop, await customer(), { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('16:00') });
     const id = res.body.appointments[0].id;
-    const cumali = await t.login(PHONES.cumali);
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
 
     t.clock.set(at('14:05'));
     const declined = await t.call('POST', `${shop.base}/appointments/${id}/decline`, { token: cumali });
@@ -126,7 +126,7 @@ describe('acceptance scenarios (handoff Section 9)', () => {
     t.clock.set(at('14:15'));
     expect((await t.tick()).confirmed).toBe(0);
     expect((await appointment(id)).status).toBe('declined');
-    const again = await book(t, shop, await t.login(PHONES.customer2, { firstName: 'M', lastName: 'K' }), {
+    const again = await book(t, shop, await t.login(PHONES.customer2, { names: { firstName: 'M', lastName: 'K' } }), {
       serviceIds: [shop.services.haircut],
       staffId: shop.staff.cumali,
       startsAt: at('16:00'),
@@ -139,7 +139,7 @@ describe('acceptance scenarios (handoff Section 9)', () => {
     t.clock.set(at('14:00'));
     const res = await book(t, shop, await customer(), { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('16:00') });
     const id = res.body.appointments[0].id;
-    const cumali = await t.login(PHONES.cumali);
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
     const first = await t.call('POST', `${shop.base}/appointments/${id}/confirm`, { token: cumali });
     const second = await t.call('POST', `${shop.base}/appointments/${id}/confirm`, { token: cumali });
     expect(first.body).toEqual({ status: 'confirmed', confirmedVia: 'staff' });
@@ -156,7 +156,7 @@ describe('acceptance scenarios (handoff Section 9)', () => {
     const res = await book(t, shop, await customer(), { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('16:00') });
     const id = res.body.appointments[0].id;
     t.clock.set(at('14:16'));
-    const r = await t.call('POST', `${shop.base}/appointments/${id}/decline`, { token: await t.login(PHONES.cumali) });
+    const r = await t.call('POST', `${shop.base}/appointments/${id}/decline`, { token: await t.login(PHONES.cumali, { portal: 'staff' }) });
     expect(r.body.status).toBe('cancelled');
     expect((await appointment(id)).cancel_reason).toBe('shop');
   });
@@ -186,7 +186,7 @@ describe('acceptance scenarios (handoff Section 9)', () => {
   it('8. "Fark etmez" assigns an eligible, free staff member with the lightest load', async () => {
     const shop = await setupShop(t);
     // Salih already has a booking today; Tahir cannot do beards; Cumali is free and eligible.
-    await book(t, shop, await t.login(PHONES.customer2, { firstName: 'M', lastName: 'K' }), {
+    await book(t, shop, await t.login(PHONES.customer2, { names: { firstName: 'M', lastName: 'K' } }), {
       serviceIds: [shop.services.haircut],
       staffId: shop.staff.salih,
       startsAt: at('12:00'),
@@ -215,7 +215,7 @@ describe('acceptance scenarios (handoff Section 9)', () => {
     expect(a.total_price_kurus).toBe(75000);
 
     // Cumali sets his own 40-minute combo; the catalog default is 60.
-    const cumali = await t.login(PHONES.cumali);
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
     await t.call('PUT', `${shop.base}/members/${shop.staff.cumali}/services`, {
       token: cumali,
       body: [{ serviceId: shop.services.haircut }, { serviceId: shop.services.beard }, { serviceId: shop.services.combo, durationMinutes: 40 }],
@@ -256,7 +256,7 @@ describe('acceptance scenarios (handoff Section 9)', () => {
     expect(alerts.some((b) => b.startsWith('Emir (Ahmet Yılmaz adına)'))).toBe(true);
 
     const list = await t.call('GET', `${shop.base}/appointments?from=${at('00:00')}&to=${at('23:59')}`, {
-      token: await t.login(PHONES.cumali),
+      token: await t.login(PHONES.cumali, { portal: 'staff' }),
     });
     expect(list.body.map((a: { guest_name: string | null }) => a.guest_name)).toEqual([null, 'Emir']);
   });
@@ -265,7 +265,7 @@ describe('acceptance scenarios (handoff Section 9)', () => {
     const shop = await setupShop(t);
     await book(t, shop, await customer(), { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('16:00') });
     const range = `from=${at('00:00')}&to=${at('23:59')}`;
-    const staffView = await t.call('GET', `${shop.base}/appointments?${range}`, { token: await t.login(PHONES.cumali) });
+    const staffView = await t.call('GET', `${shop.base}/appointments?${range}`, { token: await t.login(PHONES.cumali, { portal: 'staff' }) });
     const ownerView = await t.call('GET', `${shop.base}/appointments?${range}`, { token: shop.tokens.owner });
     expect(staffView.body[0].customer_phone).toBe(PHONES.customer);
     expect(ownerView.body[0].customer_phone).toBe(PHONES.customer);
@@ -284,7 +284,7 @@ describe('protections without deposits (handoff 2.1)', () => {
   it('at most 2 upcoming bookings per customer per shop by default', async () => {
     const shop = await setupShop(t);
     const c = await customer();
-    const cumali = await t.login(PHONES.cumali);
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
     for (const time of ['12:00', '13:00']) {
       const r = await book(t, shop, c, { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at(time) });
       await t.call('POST', `${shop.base}/appointments/${r.body.appointments[0].id}/confirm`, { token: cumali });
@@ -307,7 +307,7 @@ describe('protections without deposits (handoff 2.1)', () => {
   it('late cancellation is allowed and recorded; no-shows are counted', async () => {
     const shop = await setupShop(t);
     const c = await customer();
-    const cumali = await t.login(PHONES.cumali);
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
     const r = await book(t, shop, c, { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('10:30') });
     const id = r.body.appointments[0].id;
     await t.call('POST', `${shop.base}/appointments/${id}/confirm`, { token: cumali });

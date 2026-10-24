@@ -12,19 +12,43 @@ const OTP_MAX_ATTEMPTS = 5;
 const OTP_RESEND_SECONDS = 60;
 const OTP_MAX_PER_HOUR = 5;
 
+/**
+ * Which entrance a session was started from: the customer website, staff sign-in
+ * ("Çalışan Girişi"), or owner sign-in ("Salon Sahibi Girişi").
+ */
+export type Portal = 'customer' | 'staff' | 'owner';
+
 export type User = {
   id: string;
   phone: string;
   first_name: string | null;
   last_name: string | null;
   is_platform_admin: boolean;
+  portal: Portal;
 };
 
 const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 
-export async function requestOtp(deps: Deps, rawPhone: string): Promise<void> {
+/** Staff and owner sign-in only accept phones with that role in an active shop membership. */
+async function assertPortalAllowed(q: Queryable, phone: string, portal: Portal) {
+  if (portal === 'customer') return;
+  const { rowCount } = await q.query(
+    `SELECT 1 FROM users u JOIN shop_members m ON m.user_id = u.id
+     WHERE u.phone = $1 AND m.active AND m.role = $2 LIMIT 1`,
+    [phone, portal],
+  );
+  if (!rowCount) {
+    throw portal === 'owner'
+      ? new AppError(403, 'NOT_OWNER', 'This number is not registered as a salon owner')
+      : new AppError(403, 'NOT_STAFF', 'This number is not registered as salon staff');
+  }
+}
+
+export async function requestOtp(deps: Deps, rawPhone: string, portal: Portal = 'customer'): Promise<void> {
   const phone = normalizePhone(rawPhone);
   const now = deps.clock.now();
+  // Checked before any SMS is sent, so wrong-entrance attempts cost nothing.
+  await assertPortalAllowed(deps.db, phone, portal);
   await withTx(deps.db, async (tx) => {
     // Serialise requests per phone so the rate limits hold under concurrency.
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [phone]);
@@ -50,8 +74,9 @@ export async function requestOtp(deps: Deps, rawPhone: string): Promise<void> {
 
 export async function verifyOtp(
   deps: Deps,
-  input: { phone: string; code: string; firstName?: string; lastName?: string },
+  input: { phone: string; code: string; firstName?: string; lastName?: string; portal?: Portal },
 ): Promise<{ token: string; user: User }> {
+  const portal = input.portal ?? 'customer';
   const phone = normalizePhone(input.phone);
   const now = deps.clock.now();
   const result = await withTx(deps.db, async (tx) => {
@@ -71,10 +96,11 @@ export async function verifyOtp(
       await tx.query('UPDATE otp_codes SET attempts = attempts + 1 WHERE id = $1', [otp.id]);
       return null;
     }
+    await assertPortalAllowed(tx, phone, portal);
     await tx.query('UPDATE otp_codes SET consumed_at = $2 WHERE id = $1', [otp.id, now]);
 
-    const user = (
-      await tx.query<User>(
+    const row = (
+      await tx.query<Omit<User, 'portal'>>(
         `INSERT INTO users (phone, first_name, last_name) VALUES ($1, $2, $3)
          ON CONFLICT (phone) DO UPDATE SET
            first_name = COALESCE(EXCLUDED.first_name, users.first_name),
@@ -83,14 +109,13 @@ export async function verifyOtp(
         [phone, input.firstName?.trim() || null, input.lastName?.trim() || null],
       )
     ).rows[0]!;
+    const user: User = { ...row, portal };
 
     const token = randomBytes(32).toString('base64url');
-    await tx.query('INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES ($1, $2, $3, $4)', [
-      sha256(token),
-      user.id,
-      now,
-      new Date(now.getTime() + deps.config.sessionDays * 24 * 60 * MINUTE),
-    ]);
+    await tx.query(
+      'INSERT INTO sessions (token_hash, user_id, portal, created_at, expires_at) VALUES ($1, $2, $3, $4, $5)',
+      [sha256(token), user.id, portal, now, new Date(now.getTime() + deps.config.sessionDays * 24 * 60 * MINUTE)],
+    );
     return { token, user };
   });
   if (!result) throw badRequest('OTP_INVALID', 'Code is invalid or expired');
@@ -99,7 +124,7 @@ export async function verifyOtp(
 
 export async function userForToken(deps: Deps, token: string): Promise<User | null> {
   const { rows } = await deps.db.query<User>(
-    `SELECT u.id, u.phone, u.first_name, u.last_name, u.is_platform_admin
+    `SELECT u.id, u.phone, u.first_name, u.last_name, u.is_platform_admin, s.portal
      FROM sessions s JOIN users u ON u.id = s.user_id
      WHERE s.token_hash = $1 AND s.expires_at > $2`,
     [sha256(token), deps.clock.now()],
@@ -108,12 +133,12 @@ export async function userForToken(deps: Deps, token: string): Promise<User | nu
 }
 
 export async function updateProfile(deps: Deps, user: User, input: { firstName: string; lastName: string }) {
-  const { rows } = await deps.db.query<User>(
+  const { rows } = await deps.db.query<Omit<User, 'portal'>>(
     `UPDATE users SET first_name = $2, last_name = $3 WHERE id = $1
      RETURNING id, phone, first_name, last_name, is_platform_admin`,
     [user.id, input.firstName.trim(), input.lastName.trim()],
   );
-  return rows[0]!;
+  return { ...rows[0]!, portal: user.portal };
 }
 
 /** Finds or creates a user by phone (used when owners add staff, or staff enter a customer). */

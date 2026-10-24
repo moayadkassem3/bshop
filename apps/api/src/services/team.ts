@@ -1,10 +1,21 @@
 import type { Deps } from '../deps.js';
 import { withTx } from '../db.js';
-import { badRequest, conflict, notFound } from '../errors.js';
+import { badRequest, conflict, forbidden, notFound } from '../errors.js';
 import { normalizePhone } from '../phone.js';
 import { requireMember, requireOwner, requireSelfOrOwner } from './access.js';
 import { upsertUserByPhone, type User } from './auth.js';
 import type { WeeklyWindowInput } from './shops.js';
+
+/** Shops the caller works at, with the role this session may act as. */
+export async function listMyShops(deps: Deps, user: User) {
+  if (user.portal === 'customer') throw forbidden('Sign in through staff or owner sign-in');
+  const { rows } = await deps.db.query<{ id: string; name: string; slug: string; member_id: string; role: string; display_name: string }>(
+    `SELECT s.id, s.name, s.slug, m.id AS member_id, m.role, m.display_name
+     FROM shop_members m JOIN shops s ON s.id = m.shop_id WHERE m.user_id = $1 AND m.active ORDER BY s.name`,
+    [user.id],
+  );
+  return rows.map((r) => (user.portal === 'owner' ? r : { ...r, role: 'staff' }));
+}
 
 export async function listMembers(deps: Deps, user: User, shopId: string) {
   await requireMember(deps.db, user, shopId);

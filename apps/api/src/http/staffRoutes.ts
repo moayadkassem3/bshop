@@ -2,7 +2,6 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Deps } from '../deps.js';
 import { applyAbsence, getAbsence, markAbsence } from '../services/absence.js';
-import type { User } from '../services/auth.js';
 import { setAutoConfirmHours, updateShopSettings } from '../services/shops.js';
 import {
   addStaffAppointment,
@@ -20,6 +19,7 @@ import {
   importCatalog,
   listCatalog,
   listMembers,
+  listMyShops,
   listServices,
   setCustomerBlocked,
   setMemberServices,
@@ -35,15 +35,7 @@ const minutes = z.number().int().min(5).max(600);
 
 /** Routes for the staff/owner app. Every route is scoped to a shop the caller belongs to. */
 export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
-  app.get('/staff/shops', async (req) => {
-    const user: User = await auth(req);
-    const { rows } = await deps.db.query(
-      `SELECT s.id, s.name, s.slug, m.id AS member_id, m.role, m.display_name
-       FROM shop_members m JOIN shops s ON s.id = m.shop_id WHERE m.user_id = $1 AND m.active ORDER BY s.name`,
-      [user.id],
-    );
-    return rows;
-  });
+  app.get('/staff/shops', async (req) => listMyShops(deps, await auth(req)));
 
   // Appointments
   app.get('/staff/shops/:shopId/appointments', async (req) => {

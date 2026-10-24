@@ -7,10 +7,13 @@ import { listPublicShops } from '../services/shops.js';
 import type { AuthFn } from './app.js';
 import { csvIds, id } from './schemas.js';
 
+/** "Salon Sahibi Girişi" and "Çalışan Girişi" are separate entrances; the website signs customers in. */
+const portal = z.enum(['customer', 'staff', 'owner']).default('customer');
+
 export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
   app.post('/auth/otp/request', async (req, reply) => {
-    const body = z.object({ phone: z.string().min(7).max(20) }).parse(req.body);
-    await requestOtp(deps, body.phone);
+    const body = z.object({ phone: z.string().min(7).max(20), portal }).parse(req.body);
+    await requestOtp(deps, body.phone, body.portal);
     return reply.status(204).send();
   });
 
@@ -21,6 +24,7 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
         code: z.string().regex(/^\d{6}$/),
         firstName: z.string().trim().min(1).max(60).optional(),
         lastName: z.string().trim().min(1).max(60).optional(),
+        portal,
       })
       .parse(req.body);
     return verifyOtp(deps, body);

@@ -76,17 +76,24 @@ export function useTestApp() {
       return { status: res.statusCode, body: res.body ? res.json() : null };
     },
     /** Signs in through the real SMS-code flow and returns a session token (reused per phone within a test). */
-    async login(phone: string, names?: { firstName: string; lastName: string }) {
-      const cached = sessions.get(phone);
+    async login(
+      phone: string,
+      opts: { names?: { firstName: string; lastName: string }; portal?: 'customer' | 'staff' | 'owner' } = {},
+    ) {
+      const portal = opts.portal ?? 'customer';
+      const key = `${portal}:${phone}`;
+      const cached = sessions.get(key);
       if (cached) return cached;
-      const req = await ctx.call('POST', '/auth/otp/request', { body: { phone } });
+      // The resend limit is per phone; step past it when the same phone signs in through another entrance.
+      if ([...sessions.keys()].some((k) => k.endsWith(`:${phone}`))) clock.advance(1);
+      const req = await ctx.call('POST', '/auth/otp/request', { body: { phone, portal } });
       if (req.status !== 204) throw new Error(`OTP request failed: ${JSON.stringify(req.body)}`);
       await tick(deps);
       const text = sms.to(phone).at(-1)!;
       const code = text.match(/(\d{6})/)![1];
-      const res = await ctx.call('POST', '/auth/otp/verify', { body: { phone, code, ...names } });
+      const res = await ctx.call('POST', '/auth/otp/verify', { body: { phone, code, portal, ...opts.names } });
       if (res.status !== 200) throw new Error(`OTP verify failed: ${JSON.stringify(res.body)}`);
-      sessions.set(phone, res.body.token);
+      sessions.set(key, res.body.token);
       return res.body.token as string;
     },
   };
@@ -152,7 +159,7 @@ export async function setupShop(t: TestCtx, opts: { slug?: string; ownerPhone?: 
   await t.call('POST', `/admin/shops/${shopId}/review`, { token: admin });
   await t.call('PUT', `/admin/shops/${shopId}/subscription`, { token: admin, body: { status: 'active' } });
 
-  const owner = await t.login(opts.ownerPhone ?? PHONES.owner);
+  const owner = await t.login(opts.ownerPhone ?? PHONES.owner, { portal: 'owner' });
   const base = `/staff/shops/${shopId}`;
   // Catalog ids 1–3: Saç Kesimi (30), Sakal Tıraşı (20), Saç-Sakal Kesimi (60).
   const imported = await t.call('POST', `${base}/services/import`, {
