@@ -1,8 +1,8 @@
 # Salon Booking Platform — Handoff & Planning Baseline
 
-**Version:** 1.2  
+**Version:** 1.3  
 **Baseline date:** 24 October 2026  
-**Previous versions:** 1.1 (24 October 2026), 1.0 (6 October 2026)  
+**Previous versions:** 1.2 and 1.1 (24 October 2026), 1.0 (6 October 2026)  
 **Status:** Build in progress. The founder authorized application code on 24 October 2026 (Section 12).  
 **Working market:** Istanbul, Türkiye  
 **Product name:** To be decided
@@ -17,13 +17,13 @@ This document is the reference point for continuing product design and handing t
 - **Proposed** — a recommendation recorded for design review; it needs the founder's confirmation before it becomes agreed.
 - **Open** — not yet decided.
 
-Rows and sections new or changed in version 1.1 are marked *(v1.1)*; version 1.2 adds Section 12. The change record at the end summarises both.
+Rows and sections new or changed in version 1.1 are marked *(v1.1)*, and in version 1.3 *(v1.3)*; version 1.2 adds Section 12. The change record at the end summarises each version.
 
 ## 1. Product purpose
 
 A customer wants to book an appointment, but the barber or stylist may be busy serving someone and cannot answer calls or messages. The platform lets customers see availability and request appointments directly, while giving shops control over their schedules.
 
-The product also helps customers discover participating shops on a map. Its two core benefits are easier appointment management and shop visibility. Discovery is an agreed first-release feature.
+The product also gives each participating shop a public profile page. Its two core benefits are easier appointment management and shop visibility. *(v1.3)* Map discovery is removed; customers reach a shop through its link or QR code, or by searching its name.
 
 Initial customers are men's barbershops and women's salons in Istanbul. Initial shop acquisition will happen through face-to-face visits.
 
@@ -34,7 +34,7 @@ Initial customers are men's barbershops and women's salons in Istanbul. Initial 
 | Area | Baseline decision |
 | --- | --- |
 | Customer identity | Phone number, first name, and surname; easy account creation. |
-| Booking access *(v1.1)* | Shop link or QR code, and map discovery. Contact matching is removed from the first release. |
+| Booking access *(v1.3)* | Shop link or QR code, and search by shop name or district. Map discovery and contact matching are removed from the first release. |
 | Platforms *(v1.1)* | Customers find shops, book, and track appointments on the web only. Staff and owners use a native app on Android and iOS. |
 | Owner tools *(v1.1)* | Inside the same native app as staff, unlocked by owner permissions. No separate owner web dashboard in the first release. |
 | Separate sign-in *(v1.2)* | Owners and staff sign in through separate entrances: “Salon Sahibi Girişi” and “Çalışan Girişi”. Each accepts only phones with that role, checked before an SMS code is sent. Owner powers are available only after owner sign-in; an owner who also cuts hair sees their own schedule there. |
@@ -42,7 +42,8 @@ Initial customers are men's barbershops and women's salons in Istanbul. Initial 
 | Shop service list *(v1.1)* | Each shop keeps one service list, set up once at shop level rather than by each staff member. It starts from the platform catalog (Section 6). Shops can add their own services and rename services. |
 | Staff services and durations *(v1.1)* | Each staff member selects which of the shop's services they perform and sets their own durations for them. |
 | Subscription | Monthly shop subscription, with an extra fee per additional barber or stylist. |
-| Map membership | Only subscribed shops appear; map visibility is included in the subscription. |
+| Public visibility *(v1.3)* | Only reviewed, subscribed shops have a public profile, appear in search, and take bookings. |
+| Shop profile page *(v1.3)* | Every shop has a public profile: photos (up to 12, the first is the cover), shop type and district, today's hours and the weekly hours, address with “Yol tarifi” (directions in the phone's maps app), phone, WhatsApp, Instagram, a short description, the price list, and the staff, each with their own booking link. A fixed bar offers WhatsApp, Call, Directions, and “Randevu al”. |
 | Shop activation | Our team reviews shops before public visibility and booking activation. |
 | Owner permissions | Manage the shop, all staff, and all appointments. |
 | Staff permissions *(v1.1)* | Manage their own appointments; select which shop services they perform and modify their durations. |
@@ -79,7 +80,7 @@ These recommendations came out of the v1.0 review. They are not agreed until the
 | Automatic-confirmation hours | Based on the appointment start time, not the request time. Eligible slots show an “Anında onay” (instant confirmation) badge. | Predictable for the shop, and the customer can see it before booking. |
 | SMS budget | Plan for about 3 texts per booking: verification code, result, reminder. Include the cost in subscription pricing. | Web-only customers cannot receive push notifications, so every customer message is an SMS. |
 | Subscription sales | Sell the subscription face to face or through a web payment link, never inside the staff app. | Keeps the app clear of app-store in-app purchase rules (to verify in Phase 3). |
-| Failed subscription payment | A 7-day grace period with reminders to the owner. Then the shop is hidden from the map and stops taking new bookings; existing appointments are kept. | Predictable for shops; protects customers who already booked. |
+| Failed subscription payment | A 7-day grace period with reminders to the owner. Then the shop's profile goes offline and it stops taking new bookings; existing appointments are kept. | Predictable for shops; protects customers who already booked. |
 | Staff removal | When a staff member is removed from a shop, their access to customer data ends immediately. | Staff can see customer phone numbers. |
 
 ## 3. People and permissions
@@ -103,18 +104,18 @@ The exact order of review, subscription payment, and activation is open. The pub
 
 ### 4.2 Customer discovery
 
-1. Open a shop's direct link or scan its QR code, or find a shop on the web map.
+1. Open a shop's direct link or scan its QR code, or search by shop name or district on the home page.
 2. Open the shop profile and view services, prices, staff, and appointment availability.
 3. Continue into booking on the web.
 
 *(v1.1)* **Contact matching is removed from the first release.** If it is reconsidered later, the recommended approach is to match on the customer's device against the public list of shop business numbers and never upload the customer's contacts.
 
-**Proposed map design:** Pins with shop profiles, an accompanying list, area search, optional current location, and filters for services and appointment availability. Exact filters, ranking, map provider, and profile fields are open. Opening hours and available appointment times should be distinguishable.
+*(v1.3)* **Shop profile page:** the link and QR code open the shop's profile (Section 2); “Randevu al” starts the booking. The map design is withdrawn with map discovery.
 
 **Proposed *(v1.1)*:**
 
 - Each staff member gets their own link and QR code to share (for example on Instagram or WhatsApp). A customer arriving through it starts with that staff member already chosen.
-- Concentrate pilot shops in one or two districts so the map is not sparse at launch. Treat links shared by shops (Instagram bio, WhatsApp, Google Business Profile) as the main early booking channel.
+- Treat links shared by shops (Instagram bio, WhatsApp, Google Business Profile) and the QR code in the shop as the main booking channels.
 
 ### 4.3 Customer booking
 
@@ -123,7 +124,7 @@ The exact order of review, subscription payment, and activation is open. The pub
 3. Choose a time that accommodates the complete service duration.
 4. *(v1.1)* Choose who the appointment is for: “Kendim” (myself) or “Başka biri” (someone else). See 4.7.
 5. Provide phone number, first name, and surname. *(Proposed)* Verify the phone with an SMS code here, not before browsing.
-6. Review the service price, staff assignment, cancellation rule, and confirmation behavior. *(Proposed)* Also show “Ödeme salonda” (payment at the shop) and the shop address with a map link.
+6. Review the service price, staff assignment, cancellation rule, and confirmation behavior. *(Proposed)* Also show “Ödeme salonda” (payment at the shop) and the shop address with a directions link.
 7. Submit the booking. *(Proposed)* Re-check that the time is still free; if it was just taken, say so (“Bu saat az önce doldu”) and offer the nearest alternatives. Reserve the staff member and time.
 8. Follow the confirmation workflow below.
 
@@ -335,13 +336,13 @@ This is a sequence of deliverables, not a development schedule or technology com
 | --- | --- | --- |
 | 1. Finish system definition | Resolve the booking, cancellation, assignment, identity, and alert decisions listed below. Confirm the appointment states (5.1) and role permissions. | Founder has a coherent set of workflows, including exceptional cases. |
 | 2. Design customer and shop experiences | Create screen flows and a clickable prototype for the customer web (discovery, booking, confirmation) and the staff/owner app (schedules, requests, alerts, absence, settings, service list), plus the reviewer flow. Prepare Turkish interface wording. | Validate the prototype with the founder and initial Istanbul shops; document revisions. |
-| 3. Validate feasibility and prepare engineering handoff | Evaluate alerts in the native app on Android and iOS (4.5), the web map approach, subscription collection with iyzico, e-invoicing (e-arşiv / e-fatura), and SMS delivery. Review privacy and messaging requirements: KVKK (including VERBİS registration and data transfer abroad, which affects hosting choice), SMS sender-name registration, and whether İYS applies to appointment messages. Check app-store rules for a subscription sold outside the app. Define the data model and acceptance scenarios. | Select the technical approach and document platform limits and unresolved dependencies. Any experimental coding requires the founder's go-ahead to begin code work. |
-| 4. Implement the agreed first release | Build customer web booking and map discovery, the staff/owner native app for Android and iOS, review/activation, subscription access, and SMS and in-app notifications. | Agreed acceptance scenarios pass on the customer web and both mobile platforms; any staged rollout is explicitly agreed. |
+| 3. Validate feasibility and prepare engineering handoff | Evaluate alerts in the native app on Android and iOS (4.5), photo storage, subscription collection with iyzico, e-invoicing (e-arşiv / e-fatura), and SMS delivery. Review privacy and messaging requirements: KVKK (including VERBİS registration and data transfer abroad, which affects hosting choice), SMS sender-name registration, and whether İYS applies to appointment messages. Check app-store rules for a subscription sold outside the app. Define the data model and acceptance scenarios. | Select the technical approach and document platform limits and unresolved dependencies. Any experimental coding requires the founder's go-ahead to begin code work. |
+| 4. Implement the agreed first release | Build customer web booking and shop profile pages, the staff/owner native app for Android and iOS, review/activation, subscription access, and SMS and in-app notifications. | Agreed acceptance scenarios pass on the customer web and both mobile platforms; any staged rollout is explicitly agreed. |
 | 5. Run an Istanbul pilot | Onboard reviewed shops face-to-face, verify their service lists and schedules, and observe real booking and alert behavior. | Pilot findings are recorded and release-blocking issues are resolved. |
 
 *(Proposed, v1.1)* Run a small alert prototype on Android and iOS before Phase 2, so the alert design is based on what the platforms allow. This needs the founder's go-ahead because it involves code.
 
-**Proposed pilot measures:** Completed booking rate, staff response time, share confirmed after the reminder, share automatically confirmed by timeout, missed-alert reports, schedule conflicts, cancellations/no-shows, active shops, and *(v1.1)* booking source (shop link, staff link, QR code, map). Targets and pilot size remain open.
+**Proposed pilot measures:** Completed booking rate, staff response time, share confirmed after the reminder, share automatically confirmed by timeout, missed-alert reports, schedule conflicts, cancellations/no-shows, active shops, and *(v1.1)* booking source (shop link, staff link, QR code, search). Targets and pilot size remain open.
 
 ## 8. Decisions to close before implementation
 
@@ -362,8 +363,7 @@ This is a sequence of deliverables, not a development schedule or technology com
 | Before pilot | Shop closures and special hours | Holidays affect existing bookings. |
 | Before pilot | Reminder timing and customer preferences (channel is SMS) | Makes appointment communication concrete. |
 | Before pilot | Subscription price, included staff, seat definition, payment provider (iyzico preferred), and failed-payment behavior (proposal in 2.1) | Makes shop access and charges predictable. |
-| Before pilot | Shop review criteria and location verification | Makes map listings and activation consistent. |
-| Before pilot | Map ranking and data handling | Defines discovery behavior and privacy requirements. |
+| Before pilot | Shop review criteria, address and photo checks | Makes public profiles and activation consistent. |
 | Before pilot | Catalog coverage for women's salons, items in 6.1, and “starting from” price presentation | Confirms that the template meets participating men's and women's salons' needs. |
 
 A privacy and consent review is a future work item. This document does not assert that a particular notification or data-handling design has been legally or technically validated.
@@ -382,7 +382,7 @@ Use these to review the design and, after implementation is authorized, verify t
 8. “Any available” assigns an eligible staff member and respects their actual schedule and service duration.
 9. Multiple services use their total duration; a combined catalog service uses its own duration.
 10. Customers see the owner's cancellation rule and the applicable service price before submitting.
-11. Reviewed, subscribed shops can be discovered on the web map.
+11. Reviewed, subscribed shops have a public profile with photos, hours, and contact details, and appear in search; others do not.
 12. Staff can add walk-ins and block time without creating conflicting customer availability.
 13. A shop starts from the 45-service template, adds a custom service, renames a service, and staff select their own services and durations. Home visits cannot be booked.
 14. A customer books an appointment for someone else, and the staff app shows both names.
@@ -402,7 +402,7 @@ No product name, hosting provider, budget, or delivery date has been selected. T
 
 **Next action:** Test the alert app on real phones (Section 12), then build the customer website (milestone 2). Proposals are built as adjustable defaults; confirm or adjust them as each screen is reviewed.
 
-**Handoff instruction:** Read this document as the current planning baseline. Preserve the founder's decisions, particularly automatic confirmation at the earlier deadline with a reminder at 10 minutes, the special alert for every new appointment, map discovery in the first release, web-only customers with a native staff/owner app, a shop-level service list that shops can extend and rename, owner-defined cancellation cutoffs, payment at the shop, and the removal of home visits and contact matching. Advance open items without presenting proposals as already agreed.
+**Handoff instruction:** Read this document as the current planning baseline. Preserve the founder's decisions, particularly automatic confirmation at the earlier deadline with a reminder at 10 minutes, the special alert for every new appointment, a public profile page for every shop (no map discovery), web-only customers with a native staff/owner app, a shop-level service list that shops can extend and rename, owner-defined cancellation cutoffs, payment at the shop, and the removal of home visits and contact matching. Advance open items without presenting proposals as already agreed.
 
 ## 11. Risk register *(v1.1, proposed)*
 
@@ -411,7 +411,7 @@ No product name, hosting provider, budget, or delivery date has been selected. T
 | Fake or abusive bookings | A staff member's day is blocked by bookings that never arrive. | SMS verification, booking limit, no-show record, customer blocking (2.1). |
 | Platform alert limits | The special alert cannot be as prominent as intended on Android or iOS. | Early alert prototype; design around custom sound and high-priority notifications (4.5). |
 | Unanswered requests | Bookings auto-confirm while staff are unavailable. | 10-minute reminder; decline-after-confirmation path with alternatives (4.6). |
-| Sparse map at launch | Customers see few shops and lose interest. | Pilot in one or two districts; lead with shop and staff links. |
+| Few shops at launch | Search finds little, so customers rarely discover new shops. | Lead with each shop's link and QR code; discovery is not the first release's main channel. |
 | SMS costs | Each booking costs several texts. | Budget about 3 texts per booking in subscription pricing (2.1). |
 | Catalog fit for women's salons | Women's salons cannot represent their services. | Shop-level custom services; women's template additions; length variants (6.1). |
 | Failed subscription payments | Shops lose access unexpectedly, or keep access without paying. | Grace period with owner reminders; existing bookings kept (2.1). |
@@ -485,9 +485,9 @@ Reviewed on 24 October 2026 from founder-supplied screenshots of the customer we
 | --- | --- | --- |
 | 0 | Alert test app for Android (`apps/alert-test`), built by GitHub Actions and published as a pre-release | Test 1 done on the founder's Android phone (results below); test 2 adds the full-screen alert. iOS needs an Apple Developer account. |
 | 1 | Backend core (`apps/api`): shop separation, subscription gating, SMS-code sign-in, service list, staff services and durations, availability, booking (including “Fark etmez” and booking for someone else), pending/confirmed rules with the 10-minute reminder and 15-minute automatic confirmation, staff actions, walk-ins, blocked time, staff absence, outgoing-message queue | Delivered; automated tests cover the acceptance scenarios in Section 9. SMS and push print to the server log until real providers are connected. |
-| 2 | Customer website (`apps/web`): home search, shop page with the 4-step booking (services, staff or “Fark etmez” with each one's next free time, day and time with “İlk uygun saat” and “Anında onay”, summary with SMS sign-in and “Randevu kimin için?”), live pending/confirmed status, “Randevularım” with cancellation and late-cancellation warning, map, and the business page with separate owner and staff entrances | Delivered; checked end to end in a browser at phone size. Map tiles use OpenStreetMap until a map provider is chosen (milestone 4). |
+| 2 | Customer website (`apps/web`): home search, shop page with the 4-step booking (services, staff or “Fark etmez” with each one's next free time, day and time with “İlk uygun saat” and “Anında onay”, summary with SMS sign-in and “Randevu kimin için?”), live pending/confirmed status, “Randevularım” with cancellation and late-cancellation warning, and the business page with separate owner and staff entrances. *(v1.3)* Each shop's profile page with photos, hours, contact details, and the WhatsApp · Call · Directions · Randevu al bar; the map is removed | Delivered; checked end to end in a browser at phone size. Photos are stored on the server's disk until cloud storage is set up (milestone 5). |
 | 3 | Staff/owner app | Next |
-| 4 | Real SMS, push, map, and iyzico | Planned; needs the founder's accounts |
+| 4 | Real SMS, push, and iyzico | Planned; needs the founder's accounts |
 | 5 | Admin panel and launch | Planned |
 
 **Alert test 1 results (founder's Android phone, 24 October 2026):**
@@ -510,3 +510,4 @@ Reviewed on 24 October 2026 from founder-supplied screenshots of the customer we
 | 1.0 | 6 October 2026 | Consolidated planning decisions and created the initial handoff. Included 45 services; removed home visits; preserved the last-minute confirmation rule. |
 | 1.1 | 24 October 2026 | Founder decisions: customers on the web only, with one native staff/owner app on Android and iOS; contact matching removed; shop-level service list from the platform template, with custom and renamed services; staff select their services and durations; customer phone numbers visible to owner and staff; reminder alert at 10 minutes with automatic confirmation unchanged at 15; customer SMS with the final result; booking for someone else; special alert kept for every booking; shop tablet mode not pursued; iyzico preferred for subscriptions. Added proposals for prices, verification, abuse protection, late cancellation, booking groups, staff absence, scheduling, appointment states, women's catalog coverage, and Turkey-specific feasibility checks. Added catalog items to confirm, a risk register, a competitor review, and interface wording. |
 | 1.2 | 24 October 2026 | Founder authorized application code, approved the technology, and asked for proposals to be built as adjustable defaults; per-staff monthly fee to be set later. Alert keeps ringing until answered. Separate sign-in for owners and staff. Added Section 12 (build status). Corrected the last-minute reminder threshold to 6 minutes to match the 4.4 example. |
+| 1.3 | 24 October 2026 | Founder decisions: map discovery removed; every shop gets a public profile page with photos, hours, address and directions, phone, WhatsApp, and Instagram, and a WhatsApp · Call · Directions · Randevu al bar. Customers reach shops by link, QR code, or name search. |

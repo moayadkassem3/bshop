@@ -27,6 +27,8 @@ import {
   updateMember,
   updateService,
 } from '../services/team.js';
+import { AppError } from '../errors.js';
+import { addPhoto, deletePhoto, listPhotosForStaff, MAX_UPLOAD_BYTES, reorderPhotos } from '../services/photos.js';
 import type { AuthFn } from './app.js';
 import { id, shopParams, timestamp, weeklyWindows } from './schemas.js';
 
@@ -204,6 +206,33 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     return reply.status(204).send();
   });
 
+  // Profile photos (owner). The body is the image itself: JPEG, PNG, or WebP.
+  app.addContentTypeParser(
+    ['image/jpeg', 'image/png', 'image/webp'],
+    { parseAs: 'buffer', bodyLimit: MAX_UPLOAD_BYTES },
+    (_req, body, done) => done(null, body),
+  );
+  app.get('/staff/shops/:shopId/photos', async (req) => {
+    const { shopId } = shopParams.parse(req.params);
+    return listPhotosForStaff(deps, await auth(req), shopId);
+  });
+  app.post('/staff/shops/:shopId/photos', async (req, reply) => {
+    const user = await auth(req);
+    const { shopId } = shopParams.parse(req.params);
+    if (!Buffer.isBuffer(req.body)) throw new AppError(415, 'UNSUPPORTED_MEDIA', 'Send a JPEG, PNG, or WebP image');
+    return reply.status(201).send(await addPhoto(deps, user, shopId, req.body));
+  });
+  app.delete('/staff/shops/:shopId/photos/:id', async (req, reply) => {
+    const p = action.parse(req.params);
+    await deletePhoto(deps, await auth(req), p.shopId, p.id);
+    return reply.status(204).send();
+  });
+  app.put('/staff/shops/:shopId/photos/order', async (req, reply) => {
+    const { shopId } = shopParams.parse(req.params);
+    await reorderPhotos(deps, await auth(req), shopId, z.array(id).parse(req.body));
+    return reply.status(204).send();
+  });
+
   // Shop settings and customers (owner)
   app.patch('/staff/shops/:shopId/settings', async (req) => {
     const user = await auth(req);
@@ -213,6 +242,10 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
         name: z.string().trim().min(1).max(80),
         phone: z.string().min(7).max(20).nullable(),
         address: z.string().max(300).nullable(),
+        district: z.string().max(80).nullable(),
+        whatsapp: z.string().min(7).max(20).nullable(),
+        instagram: z.string().max(120).nullable(),
+        about: z.string().max(600).nullable(),
         latitude: z.number().min(-90).max(90).nullable(),
         longitude: z.number().min(-180).max(180).nullable(),
         audience: z.enum(['men', 'women', 'unisex']),

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { photoUrl } from '@/lib/shop';
 import type { ShopSummary } from '@/lib/types';
 import styles from './SearchBox.module.css';
 
@@ -49,8 +50,16 @@ export function SearchBox() {
           {results.map((shop) => (
             <li key={shop.slug}>
               <Link href={`/${shop.slug}`} className={styles.result}>
-                <span className={styles.resultName}>{shop.name}</span>
-                {shop.address && <span className={styles.resultAddress}>{shop.address}</span>}
+                {shop.cover_photo_id ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={photoUrl(shop.cover_photo_id)} alt="" className={styles.thumb} width={56} height={56} />
+                ) : (
+                  <span className={styles.thumb} aria-hidden />
+                )}
+                <span className={styles.resultText}>
+                  <span className={styles.resultName}>{shop.name}</span>
+                  <span className={styles.resultAddress}>{shop.district ?? shop.address}</span>
+                </span>
               </Link>
             </li>
           ))}

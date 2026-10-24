@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { at, book, PHONES, setupShop, useTestApp } from './helpers.js';
 
@@ -51,14 +52,12 @@ describe('shops are kept apart (one system, many paying shops)', () => {
 });
 
 describe('subscription and review control visibility (scenario 11)', () => {
-  const box = 'minLat=40&maxLat=42&minLng=28&maxLng=30';
-
-  it('only reviewed, subscribed shops appear on the map and take bookings', async () => {
+  it('only reviewed, subscribed shops have a public profile, appear in search, and take bookings', async () => {
     const shop = await setupShop(t);
-    expect((await t.call('GET', `/public/shops?${box}`)).body.map((s: { slug: string }) => s.slug)).toEqual([shop.slug]);
+    expect((await t.call('GET', '/public/search?q=nirvana')).body.map((s: { slug: string }) => s.slug)).toEqual([shop.slug]);
 
     await t.call('PUT', `/admin/shops/${shop.shopId}/subscription`, { token: shop.tokens.admin, body: { status: 'canceled' } });
-    expect((await t.call('GET', `/public/shops?${box}`)).body).toEqual([]);
+    expect((await t.call('GET', '/public/search?q=nirvana')).body).toEqual([]);
     expect((await t.call('GET', `/public/shops/${shop.slug}`)).status).toBe(404);
     const r = await book(t, shop, await customer(), { serviceIds: [shop.services.haircut], staffId: null, startsAt: at('16:00') });
     expect(r.status).toBe(404);
@@ -352,5 +351,78 @@ describe('separate sign-in for owners and staff', () => {
       body: { priceKurus: 50000 },
     });
     expect(ok.status).toBe(204);
+  });
+});
+
+describe('shop profile page (handoff v1.3)', () => {
+  const jpeg = (width: number, height: number) =>
+    sharp({ create: { width, height, channels: 3, background: '#7a5c3e' } })
+      .jpeg()
+      .withExif({ IFD0: { Copyright: 'camera owner' } })
+      .toBuffer();
+
+  it('shows contact details, opening hours, and photos; uploads are re-encoded without metadata', async () => {
+    const shop = await setupShop(t);
+    await t.call('PATCH', `${shop.base}/settings`, {
+      token: shop.tokens.owner,
+      body: {
+        district: 'Kadıköy',
+        phone: '0532 000 00 00',
+        whatsapp: '0532 000 00 01',
+        instagram: 'https://www.instagram.com/nirvanaformen/',
+        about: 'Moda’nın klasik berberi.',
+      },
+    });
+    const upload = await t.call('POST', `${shop.base}/photos`, {
+      token: shop.tokens.owner,
+      body: await jpeg(3000, 2000),
+      contentType: 'image/jpeg',
+    });
+    expect(upload.status).toBe(201);
+    expect([upload.body.width, upload.body.height]).toEqual([1600, 1067]);
+
+    const profile = (await t.call('GET', `/public/shops/${shop.slug}`)).body;
+    expect(profile).toMatchObject({ district: 'Kadıköy', whatsapp: '+905320000001', instagram: 'nirvanaformen' });
+    expect(profile.photos).toHaveLength(1);
+    expect(profile.openingHours[0]).toEqual({ weekday: 1, open: '10:00', close: '21:00' });
+
+    const image = await t.call('GET', `/public/photos/${profile.photos[0].id}`);
+    const meta = await sharp(image.raw).metadata();
+    expect(meta.format).toBe('webp');
+    expect(meta.exif).toBeUndefined();
+  });
+
+  it('only owners manage photos; order and limit are enforced', async () => {
+    const shop = await setupShop(t);
+    const staff = await t.login(PHONES.cumali, { portal: 'staff' });
+    const denied = await t.call('POST', `${shop.base}/photos`, { token: staff, body: await jpeg(100, 100), contentType: 'image/jpeg' });
+    expect(denied.status).toBe(403);
+    const bad = await t.call('POST', `${shop.base}/photos`, {
+      token: shop.tokens.owner,
+      body: Buffer.from('not an image'),
+      contentType: 'image/png',
+    });
+    expect(bad.body.error).toBe('INVALID_IMAGE');
+
+    const ids: string[] = [];
+    for (let i = 0; i < 12; i++) {
+      const r = await t.call('POST', `${shop.base}/photos`, { token: shop.tokens.owner, body: await jpeg(200, 200), contentType: 'image/jpeg' });
+      ids.push(r.body.id);
+    }
+    const thirteenth = await t.call('POST', `${shop.base}/photos`, { token: shop.tokens.owner, body: await jpeg(200, 200), contentType: 'image/jpeg' });
+    expect(thirteenth.body.error).toBe('PHOTO_LIMIT');
+
+    const reversed = [...ids].reverse();
+    expect((await t.call('PUT', `${shop.base}/photos/order`, { token: shop.tokens.owner, body: reversed })).status).toBe(204);
+    expect((await t.call('DELETE', `${shop.base}/photos/${reversed[0]}`, { token: shop.tokens.owner })).status).toBe(204);
+    const profile = (await t.call('GET', `/public/shops/${shop.slug}`)).body;
+    expect(profile.photos.map((p: { id: string }) => p.id)).toEqual(reversed.slice(1));
+    expect((await t.call('GET', `/public/photos/${reversed[0]}`)).status).toBe(404);
+  });
+
+  it('rejects an invalid Instagram handle', async () => {
+    const shop = await setupShop(t);
+    const r = await t.call('PATCH', `${shop.base}/settings`, { token: shop.tokens.owner, body: { instagram: 'not a handle!' } });
+    expect(r.body.error).toBe('INVALID_INSTAGRAM');
   });
 });

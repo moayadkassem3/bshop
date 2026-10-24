@@ -8,16 +8,26 @@ export type Service = {
 
 export type StaffMember = { id: string; display_name: string; service_ids: string[] };
 
+export type Photo = { id: string; width: number; height: number };
+
+export type OpeningHours = { weekday: number; open: string | null; close: string | null };
+
 export type ShopProfile = {
   slug: string;
   name: string;
+  about: string | null;
   address: string | null;
+  district: string | null;
   phone: string | null;
+  whatsapp: string | null;
+  instagram: string | null;
   latitude: number | null;
   longitude: number | null;
   audience: 'men' | 'women' | 'unisex';
   cancellationCutoffMinutes: number;
   paymentAtShop: boolean;
+  photos: Photo[];
+  openingHours: OpeningHours[];
   services: Service[];
   staff: StaffMember[];
 };
@@ -34,9 +44,9 @@ export type ShopSummary = {
   slug: string;
   name: string;
   address: string | null;
-  latitude: number | null;
-  longitude: number | null;
+  district: string | null;
   audience: string;
+  cover_photo_id: string | null;
 };
 
 export type Me = { id: string; phone: string; first_name: string | null; last_name: string | null };

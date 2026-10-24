@@ -14,7 +14,7 @@ export default function BusinessPage() {
         <ul className={styles.benefits}>
           <li>Müşterileriniz boş saatleri görüp kendileri randevu oluşturur.</li>
           <li>Her yeni randevu telefonunuza alarm gibi gelir; tek dokunuşla onaylarsınız.</li>
-          <li>Salonunuz haritada görünür; yeni müşteriler sizi bulur.</li>
+          <li>Salonunuzun fotoğrafları, adresi ve iletişim bilgileriyle kendi profil sayfası olur; QR kodla paylaşırsınız.</li>
         </ul>
       </section>
 

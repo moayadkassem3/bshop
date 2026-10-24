@@ -3,7 +3,8 @@ import { z } from 'zod';
 import type { Deps } from '../deps.js';
 import { requestOtp, verifyOtp } from '../services/auth.js';
 import { firstAvailable, getAvailability, getShopProfile } from '../services/availability.js';
-import { listPublicShops, searchPublicShops } from '../services/shops.js';
+import { readPhoto } from '../services/photos.js';
+import { searchPublicShops } from '../services/shops.js';
 import type { AuthFn } from './app.js';
 import { csvIds, id } from './schemas.js';
 
@@ -30,19 +31,6 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
     return verifyOtp(deps, body);
   });
 
-  // Web map: only reviewed, subscribed shops (handoff 2).
-  app.get('/public/shops', async (req) => {
-    const q = z
-      .object({
-        minLat: z.coerce.number(),
-        maxLat: z.coerce.number(),
-        minLng: z.coerce.number(),
-        maxLng: z.coerce.number(),
-      })
-      .parse(req.query);
-    return listPublicShops(deps, q);
-  });
-
   app.get('/public/search', async (req) => {
     const { q } = z.object({ q: z.string().trim().min(2).max(60) }).parse(req.query);
     return searchPublicShops(deps, q);
@@ -51,6 +39,13 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
   app.get('/public/shops/:slug', async (req) => {
     const { slug } = z.object({ slug: z.string() }).parse(req.params);
     return getShopProfile(deps, slug);
+  });
+
+  // Re-encoded WebP files; a photo's id never points at different content, so it caches forever.
+  app.get('/public/photos/:id', async (req, reply) => {
+    const { id: photoId } = z.object({ id }).parse(req.params);
+    const data = await readPhoto(deps, photoId);
+    return reply.type('image/webp').header('cache-control', 'public, max-age=31536000, immutable').send(data);
   });
 
   app.get('/public/shops/:slug/availability', async (req) => {

@@ -64,7 +64,8 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 24px;
-  padding: 32px 16px 48px;
+  /* Room for the fixed bars on profile and booking pages. */
+  padding: 32px 16px 120px;
 }
 
 .site-footer p {

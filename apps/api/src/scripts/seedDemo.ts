@@ -1,12 +1,15 @@
 import { DateTime } from 'luxon';
+import sharp from 'sharp';
 import { systemClock } from '../clock.js';
 import { loadConfig } from '../config.js';
 import { createPool, migrate } from '../db.js';
 import type { Deps } from '../deps.js';
 import { consolePush, consoleSms } from '../notifications.js';
+import { diskStorage } from '../storage.js';
 import type { User } from '../services/auth.js';
 import { createStaffAppointment } from '../services/booking.js';
-import { createShop, markReviewed, setAutoConfirmHours, setSubscription } from '../services/shops.js';
+import { addPhoto } from '../services/photos.js';
+import { createShop, markReviewed, setAutoConfirmHours, setSubscription, updateShopSettings } from '../services/shops.js';
 import { addMember, importCatalog, setMemberServices, setWorkingHours } from '../services/team.js';
 
 // Local demo data: two reviewed, subscribed shops in Kadıköy with staff, hours,
@@ -15,7 +18,7 @@ const ADMIN_PHONE = process.env.ADMIN_PHONE ?? '+905000000000';
 
 const config = loadConfig();
 const db = createPool(config.databaseUrl);
-const deps: Deps = { db, clock: systemClock, sms: consoleSms, push: consolePush, config };
+const deps: Deps = { db, clock: systemClock, sms: consoleSms, push: consolePush, photos: diskStorage(config.uploadsDir), config };
 await migrate(db);
 
 const userByPhone = async (phone: string, portal: User['portal']): Promise<User> => {
@@ -40,6 +43,12 @@ type DemoShop = {
   latitude: number;
   longitude: number;
   audience: 'men' | 'women' | 'unisex';
+  district: string;
+  phone: string;
+  whatsapp: string;
+  instagram: string;
+  about: string;
+  colors: [string, string][];
   owner: { phone: string; firstName: string; lastName: string };
   staff: { phone: string; displayName: string }[];
   services: { catalogId: number; lira: number; startingFrom?: boolean }[];
@@ -53,6 +62,18 @@ const shops: DemoShop[] = [
     latitude: 40.9867,
     longitude: 29.0262,
     audience: 'men',
+    district: 'Kadıköy',
+    phone: '+905320000001',
+    whatsapp: '+905320000001',
+    instagram: 'demoberber',
+    about: 'Moda’nın klasik berberi. Saç, sakal ve damat tıraşında 15 yıllık deneyim.',
+    colors: [
+      ['#2b2420', '#8a6a4c'],
+      ['#1f2a2a', '#4f7c75'],
+      ['#3a2a22', '#b0835a'],
+      ['#24221f', '#6b6457'],
+      ['#2d241d', '#9c7a52'],
+    ],
     owner: { phone: '+905320000001', firstName: 'Salih', lastName: 'Demir' },
     staff: [
       { phone: '+905320000002', displayName: 'Cumali Yıldız' },
@@ -78,6 +99,16 @@ const shops: DemoShop[] = [
     latitude: 40.9843,
     longitude: 29.0301,
     audience: 'unisex',
+    district: 'Kadıköy',
+    phone: '+905320000011',
+    whatsapp: '+905320000011',
+    instagram: 'demokuafor',
+    about: 'Kadın ve erkek için kesim, fön, boya ve bakım.',
+    colors: [
+      ['#3b2433', '#b07a95'],
+      ['#2a2434', '#7d6aa8'],
+      ['#33262a', '#c4917a'],
+    ],
     owner: { phone: '+905320000011', firstName: 'Elif', lastName: 'Kaya' },
     staff: [{ phone: '+905320000012', displayName: 'Zeynep Arslan' }],
     services: [
@@ -89,6 +120,22 @@ const shops: DemoShop[] = [
     ],
   },
 ];
+
+/** Clearly labelled placeholder photos until shops upload their own. */
+function samplePhoto([from, to]: [string, string], n: number) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient></defs>
+    <rect width="100%" height="100%" fill="url(#g)"/>
+    <g fill="none" stroke="#f5e6c8" stroke-width="16" stroke-linecap="round" opacity="0.22"
+       transform="translate(600 430) rotate(${-20 + n * 9}) translate(-180 -180)">
+      <circle cx="80" cy="80" r="60"/><circle cx="80" cy="280" r="60"/>
+      <path d="M330 40 L125 235 M235 235 L330 320 M125 125 L180 180"/>
+    </g>
+    <text x="60" y="840" font-family="sans-serif" font-size="40" fill="#fff" opacity="0.9">Örnek fotoğraf ${n}</text>
+  </svg>`;
+  return sharp(Buffer.from(svg)).jpeg({ quality: 90 }).toBuffer();
+}
 
 for (const demo of shops) {
   const exists = await db.query('SELECT 1 FROM shops WHERE slug = $1', [demo.slug]);
@@ -108,6 +155,16 @@ for (const demo of shops) {
   await markReviewed(deps, admin, shopId);
   await setSubscription(deps, admin, shopId, { status: 'active' });
   const owner = await userByPhone(demo.owner.phone, 'owner');
+  await updateShopSettings(deps, owner, shopId, {
+    district: demo.district,
+    phone: demo.phone,
+    whatsapp: demo.whatsapp,
+    instagram: demo.instagram,
+    about: demo.about,
+  });
+  for (const [i, colors] of demo.colors.entries()) {
+    await addPhoto(deps, owner, shopId, await samplePhoto(colors, i + 1));
+  }
 
   const serviceIds = await importCatalog(
     deps,

@@ -20,7 +20,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="container site-header-inner">
             <Logo />
             <nav className="site-nav">
-              <Link href="/harita">Harita</Link>
               <Link href="/randevularim" className="nav-pill">
                 Randevularım
               </Link>

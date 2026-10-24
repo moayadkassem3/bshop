@@ -1,10 +1,14 @@
 import { afterAll, beforeEach } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { loadConfig } from '../src/config.js';
 import { createPool } from '../src/db.js';
 import type { Deps } from '../src/deps.js';
 import { buildApp } from '../src/http/app.js';
 import type { PushMessage, PushProvider, SmsProvider } from '../src/notifications.js';
+import { diskStorage } from '../src/storage.js';
 import { tick } from '../src/worker.js';
 
 export class TestClock {
@@ -44,7 +48,7 @@ export const MONDAY_9AM = '2026-10-26T06:00:00.000Z';
 /** Istanbul local time on Monday 26 October 2026, as an ISO instant. */
 export const at = (hhmm: string, date = '2026-10-26') => new Date(`${date}T${hhmm}:00+03:00`).toISOString();
 
-const TABLES = `notifications, appointment_services, appointments, booking_groups, shop_customers, member_services,
+const TABLES = `shop_photos, notifications, appointment_services, appointments, booking_groups, shop_customers, member_services,
   services, auto_confirm_hours, time_off, working_hours, shop_members, subscriptions, shops, sessions, otp_codes, users`;
 
 export function useTestApp() {
@@ -53,7 +57,8 @@ export function useTestApp() {
   const clock = new TestClock(new Date(MONDAY_9AM));
   const sms = new MemorySms();
   const push = new MemoryPush();
-  const deps: Deps = { db, clock, sms, push, config };
+  const photos = diskStorage(mkdtempSync(join(tmpdir(), 'bshop-photos-')));
+  const deps: Deps = { db, clock, sms, push, photos, config };
   const app: FastifyInstance = buildApp(deps);
   const sessions = new Map<string, string>();
 
@@ -66,14 +71,22 @@ export function useTestApp() {
     app,
     /** Runs the worker once: due timers, then sends queued SMS/push. */
     tick: () => tick(deps),
-    async call(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', url: string, opts: { token?: string; body?: unknown } = {}) {
+    async call(
+      method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+      url: string,
+      opts: { token?: string; body?: unknown; contentType?: string } = {},
+    ) {
       const res = await app.inject({
         method,
         url,
-        headers: opts.token ? { authorization: `Bearer ${opts.token}` } : {},
+        headers: {
+          ...(opts.token ? { authorization: `Bearer ${opts.token}` } : {}),
+          ...(opts.contentType ? { 'content-type': opts.contentType } : {}),
+        },
         ...(opts.body !== undefined ? { payload: opts.body as object } : {}),
       });
-      return { status: res.statusCode, body: res.body ? res.json() : null };
+      const isJson = res.headers['content-type']?.toString().includes('json');
+      return { status: res.statusCode, body: res.body && isJson ? res.json() : null, raw: res.rawPayload };
     },
     /** Signs in through the real SMS-code flow and returns a session token (reused per phone within a test). */
     async login(

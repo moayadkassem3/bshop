@@ -7,7 +7,7 @@ Appointment booking for barbershops and salons in Istanbul, sold to shops as a m
 | Path | What it is |
 | --- | --- |
 | `apps/api` | Backend: Node.js + TypeScript (Fastify) and PostgreSQL. Booking rules, timers, and the outgoing SMS/push queue. |
-| `apps/web` | Customer website: Next.js. Shop pages and booking, “Randevularım”, map, and the business page with separate owner and staff entrances. |
+| `apps/web` | Customer website: Next.js. Shop profile pages, booking, “Randevularım”, and the business page with separate owner and staff entrances. |
 | `apps/alert-test` | Milestone 0: an Android test app for the new-appointment alert (Expo). |
 | `docs/` | Product handoff. |
 
@@ -23,7 +23,7 @@ npm run dev --workspace apps/api    # http://localhost:3000
 npm test                            # needs postgres://postgres:postgres@localhost:5432
 ```
 
-Settings come from environment variables: `DATABASE_URL`, `PORT`, `PUBLIC_WEB_URL`, `OTP_SECRET`, `TICK_SECONDS`. Until real providers are connected, SMS codes and staff alerts are printed to the server log.
+Settings come from environment variables: `DATABASE_URL`, `PORT`, `PUBLIC_WEB_URL`, `OTP_SECRET`, `TICK_SECONDS`, `UPLOADS_DIR` (shop photos, default `uploads/`). Until real providers are connected, SMS codes and staff alerts are printed to the server log.
 
 ## Customer website
 
@@ -33,7 +33,7 @@ npm run dev --workspace apps/api         # backend on :3000
 npm run dev --workspace apps/web         # website on http://localhost:3001
 ```
 
-Open `http://localhost:3001/demo-berber`. The website forwards `/api/*` to the backend (`API_URL`, default `http://localhost:3000`). SMS codes appear in the backend log. A staff member's personal link is `/<shop>?personel=<staff id>`.
+Open `http://localhost:3001/demo-berber` for a shop's profile page; booking is at `/<shop>/randevu`, and a staff member's personal link is `/<shop>/randevu?personel=<staff id>`. The website forwards `/api/*` to the backend (`API_URL`, default `http://localhost:3000`). SMS codes appear in the backend log. Demo photos are generated placeholders marked “Örnek fotoğraf”.
 
 ## Alert test app
 

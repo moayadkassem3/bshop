@@ -4,12 +4,20 @@ import { createPool, migrate } from './db.js';
 import type { Deps } from './deps.js';
 import { buildApp } from './http/app.js';
 import { consolePush, consoleSms } from './notifications.js';
+import { diskStorage } from './storage.js';
 import { startWorker } from './worker.js';
 
 // SMS and push print to the console until the real providers are connected (milestone 4).
 const config = loadConfig();
 const db = createPool(config.databaseUrl);
-const deps: Deps = { db, clock: systemClock, sms: consoleSms, push: consolePush, config };
+const deps: Deps = {
+  db,
+  clock: systemClock,
+  sms: consoleSms,
+  push: consolePush,
+  photos: diskStorage(config.uploadsDir),
+  config,
+};
 
 await migrate(db);
 const app = buildApp(deps, { logger: true });

@@ -41,8 +41,9 @@
 }
 
 .result {
-  display: grid;
-  gap: 2px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 10px 12px;
   border-radius: 10px;
   text-decoration: none;
@@ -65,4 +66,19 @@
   padding: 10px 12px;
   color: var(--muted);
   font-size: 14px;
+}
+
+.thumb {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--ink);
+}
+
+.resultText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
 }

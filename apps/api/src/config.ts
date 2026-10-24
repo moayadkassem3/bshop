@@ -5,6 +5,7 @@ export type Config = {
   otpSecret: string;
   sessionDays: number;
   tickSeconds: number;
+  uploadsDir: string;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -15,5 +16,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     otpSecret: env.OTP_SECRET ?? 'dev-only-otp-secret',
     sessionDays: Number(env.SESSION_DAYS ?? 90),
     tickSeconds: Number(env.TICK_SECONDS ?? 5),
+    uploadsDir: env.UPLOADS_DIR ?? 'uploads',
   };
 }

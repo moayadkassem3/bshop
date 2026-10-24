@@ -3,6 +3,7 @@ import { badRequest } from '../errors.js';
 import { candidateStarts } from '../domain/availability.js';
 import { inAutoConfirmHours, type WeeklyWindow } from '../domain/confirmation.js';
 import { localDay, localDayOf } from '../domain/time.js';
+import { listPhotos } from './photos.js';
 import { getPublicShopBySlug } from './shops.js';
 import { earliestStart, eligibleStaff, loadDaySchedules, loadServices } from './schedule.js';
 
@@ -102,16 +103,36 @@ export async function getShopProfile(deps: Deps, slug: string) {
      GROUP BY m.id ORDER BY m.display_name`,
     [shop.id],
   );
+  // Shop hours = from the earliest start to the latest end of anyone bookable that weekday.
+  const hours = await deps.db.query<{ weekday: number; open: number; close: number }>(
+    `SELECT w.weekday, min(w.start_minute)::int AS open, max(w.end_minute)::int AS close
+     FROM working_hours w JOIN shop_members m ON m.id = w.member_id
+     WHERE w.shop_id = $1 AND m.active AND m.bookable
+     GROUP BY w.weekday`,
+    [shop.id],
+  );
+  const hhmm = (minute: number) => `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
+  const openingHours = [1, 2, 3, 4, 5, 6, 7].map((weekday) => {
+    const h = hours.rows.find((r) => r.weekday === weekday);
+    return h ? { weekday, open: hhmm(h.open), close: hhmm(h.close) } : { weekday, open: null, close: null };
+  });
+
   return {
     slug: shop.slug,
     name: shop.name,
+    about: shop.about,
     address: shop.address,
+    district: shop.district,
     phone: shop.phone,
+    whatsapp: shop.whatsapp,
+    instagram: shop.instagram,
     latitude: shop.latitude,
     longitude: shop.longitude,
     audience: shop.audience,
     cancellationCutoffMinutes: shop.cancellation_cutoff_minutes,
     paymentAtShop: true,
+    photos: await listPhotos(deps, shop.id),
+    openingHours,
     services: services.rows,
     staff: staff.rows,
   };
