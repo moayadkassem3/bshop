@@ -13,7 +13,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import * as Speech from 'expo-speech';
-import { FullScreenAlert, type LaunchAlert } from './modules/full-screen-alert';
+import { FullScreenAlert, type Diagnostics, type LaunchAlert } from './modules/full-screen-alert';
 
 // Milestone 0: measures how prominent a new-appointment alert can be on a real
 // phone. Local notifications stand in for server push; sound, lock-screen,
@@ -96,14 +96,19 @@ function speechText(data: AlertData) {
   return `${prefix} ${data.customer}. ${data.services}. ${data.time}.`;
 }
 
+function yesNo(value: boolean) {
+  return value ? 'açık' : 'kapalı';
+}
+
 function clock(ms: number) {
   return new Date(ms).toLocaleTimeString('tr-TR');
 }
 
 export default function App() {
   const [permission, setPermission] = useState('kontrol ediliyor…');
-  const [fullScreenAllowed, setFullScreenAllowed] = useState<boolean | null>(null);
+  const [diagnostics, setDiagnostics] = useState<Diagnostics | null>(null);
   const activeNotificationId = useRef<number | null>(null);
+  const handledAlerts = useRef(new Set<number>());
   const [useAlarmSound, setUseAlarmSound] = useState(false);
   const [speak, setSpeak] = useState(true);
   const [active, setActive] = useState<AlertData | null>(null);
@@ -144,12 +149,22 @@ export default function App() {
         FullScreenAlert?.dismiss(alert.notificationId);
         return;
       }
+      // Build 3 may open the app twice for one alert (full-screen request and direct open).
+      if (handledAlerts.current.has(alert.notificationId)) return;
+      handledAlerts.current.add(alert.notificationId);
       addLog(`Tam ekran açıldı (gecikme ${delay} sn)`);
       activeNotificationId.current = alert.notificationId;
       show(data);
     },
     [addLog, show],
   );
+
+  // Phone details, permissions, and what the native side recorded while the app was closed.
+  const refreshDiagnostics = useCallback(() => {
+    if (!FullScreenAlert) return;
+    setDiagnostics(FullScreenAlert.diagnostics(CHANNEL_NORMAL));
+    for (const entry of FullScreenAlert.takeNativeLog()) addLog(`[telefon] ${entry}`);
+  }, [addLog]);
 
   const refreshPermission = useCallback(async () => {
     const status = await Notifications.getPermissionsAsync();
@@ -160,13 +175,13 @@ export default function App() {
   useEffect(() => {
     setUpNotifications().catch((e) => addLog(`Kurulum hatası: ${String(e)}`));
     refreshPermission();
-    setFullScreenAllowed(FullScreenAlert?.canUseFullScreenIntent() ?? null);
+    refreshDiagnostics();
     const launch = FullScreenAlert?.takeLaunchAlert();
     if (launch) handleNativeAlert(launch);
     const nativeAlerts = FullScreenAlert?.addListener('onAlert', handleNativeAlert);
-    // Re-check the full-screen permission when coming back from settings.
+    // Re-check permissions when coming back from settings or from the lock screen.
     const appState = AppState.addEventListener('change', (state) => {
-      if (state === 'active') setFullScreenAllowed(FullScreenAlert?.canUseFullScreenIntent() ?? null);
+      if (state === 'active') refreshDiagnostics();
     });
 
     const received = Notifications.addNotificationReceivedListener((n) => {
@@ -195,7 +210,7 @@ export default function App() {
       nativeAlerts?.remove();
       appState.remove();
     };
-  }, [addLog, refreshPermission, show, handleNativeAlert]);
+  }, [addLog, refreshPermission, refreshDiagnostics, show, handleNativeAlert]);
 
   async function ensurePermission() {
     let granted = await refreshPermission();
@@ -287,13 +302,35 @@ export default function App() {
 
         {FullScreenAlert && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Tam ekran alarm (test 2)</Text>
-            <Text style={styles.muted}>
-              Tam ekran izni: {fullScreenAllowed === false ? 'kapalı' : 'açık'}
-            </Text>
-            {fullScreenAllowed === false && (
+            <Text style={styles.cardTitle}>Tam ekran alarm (test 3)</Text>
+            {diagnostics && (
+              <>
+                <Text style={styles.muted}>
+                  Telefon: {diagnostics.manufacturer} {diagnostics.model} · Android {diagnostics.androidVersion} (API{' '}
+                  {diagnostics.sdk})
+                </Text>
+                <Text style={styles.muted}>
+                  Bildirimler: {yesNo(diagnostics.notificationsEnabled)} · Kanal önemi:{' '}
+                  {diagnostics.channelImportance ?? '-'}
+                </Text>
+                <Text style={styles.muted}>Tam ekran izni: {yesNo(diagnostics.canUseFullScreenIntent)}</Text>
+                <Text style={styles.muted}>Diğer uygulamaların üzerinde göster: {yesNo(diagnostics.canDrawOverlays)}</Text>
+                <Text style={styles.muted}>Tam zamanlı alarm: {yesNo(diagnostics.canScheduleExactAlarms)}</Text>
+              </>
+            )}
+            {diagnostics?.canUseFullScreenIntent === false && (
               <Button label="Tam ekran iznini aç" onPress={() => FullScreenAlert?.openFullScreenSettings()} primary />
             )}
+            {diagnostics?.canDrawOverlays === false && (
+              <Button
+                label="Üzerinde gösterme iznini aç"
+                onPress={() => FullScreenAlert?.openOverlaySettings()}
+              />
+            )}
+            <Button
+              label="Uygulama izinlerini aç (kilit ekranında göster)"
+              onPress={() => FullScreenAlert?.openAppPermissions()}
+            />
             <Text style={styles.muted}>
               Düğmeye basın ve telefonu kilitleyin. Ekran açılmalı, ses yanıt verene kadar tekrar etmeli ve
               ayrıntılar sesli okunmalı.

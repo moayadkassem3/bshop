@@ -3,8 +3,23 @@ import { requireOptionalNativeModule } from 'expo';
 
 export type LaunchAlert = { payload: string; action: string | null; notificationId: number };
 
+export type Diagnostics = {
+  manufacturer: string;
+  model: string;
+  androidVersion: string;
+  sdk: number;
+  notificationsEnabled: boolean;
+  channelImportance: number | null;
+  canUseFullScreenIntent: boolean;
+  canDrawOverlays: boolean;
+  canScheduleExactAlarms: boolean;
+};
+
 type NativeModule = {
-  canUseFullScreenIntent(): boolean;
+  diagnostics(channelId: string): Diagnostics;
+  openAppPermissions(): void;
+  openOverlaySettings(): void;
+  takeNativeLog(): string[];
   openFullScreenSettings(): void;
   schedule(delaySeconds: number, channelId: string, title: string, body: string, payload: string, insistent: boolean): number;
   dismiss(notificationId: number): void;

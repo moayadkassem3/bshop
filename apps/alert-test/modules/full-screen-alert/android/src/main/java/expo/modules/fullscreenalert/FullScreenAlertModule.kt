@@ -3,6 +3,7 @@ package expo.modules.fullscreenalert
 import android.app.AlarmManager
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -21,20 +22,56 @@ class FullScreenAlertModule : Module() {
 
     // Android 14+ only lets calling and alarm apps show full-screen alerts by default;
     // other apps need the user to allow it in settings.
-    Function("canUseFullScreenIntent") {
-      if (Build.VERSION.SDK_INT >= 34) {
-        context.getSystemService(NotificationManager::class.java).canUseFullScreenIntent()
-      } else {
-        true
-      }
-    }
-
     Function("openFullScreenSettings") {
       if (Build.VERSION.SDK_INT >= 34) {
         val intent = Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:${context.packageName}"))
           .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
       }
+    }
+
+    // Phone and permission details, so test results can be matched to the phone.
+    Function("diagnostics") { channelId: String ->
+      val notifications = context.getSystemService(NotificationManager::class.java)
+      val alarms = context.getSystemService(AlarmManager::class.java)
+      mapOf(
+        "manufacturer" to Build.MANUFACTURER,
+        "model" to Build.MODEL,
+        "androidVersion" to Build.VERSION.RELEASE,
+        "sdk" to Build.VERSION.SDK_INT,
+        "notificationsEnabled" to notifications.areNotificationsEnabled(),
+        "channelImportance" to notifications.getNotificationChannel(channelId)?.importance,
+        "canUseFullScreenIntent" to (Build.VERSION.SDK_INT < 34 || notifications.canUseFullScreenIntent()),
+        "canDrawOverlays" to Settings.canDrawOverlays(context),
+        "canScheduleExactAlarms" to (Build.VERSION.SDK_INT < 31 || alarms.canScheduleExactAlarms()),
+      )
+    }
+
+    // The app's permission page; on Xiaomi phones, their own page with "Show on lock screen".
+    Function("openAppPermissions") {
+      val xiaomi = Intent("miui.intent.action.APP_PERM_EDITOR")
+        .setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity")
+        .putExtra("extra_pkgname", context.packageName)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      val standard = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      try {
+        if (Build.MANUFACTURER.equals("xiaomi", ignoreCase = true)) context.startActivity(xiaomi) else context.startActivity(standard)
+      } catch (e: ActivityNotFoundException) {
+        context.startActivity(standard)
+      } catch (e: SecurityException) {
+        context.startActivity(standard)
+      }
+    }
+
+    Function("openOverlaySettings") {
+      val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      context.startActivity(intent)
+    }
+
+    Function("takeNativeLog") {
+      AlertLog.take(context)
     }
 
     Function("schedule") { delaySeconds: Int, channelId: String, title: String, body: String, payload: String, insistent: Boolean ->
@@ -70,13 +107,17 @@ class FullScreenAlertModule : Module() {
     Function("takeLaunchAlert") {
       val intent = appContext.currentActivity?.intent ?: return@Function null
       val alert = alertFrom(intent)
+      if (alert != null) AlertLog.add(context, "Uygulama alarmla başlatıldı")
       intent.removeExtra(AlertReceiver.EXTRA_PAYLOAD)
       alert
     }
 
     // The app was already running when the alert or one of its buttons opened it.
     OnNewIntent { intent ->
-      alertFrom(intent)?.let { sendEvent("onAlert", it) }
+      alertFrom(intent)?.let {
+        AlertLog.add(context, "Uygulama alarmla açıldı")
+        sendEvent("onAlert", it)
+      }
       intent.removeExtra(AlertReceiver.EXTRA_PAYLOAD)
     }
   }
