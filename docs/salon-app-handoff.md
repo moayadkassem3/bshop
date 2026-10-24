@@ -485,8 +485,8 @@ Reviewed on 24 October 2026 from founder-supplied screenshots of the customer we
 | --- | --- | --- |
 | 0 | Alert test app for Android (`apps/alert-test`), built by GitHub Actions and published as a pre-release | Test 1 done on the founder's Android phone (results below); test 2 adds the full-screen alert. iOS needs an Apple Developer account. |
 | 1 | Backend core (`apps/api`): shop separation, subscription gating, SMS-code sign-in, service list, staff services and durations, availability, booking (including “Fark etmez” and booking for someone else), pending/confirmed rules with the 10-minute reminder and 15-minute automatic confirmation, staff actions, walk-ins, blocked time, staff absence, outgoing-message queue | Delivered; automated tests cover the acceptance scenarios in Section 9. SMS and push print to the server log until real providers are connected. |
-| 2 | Customer website | Next |
-| 3 | Staff/owner app | Planned |
+| 2 | Customer website (`apps/web`): home search, shop page with the 4-step booking (services, staff or “Fark etmez” with each one's next free time, day and time with “İlk uygun saat” and “Anında onay”, summary with SMS sign-in and “Randevu kimin için?”), live pending/confirmed status, “Randevularım” with cancellation and late-cancellation warning, map, and the business page with separate owner and staff entrances | Delivered; checked end to end in a browser at phone size. Map tiles use OpenStreetMap until a map provider is chosen (milestone 4). |
+| 3 | Staff/owner app | Next |
 | 4 | Real SMS, push, map, and iyzico | Planned; needs the founder's accounts |
 | 5 | Admin panel and launch | Planned |
 

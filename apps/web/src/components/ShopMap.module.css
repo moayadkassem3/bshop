@@ -1,0 +1,77 @@
+.wrap {
+  display: grid;
+  gap: 16px;
+}
+
+.mapBox {
+  position: relative;
+}
+
+.map {
+  height: min(60vh, 520px);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  z-index: 0;
+}
+
+.locate {
+  position: absolute;
+  right: 12px;
+  bottom: 32px;
+  z-index: 500;
+  min-height: 40px;
+  box-shadow: var(--shadow);
+}
+
+.pin {
+  background: none;
+  border: 0;
+}
+
+.pin span {
+  display: block;
+  width: 30px;
+  height: 30px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--ink);
+  border: 3px solid #f5e6c8;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 0.25);
+}
+
+.listTitle {
+  margin: 0;
+  font-size: 16px;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+.address {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.go {
+  color: var(--primary);
+  font-weight: 650;
+  white-space: nowrap;
+  font-size: 14px;
+}

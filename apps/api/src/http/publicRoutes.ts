@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Deps } from '../deps.js';
 import { requestOtp, verifyOtp } from '../services/auth.js';
 import { firstAvailable, getAvailability, getShopProfile } from '../services/availability.js';
-import { listPublicShops } from '../services/shops.js';
+import { listPublicShops, searchPublicShops } from '../services/shops.js';
 import type { AuthFn } from './app.js';
 import { csvIds, id } from './schemas.js';
 
@@ -41,6 +41,11 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
       })
       .parse(req.query);
     return listPublicShops(deps, q);
+  });
+
+  app.get('/public/search', async (req) => {
+    const { q } = z.object({ q: z.string().trim().min(2).max(60) }).parse(req.query);
+    return searchPublicShops(deps, q);
   });
 
   app.get('/public/shops/:slug', async (req) => {

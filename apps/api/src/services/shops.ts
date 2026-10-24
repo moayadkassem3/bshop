@@ -64,6 +64,18 @@ export async function listPublicShops(
   return rows;
 }
 
+/** Home-page search by shop name or address. */
+export async function searchPublicShops(deps: Deps, query: string) {
+  const { rows } = await deps.db.query(
+    `SELECT s.slug, s.name, s.address, s.latitude, s.longitude, s.audience
+     FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
+     WHERE ${PUBLIC_CONDITION} AND (s.name ILIKE $2 OR s.address ILIKE $2)
+     ORDER BY s.name LIMIT 20`,
+    [deps.clock.now(), `%${query.replace(/[%_\\]/g, (c) => `\\${c}`)}%`],
+  );
+  return rows;
+}
+
 export type CreateShopInput = {
   name: string;
   slug: string;

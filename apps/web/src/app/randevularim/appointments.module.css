@@ -1,0 +1,116 @@
+.wrap {
+  display: grid;
+  gap: 12px;
+}
+
+.signIn {
+  padding: 18px;
+}
+
+.signIn p {
+  margin: 0 0 14px;
+}
+
+.sectionTitle {
+  margin: 12px 0 0;
+  font-size: 15px;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.empty {
+  padding: 24px;
+  text-align: center;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.empty p {
+  margin: 0 0 12px;
+}
+
+.card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.card p {
+  margin: 0;
+}
+
+/* Status badges keep their own width inside the card's grid. */
+.card > span {
+  justify-self: start;
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.when {
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.shop {
+  display: inline-block;
+  margin-top: 2px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.price {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.services {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.cancel {
+  justify-self: start;
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  color: var(--danger);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirmBox {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  font-size: 14px;
+}
+
+.confirmBox p {
+  margin: 0 0 10px;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 8px;
+}
+
+.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+.signOut {
+  justify-self: center;
+  margin-top: 16px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}

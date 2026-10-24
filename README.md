@@ -7,6 +7,7 @@ Appointment booking for barbershops and salons in Istanbul, sold to shops as a m
 | Path | What it is |
 | --- | --- |
 | `apps/api` | Backend: Node.js + TypeScript (Fastify) and PostgreSQL. Booking rules, timers, and the outgoing SMS/push queue. |
+| `apps/web` | Customer website: Next.js. Shop pages and booking, “Randevularım”, map, and the business page with separate owner and staff entrances. |
 | `apps/alert-test` | Milestone 0: an Android test app for the new-appointment alert (Expo). |
 | `docs/` | Product handoff. |
 
@@ -23,6 +24,16 @@ npm test                            # needs postgres://postgres:postgres@localho
 ```
 
 Settings come from environment variables: `DATABASE_URL`, `PORT`, `PUBLIC_WEB_URL`, `OTP_SECRET`, `TICK_SECONDS`. Until real providers are connected, SMS codes and staff alerts are printed to the server log.
+
+## Customer website
+
+```bash
+npm run seed:demo --workspace apps/api   # two demo shops in Kadıköy (demo-berber, demo-kuafor-moda)
+npm run dev --workspace apps/api         # backend on :3000
+npm run dev --workspace apps/web         # website on http://localhost:3001
+```
+
+Open `http://localhost:3001/demo-berber`. The website forwards `/api/*` to the backend (`API_URL`, default `http://localhost:3000`). SMS codes appear in the backend log. A staff member's personal link is `/<shop>?personel=<staff id>`.
 
 ## Alert test app
 

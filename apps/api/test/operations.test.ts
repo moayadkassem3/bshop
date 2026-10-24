@@ -75,6 +75,26 @@ describe('subscription and review control visibility (scenario 11)', () => {
     expect((await t.call('GET', `/public/shops/${shop.slug}`)).status).toBe(404);
   });
 
+  it('shop links cannot take the names of website pages', async () => {
+    const shop = await setupShop(t);
+    const r = await t.call('POST', '/admin/shops', {
+      token: shop.tokens.admin,
+      body: {
+        name: 'Harita',
+        slug: 'harita',
+        owner: { phone: '+905320000077', firstName: 'A', lastName: 'B', displayName: 'A B' },
+      },
+    });
+    expect(r.status).toBe(400);
+  });
+
+  it('home-page search finds only bookable shops', async () => {
+    const shop = await setupShop(t);
+    expect((await t.call('GET', '/public/search?q=nirvana')).body.map((s: { slug: string }) => s.slug)).toEqual([shop.slug]);
+    await t.call('PUT', `/admin/shops/${shop.shopId}/subscription`, { token: shop.tokens.admin, body: { status: 'none' } });
+    expect((await t.call('GET', '/public/search?q=nirvana')).body).toEqual([]);
+  });
+
   it('only platform admins can create or review shops', async () => {
     const shop = await setupShop(t);
     const r = await t.call('POST', `/admin/shops/${shop.shopId}/review`, { token: shop.tokens.owner });

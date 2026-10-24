@@ -5,6 +5,12 @@ import { createShop, listShopsForAdmin, markReviewed, setSubscription } from '..
 import type { AuthFn } from './app.js';
 import { shopParams, timestamp } from './schemas.js';
 
+/** Shop links live at the website's top level (/<slug>), so they must not clash with its pages. */
+const RESERVED_SLUGS = new Set([
+  'api', 'admin', 'harita', 'randevularim', 'isletmeler', 'giris', 'hesap', 'yardim', 'gizlilik', 'kvkk',
+  'sozlesme', 'iletisim', 'hakkimizda', 'arama', 'salon', 'salonlar', 'uygulama', 'static', 'favicon-ico',
+]);
+
 /** Back office for our team: create shops on site, review, and manage subscriptions. */
 export function adminRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.get('/admin/shops', async (req) => listShopsForAdmin(deps, await auth(req)));
@@ -14,7 +20,12 @@ export function adminRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     const body = z
       .object({
         name: z.string().trim().min(1).max(80),
-        slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/).max(60),
+        slug: z
+          .string()
+          .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+          .min(3)
+          .max(60)
+          .refine((s) => !RESERVED_SLUGS.has(s), 'This link is reserved'),
         phone: z.string().min(7).max(20).optional(),
         address: z.string().max(300).optional(),
         latitude: z.number().min(-90).max(90).optional(),
