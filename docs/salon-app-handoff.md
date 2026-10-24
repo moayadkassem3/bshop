@@ -1,14 +1,23 @@
 # Salon Booking Platform — Handoff & Planning Baseline
 
-**Version:** 1.0  
-**Baseline date:** 6 October 2026  
+**Version:** 1.1  
+**Baseline date:** 24 October 2026  
+**Previous version:** 1.0 (6 October 2026)  
 **Status:** Product planning; no application code authorized yet  
 **Working market:** Istanbul, Türkiye  
 **Product name:** To be decided
 
-This document is the reference point for continuing product design and handing the project to a designer or development team. It consolidates the founder's decisions from the planning conversation. It is a planning baseline, not a claim that every design or technical question has been resolved.
+This document is the reference point for continuing product design and handing the project to a designer or development team. It consolidates the founder's decisions from the planning conversations. It is a planning baseline, not a claim that every design or technical question has been resolved.
 
 **How to use it:** Preserve the agreed requirements. Treat anything labelled proposed or open as a decision still to make. Record future changes in this document before changing dependent workflows. Do not reopen settled choices without a concrete reason.
+
+**Status labels:**
+
+- **Agreed** — a founder decision. Tables and statements without a label in Section 2 are agreed.
+- **Proposed** — a recommendation recorded for design review; it needs the founder's confirmation before it becomes agreed.
+- **Open** — not yet decided.
+
+Rows and sections new or changed in this version are marked *(v1.1)*. The change record at the end summarises them.
 
 ## 1. Product purpose
 
@@ -16,122 +25,203 @@ A customer wants to book an appointment, but the barber or stylist may be busy s
 
 The product also helps customers discover participating shops on a map. Its two core benefits are easier appointment management and shop visibility. Discovery is an agreed first-release feature.
 
-Initial customers are men's barbershops and women's salons in Istanbul. Initial shop acquisition will happen through face-to-face visits. Android, iOS, and web are all part of the intended product; customers must be able to book on the web without installing an app. No delivery order has been chosen.
+Initial customers are men's barbershops and women's salons in Istanbul. Initial shop acquisition will happen through face-to-face visits.
+
+*(v1.1)* Customers use the product on the **web only**; there is no customer app to install. Staff and shop owners use **one native app on Android and iOS**. No delivery order between Android and iOS has been chosen.
 
 ## 2. Agreed product and commercial scope
 
 | Area | Baseline decision |
 | --- | --- |
 | Customer identity | Phone number, first name, and surname; easy account creation. |
-| Booking access | Shop link or QR code, map discovery, and optional contact matching. |
+| Booking access *(v1.1)* | Shop link or QR code, and map discovery. Contact matching is removed from the first release. |
+| Platforms *(v1.1)* | Customers find shops, book, and track appointments on the web only. Staff and owners use a native app on Android and iOS. |
+| Owner tools *(v1.1)* | Inside the same native app as staff, unlocked by owner permissions. No separate owner web dashboard in the first release. |
 | Shop structure | A shop can have multiple barbers or stylists. |
+| Shop service list *(v1.1)* | Each shop keeps one service list, set up once at shop level rather than by each staff member. It starts from the platform catalog (Section 6). Shops can add their own services and rename services. |
+| Staff services and durations *(v1.1)* | Each staff member selects which of the shop's services they perform and sets their own durations for them. |
 | Subscription | Monthly shop subscription, with an extra fee per additional barber or stylist. |
 | Map membership | Only subscribed shops appear; map visibility is included in the subscription. |
 | Shop activation | Our team reviews shops before public visibility and booking activation. |
 | Owner permissions | Manage the shop, all staff, and all appointments. |
-| Staff permissions | Manage their own appointments and modify their service durations. |
+| Staff permissions *(v1.1)* | Manage their own appointments; select which shop services they perform and modify their durations. |
+| Customer phone numbers *(v1.1)* | Visible to both the owner and staff. |
 | Staff choice | Customer chooses a specific person or “Any available staff member.” |
 | Multiple services | Allowed in one appointment, performed by one staff member; durations are added. |
+| Booking for someone else *(v1.1)* | A customer can book an appointment for another person, such as a child (“Çocuk Tıraşı”). See 4.7. |
 | Service pricing | Every bookable service displays a price; “starting from” pricing must be clearly identified. |
 | Confirmation | Approval normally required; the shop can designate hours for immediate automatic confirmation. |
+| Approval reminder *(v1.1)* | If a pending request is still unanswered 10 minutes after it arrives, a second alert asks the staff member to confirm or decline. The 15-minute automatic confirmation does not change. |
 | Approval timeout | Automatically confirm after 15 minutes or at the appointment start, whichever comes first. |
+| Customer result message *(v1.1)* | The customer receives an SMS with the final result: confirmed or declined. |
 | Pending reservation | Hold the selected staff member's time while approval is pending. |
-| Pending requests | One pending request per customer at the same shop. |
-| Appointment alerts | Every new appointment triggers the prominent alert, including automatically confirmed appointments. |
+| Pending requests | One pending request per customer at the same shop. (A change for multi-person bookings is proposed in 4.7.) |
+| Appointment alerts | Every new appointment triggers the special, prominent alert, including automatically confirmed appointments. Confirmed again in v1.1. |
 | Cancellation cutoff | Determined by the shop owner; no platform-wide cutoff has been chosen. |
 | Payment for services | At the shop. No customer deposit or online service payment in the first release. |
 | Earliest appointment | As early as availability permits; no fixed minimum booking lead time. |
 | Service location | At the shop only. Home visits have been removed. |
 
-The shop's subscription payment process is separate from the customer's payment for salon services. Subscription prices, collection method, billing-seat definition, and billing policies remain open.
+The shop's subscription payment process is separate from the customer's payment for salon services. Subscription prices, billing-seat definition, and billing policies remain open. *(v1.1)* **iyzico** is the founder's preferred candidate for collecting subscriptions; it is to be confirmed during feasibility (Phase 3).
+
+### 2.1 Proposed for confirmation *(v1.1)*
+
+These recommendations came out of the v1.0 review. They are not agreed until the founder confirms them.
+
+| Area | Proposal | Reason |
+| --- | --- | --- |
+| Service prices | The owner sets one price per service for the whole shop. Per-staff prices can be added later if shops ask for them. | Fastest setup, consistent with a single shop-level service list, and “Any available” never needs a price range. |
+| Phone verification | Verify the phone with an SMS code at the final booking step, before the slot is held. Returning customers on the same device skip the code. | Ties each booking to a real phone; the main protection against fake bookings. |
+| Booking limit | At most 2 future appointments (or booking groups, 4.7) per customer per shop. The owner can raise the limit. | With automatic confirmation and no deposit, one person could otherwise fill a barber's day. |
+| No-show record | Track no-shows per customer per shop. The owner can block a customer, or require manual approval for them (no automatic confirmation). | Without deposits, this is the shop's main protection. |
+| Late cancellation | Customers can still cancel after the cutoff; it is recorded as a late cancellation in their history. | With no fee, blocking cancellation only turns it into a no-show. |
+| Automatic-confirmation hours | Based on the appointment start time, not the request time. Eligible slots show an “Anında onay” (instant confirmation) badge. | Predictable for the shop, and the customer can see it before booking. |
+| SMS budget | Plan for about 3 texts per booking: verification code, result, reminder. Include the cost in subscription pricing. | Web-only customers cannot receive push notifications, so every customer message is an SMS. |
+| Subscription sales | Sell the subscription face to face or through a web payment link, never inside the staff app. | Keeps the app clear of app-store in-app purchase rules (to verify in Phase 3). |
+| Failed subscription payment | A 7-day grace period with reminders to the owner. Then the shop is hidden from the map and stops taking new bookings; existing appointments are kept. | Predictable for shops; protects customers who already booked. |
+| Staff removal | When a staff member is removed from a shop, their access to customer data ends immediately. | Staff can see customer phone numbers. |
 
 ## 3. People and permissions
 
-- **Customer:** Find a shop, view prices and availability, book, track the result, and cancel or request rescheduling under the shop's rules.
-- **Shop owner:** Configure the shop, services, prices, team, schedules, confirmation hours, and cancellation cutoff; manage all shop appointments.
-- **Barber or stylist:** View and manage their own schedule and appointments, respond to requests, and adjust service durations.
+- **Customer:** On the web, without installing an app: find a shop, view prices and availability, book for themselves or someone else, track the result, and cancel or request rescheduling under the shop's rules.
+- **Shop owner:** Configure the shop, its service list (including custom and renamed services), prices, team, schedules, confirmation hours, and cancellation cutoff; manage all shop appointments. Uses the same native app as staff, with owner permissions.
+- **Barber or stylist:** View and manage their own schedule and appointments, respond to requests, select which of the shop's services they perform, and set their durations. *(Proposed)* Mark their own absence (4.8).
 - **Platform reviewer:** Review shop submissions before they become public and bookable. This is a required operational role; the full administration interface is not yet specified.
 
-Receptionist accounts, detailed permission exceptions, and access to customer records beyond appointment needs have not been defined.
+*(v1.1)* Both the owner and staff see customer phone numbers. Receptionist accounts and detailed permission exceptions have not been defined.
 
 ## 4. Main workflows
 
 ### 4.1 Shop onboarding
 
-The shop provides its business details, location, service offerings, prices, staff, and schedules. The owner sets cancellation rules and any hours for immediate automatic confirmation. Our team reviews the shop, and subscription requirements must be satisfied before public activation.
+The shop provides its business details, location, staff, and schedules. *(v1.1)* It builds its service list once, starting from the platform catalog and adding its own services or renaming services as needed. The owner sets prices, cancellation rules, and any hours for immediate automatic confirmation. Each staff member marks which services they perform and their durations. Our team reviews the shop, and subscription requirements must be satisfied before public activation.
 
 The exact order of review, subscription payment, and activation is open. The public activation condition is agreed: reviewed and subscribed.
 
+*(Proposed)* Our team completes this setup together with the owner during the face-to-face visit, so the shop is ready to take bookings the same day it is activated.
+
 ### 4.2 Customer discovery
 
-1. Open a shop's direct link or scan its QR code; or find a shop through the app's map.
-2. Optionally use phone-contact matching to find registered shops whose business numbers are already saved in the customer's contacts.
-3. Open the shop profile and view services, prices, staff, and appointment availability.
-4. Continue into booking without requiring an app installation.
+1. Open a shop's direct link or scan its QR code, or find a shop on the web map.
+2. Open the shop profile and view services, prices, staff, and appointment availability.
+3. Continue into booking on the web.
 
-Contact matching refers to **the customer's contacts**, not a barber importing a customer address book. Permission handling, matching approach, and supported platforms are still to be designed. It must remain optional.
+*(v1.1)* **Contact matching is removed from the first release.** If it is reconsidered later, the recommended approach is to match on the customer's device against the public list of shop business numbers and never upload the customer's contacts.
 
 **Proposed map design:** Pins with shop profiles, an accompanying list, area search, optional current location, and filters for services and appointment availability. Exact filters, ranking, map provider, and profile fields are open. Opening hours and available appointment times should be distinguishable.
+
+**Proposed *(v1.1)*:**
+
+- Each staff member gets their own link and QR code to share (for example on Instagram or WhatsApp). A customer arriving through it starts with that staff member already chosen.
+- Concentrate pilot shops in one or two districts so the map is not sparse at launch. Treat links shared by shops (Instagram bio, WhatsApp, Google Business Profile) as the main early booking channel.
 
 ### 4.3 Customer booking
 
 1. Select services.
 2. Choose a staff member or “Any available staff member.”
 3. Choose a time that accommodates the complete service duration.
-4. Provide phone number, first name, and surname. Phone verification and returning-customer sign-in still need design.
-5. Review the service price, staff assignment, cancellation rule, and confirmation behavior.
-6. Submit the booking; reserve the staff member and time.
-7. Follow the confirmation workflow below.
+4. *(v1.1)* Choose who the appointment is for: “Kendim” (myself) or “Başka biri” (someone else). See 4.7.
+5. Provide phone number, first name, and surname. *(Proposed)* Verify the phone with an SMS code here, not before browsing.
+6. Review the service price, staff assignment, cancellation rule, and confirmation behavior. *(Proposed)* Also show “Ödeme salonda” (payment at the shop) and the shop address with a map link.
+7. Submit the booking. *(Proposed)* Re-check that the time is still free; if it was just taken, say so (“Bu saat az önce doldu”) and offer the nearest alternatives. Reserve the staff member and time.
+8. Follow the confirmation workflow below.
 
-One appointment cannot split services between different staff members in the first release. For “Any available staff member,” an eligible person must be assigned when reserving the slot; the assignment policy is open.
+One appointment cannot split services between different staff members in the first release. For “Any available staff member,” an eligible person must be assigned when reserving the slot; a policy is proposed in Section 5.
+
+*(Proposed)* Customers can browse services, staff, and times without signing in. Screen-level proposals from the competitor review are in Appendix A.
 
 ### 4.4 Confirmation and timing
 
-**During designated automatic-confirmation hours:** Confirm immediately and notify both sides. Send the prominent staff alert. The alert announces an existing confirmation; it does not create a second approval step.
+**During designated automatic-confirmation hours:** Confirm immediately and notify both sides. Send the prominent staff alert. The alert announces an existing confirmation; it does not create a second approval step. No reminder is sent.
 
-**At other times:** Create a pending appointment, hold the slot, and alert the staff member. The owner or assigned staff member can confirm or decline before the deadline.
+**At other times:** Create a pending appointment, hold the slot, and alert the staff member. *(v1.1)* If there is still no response 10 minutes after the request, send a second alert (the reminder) with the same Confirm / Decline actions. The owner or assigned staff member can confirm or decline before the deadline.
 
-**Approval deadline = the earlier of request time + 15 minutes and appointment start time.**
+**Approval deadline = the earlier of request time + 15 minutes and appointment start time.** *(Unchanged in v1.1.)*
 
-If no response arrives by that deadline, confirm automatically and update both sides. A missed alert does not extend the deadline or cause the booking to expire.
+If no response arrives by that deadline, confirm automatically and update both sides. A missed alert or reminder does not extend the deadline or cause the booking to expire.
 
-| Example | Result without a staff response |
-| --- | --- |
-| Request at 14:00 for a 16:00 appointment | Automatically confirmed at 14:15. |
-| Request at 14:00 for a 14:05 appointment | Automatically confirmed at 14:05. |
-| Request during automatic-confirmation hours | Confirmed immediately. |
+| Example | Reminder | Result without a staff response |
+| --- | --- | --- |
+| Request at 14:00 for a 16:00 appointment | 14:10 | Automatically confirmed at 14:15. |
+| Request at 14:00 for a 14:12 appointment | *(Proposed)* 14:06 | Automatically confirmed at 14:12. |
+| Request at 14:00 for a 14:05 appointment | *(Proposed)* None | Automatically confirmed at 14:05. |
+| Request during automatic-confirmation hours | None | Confirmed immediately. |
 
-The customer must see whether the appointment is pending or confirmed and the precise automatic-confirmation deadline. Last-minute requests can remain pending until their start time; this is an intentional founder decision.
+*(Proposed)* **Last-minute reminder rule:** when the deadline is the appointment start and comes before request + 15 minutes, send the reminder halfway through the remaining response window, and skip it if that window is under 4 minutes.
 
-There is no fixed advance-booking requirement. Available start-time increments and treatment of a booking starting at the current instant remain open; the timing rule must not create an appointment that stays pending past its start.
+The customer must see whether the appointment is pending or confirmed and the precise automatic-confirmation deadline. *(v1.1)* The customer receives an SMS with the final result (confirmed or declined). No customer message is sent at the reminder. *(Proposed)* On-screen pending wording: “Salon onayı bekleniyor — 14:15'e kadar yanıt gelmezse otomatik onaylanır.”
+
+Last-minute requests can remain pending until their start time; this is an intentional founder decision.
+
+There is no fixed advance-booking requirement. Available start-time increments and treatment of a booking starting at the current instant remain open (proposals in Section 5); the timing rule must not create an appointment that stays pending past its start.
 
 ### 4.5 Appointment alerts
 
-Every new appointment uses the prominent alert experience, regardless of its confirmation route. Desired features are a distinctive ringtone, a prominent presentation potentially using the full screen, and optional spoken appointment details.
+Every new appointment uses the special, prominent alert, regardless of its confirmation route. Desired features are a distinctive ringtone, a prominent presentation potentially using the full screen, and optional spoken appointment details. *(v1.1)* The founder confirmed keeping this for every booking, accepting that it may reach staff while they are serving a customer.
 
 - Pending request: Show the requested time, services, and Confirm / Decline actions.
+- *(v1.1)* Reminder at 10 minutes: The same request and actions, presented again.
 - Already confirmed booking: Announce the confirmed appointment and provide its details.
 - Confirmation must update the same appointment; it must not create another booking.
 
-Custom sound, full-screen presentation, speech, and background delivery must be evaluated for Android, iOS, and web before exact behavior is promised. These are product intentions, not verified platform capabilities.
+*(v1.1)* Alerts are delivered to staff members' own phones through the native staff app. **Not pursued:** a dedicated always-on “shop tablet mode” at the counter, because it complicates selling and scaling the service.
 
-Recipients, repeat-alert behavior, owner escalation, and alerts for appointments staff enter themselves are open. Any fallback must preserve appointment status and deadlines.
+Custom sound, full-screen presentation, speech, and background delivery must be evaluated on Android and iOS before exact behavior is promised. These are product intentions, not verified platform capabilities. Constraints to verify in Phase 3:
+
+- Android 14 and later: Google Play restricts full-screen notification alerts to calling and alarm apps.
+- iOS: no full-screen notifications for third-party apps; Critical Alerts need a special Apple permission that a booking app is unlikely to get. Custom notification sounds and Time-Sensitive notifications are available.
+- Spoken details while the app is in the background are limited on both platforms.
+
+Recipients, repeat-alert behavior beyond the 10-minute reminder, owner escalation, and alerts for appointments staff enter themselves are open. *(Proposed)* The reminder also goes to the owner. Any fallback must preserve appointment status and deadlines.
 
 ### 4.6 Daily operations and customer changes
 
-Owners and staff see their schedules, add appointments manually, record walk-ins, and block unavailable time. Customers receive confirmation updates and reminders.
+Owners and staff see their schedules, add appointments manually, record walk-ins, and block unavailable time. Customers receive confirmation updates and reminders by SMS.
 
-Owners set the cancellation cutoff. Reminder timing, reminder channels, cancellation after the cutoff, rescheduling rules, staff-initiated cancellations, delays, and no-shows still need explicit workflows. No penalty or cancellation fee has been agreed.
+Owners set the cancellation cutoff. Reminder timing, cancellation after the cutoff, rescheduling rules, staff-initiated cancellations, delays, and no-shows still need explicit workflows. No penalty or cancellation fee has been agreed.
+
+**Proposed *(v1.1)*:**
+
+- Customers can cancel after the cutoff; it is recorded as a late cancellation (2.1).
+- Changes caused by the shop (staff absence, shop-initiated cancellation) never count against the customer's cutoff or no-show record.
+- A decline after automatic confirmation follows the cancellation workflow, sends the customer an SMS immediately, and offers the nearest free times.
+- Appointments entered by staff (phone bookings, walk-ins) create a customer record from the name and phone number, which is linked when that customer later books on the web.
+- Shop-wide closures and special hours (for example the Bayram holidays) can be set by the owner. Open: how existing bookings on a newly closed day are handled; the staff-absence flow in 4.8 is the suggested model.
+
+### 4.7 Booking for someone else *(v1.1)*
+
+**Agreed:** A customer can book an appointment for another person, such as a child.
+
+**Proposed details:**
+
+- The last booking step asks “Randevu kimin için?” (who is the appointment for?) with “Kendim” or “Başka biri”, plus a name field for the other person.
+- The booker stays the contact: verification, result, and reminder texts go to the booker's phone.
+- The staff app shows it as, for example, “Emir (çocuk) — Mehmet Yılmaz adına.”
+- “Bir kişi daha ekle” (add another person) lets a parent book for themselves and a child together. It offers back-to-back times with the same staff member, or the same time with another staff member. Each person becomes a separate appointment, linked in one booking group.
+- Up to 3 people in one booking group.
+- The pending-request rule becomes: one pending **booking group** per customer per shop.
+
+### 4.8 Unexpected staff absence *(v1.1, proposed)*
+
+1. **Marking it:** Staff can mark their own absence; the owner can mark it for anyone. Options: “Bugün yokum” (out today) or a date and time range. New bookings in that period stop immediately.
+2. **What the app shows:** Every pending and confirmed appointment affected, each with an automatic suggestion of another staff member who performs the same services and is free at the same time.
+3. **What the owner does:** Reviews the suggestions in one place and taps “Uygula” (apply). Pending requests are reassigned or declined in the same step.
+4. **What the customer receives by SMS:**
+   - “Any available” bookings that are reassigned: an informational text with the new staff member's name; the time stays the same.
+   - Bookings where the customer chose the absent staff member: a link with three choices — keep the time with the new staff member, pick a new time with the original staff member, or cancel. If the customer does not respond, the reassigned booking stands.
+   - Bookings that cannot be reassigned: cancelled, with a link to rebook.
+5. **Cutoff and record:** The shop's cancellation cutoff does not apply to these changes. The customer can cancel freely, and nothing is added to their no-show or late-cancellation record.
+6. **Owner alert:** When staff mark their own absence and it affects existing appointments, the owner is alerted.
 
 ## 5. Scheduling rules and safeguards
 
-**Agreed:** Services have default durations that staff can modify. Multiple selected services occupy their combined duration. Pending and confirmed appointments reserve time. Staff availability accounts for working hours, breaks, and blocked periods.
+**Agreed:** Services have default durations that staff can modify. *(v1.1)* Each staff member selects which of the shop's services they perform and sets their own durations. Multiple selected services occupy their combined duration. Pending and confirmed appointments reserve time. Staff availability accounts for working hours, breaks, and blocked periods.
 
 **Proposed implementation requirements for design review:**
 
-- Use a staff-specific duration when configured; otherwise use the catalog default.
+- Use a staff-specific duration when configured; otherwise use the shop's default for the service.
 - A combined catalog service uses its own listed duration; do not expand it into additional component services.
-- Only offer a time if the full booking fits and the staff member can perform all selected services.
+- Only offer a time if the full booking fits and the staff member performs all selected services.
 - Assign and reserve a specific staff member for “Any available” bookings, so availability remains reliable.
 - Changing a service duration affects future bookings; existing appointments retain their booked duration unless explicitly edited.
 - Check an individual appointment's duration edit against other reservations. Notify the customer of changes affecting their start time through the agreed rescheduling flow.
@@ -139,11 +229,34 @@ Owners set the cancellation cutoff. Reminder timing, reminder channels, cancella
 - Handle staff responses and automatic confirmation together so there is one final outcome, including when they arrive at the deadline.
 - Release reserved time when a request is declined or an appointment is cancelled. A decline after automatic confirmation must follow the cancellation workflow.
 
-Use Istanbul local time in customer and shop displays. Decide the available start-time increments during scheduling design.
+**Proposed *(v1.1)*:**
 
-## 6. Initial service catalog — 45 services
+- **“Any available” assignment:** consider only staff who perform all selected services and are free for the whole duration; pick the one with the lightest load that day. The owner can reassign while the request is pending.
+- **Start times:** offer starts on 15-minute marks plus the exact minute the staff member's previous appointment ends, so no dead gaps are left. Hide past times.
+- **Minimum lead time:** an optional per-shop setting, default 0. The platform still has no fixed minimum. Starts are offered from “now + lead time”, rounded up to 5 minutes, so a slot never appears at an odd current minute.
+- **Buffer:** an optional per-shop or per-staff gap after each appointment for cleanup, set explicitly rather than hidden in the time grid.
+- **Booking horizon:** open (how far ahead customers can book).
 
-Names and durations below are supplied by the founder and preserved as given. They are scheduling defaults, not a universal statement about how long every shop takes. Staff may modify durations. More services can be added to the platform later.
+Use Istanbul local time in customer and shop displays. Türkiye has used UTC+3 all year with no daylight saving time since 2016; store times in UTC regardless.
+
+### 5.1 Draft appointment states *(v1.1, proposed)*
+
+| State | Entered when | Can move to |
+| --- | --- | --- |
+| Pending | A customer submits outside automatic-confirmation hours. | Confirmed, Declined, Cancelled |
+| Confirmed | Staff or owner confirms; the deadline passes; booked during automatic-confirmation hours; or entered by staff. Record which route. | Completed, No-show, Cancelled |
+| Declined | Staff or owner declines before the deadline. | — (final) |
+| Cancelled | Customer withdraws or cancels (before or after cutoff), shop cancels, or staff absence cannot be covered. Record the reason. | — (final) |
+| Completed | The appointment took place. | — (final) |
+| No-show | The customer did not arrive. | — (final) |
+
+Reassignment to another staff member changes the appointment; it is not a separate state. Open: whether rescheduling edits the same appointment or cancels it and creates a new one. *(Proposed)* Edit the same appointment, keep its history, and re-check availability.
+
+## 6. Platform service catalog — 45 services
+
+*(v1.1)* This list is now the **starting template** for each shop's own service list. A shop sets its list up once at shop level, can add its own services, and can rename services. Each staff member then selects which of the shop's services they perform and sets their durations.
+
+Names and durations below are supplied by the founder and preserved as given. They are scheduling defaults, not a universal statement about how long every shop takes. More services can be added to the platform template later.
 
 Related services with different durations must not be silently merged or normalized. For example, “Saç-Sakal Kesimi” is 60 minutes while “Saç-Sakal Kesimi+Yıkama” is 45 minutes.
 
@@ -197,38 +310,62 @@ Related services with different durations must not be silently merged or normali
 
 **Removed:** Evde Hizmet Alımı. Home-visit bookings, customer service addresses, travel buffers, home-service areas, and travel charges are outside the first release.
 
+### 6.1 Items to confirm with the founder *(v1.1)*
+
+The list is preserved as given; these points should be confirmed, not silently corrected, before the template is loaded:
+
+- “Keratin Yükleme” is 15 min, but “Keratin Yükleme(En Kısa Saç)” (shortest hair) is 30 min.
+- “Saç Boyama” (20 min) is shorter than “Saç Boyama(Tek Renk)” (30 min).
+- These variants have the same duration as the base service: Saç Kesimi and Saç Kesimi+Yıkama; Fön and Saç Yıkama+Fön; Keratin Düzleştirme and Keratin Düzleştirme(Kısa Saç).
+- Choosing “Saç Kesimi” and “Sakal Tıraşı” separately totals 50 min; the “Saç-Sakal Kesimi” combination is 60 min.
+- “Pigmentaston” is probably a typo for “Pigmentasyon”.
+- Names mix `&`, `+`, and `-`, and capitalisation is inconsistent.
+- 20 min for hair colouring and 30 min for keratin straightening are short for women's salons.
+
+The first services and durations in this list match a men's barbershop's live listing on a competitor platform (Appendix A), so the template probably reflects one men's barbershop's setup.
+
+**Proposed for women's salons:** add template services such as highlights (röfle), balayage, perms, manicure and pedicure, gel polish, lash and brow services, body waxing, and bridal hair and make-up. Support duration variants by hair length (short, medium, long) instead of a separate service for each. Decide whether processing time (the stylist serves someone else while colour sets) is supported; the recommendation is to exclude it explicitly from the first release. Tag services (or shops) by audience — women, men, unisex.
+
 ## 7. Proposed delivery plan
 
 This is a sequence of deliverables, not a development schedule or technology commitment.
 
 | Phase | Work | Completion condition |
 | --- | --- | --- |
-| 1. Finish system definition | Resolve the booking, cancellation, assignment, identity, and alert decisions listed below. Define appointment states and role permissions. | Founder has a coherent set of workflows, including exceptional cases. |
-| 2. Design customer and shop experiences | Create screen flows and a clickable prototype for discovery, booking, confirmation, schedules, settings, and review. Prepare Turkish interface wording. | Validate the prototype with the founder and initial Istanbul shops; document revisions. |
-| 3. Validate feasibility and prepare engineering handoff | Evaluate alerts on all three platforms, map and contact matching approaches, subscriptions, and notification delivery. Review applicable privacy and consent requirements. Define the data model and acceptance scenarios. | Select the technical approach and document platform limits and unresolved dependencies. Any experimental coding requires the founder's go-ahead to begin code work. |
-| 4. Implement the agreed first release | Build customer booking, staff scheduling, review/activation, subscription access, map discovery, contact matching, and notifications for Android, iOS, and web. | Agreed acceptance scenarios pass across the intended platforms; any staged rollout is explicitly agreed. |
-| 5. Run an Istanbul pilot | Onboard reviewed shops face-to-face, verify their schedules and services, and observe real booking and alert behavior. | Pilot findings are recorded and release-blocking issues are resolved. |
+| 1. Finish system definition | Resolve the booking, cancellation, assignment, identity, and alert decisions listed below. Confirm the appointment states (5.1) and role permissions. | Founder has a coherent set of workflows, including exceptional cases. |
+| 2. Design customer and shop experiences | Create screen flows and a clickable prototype for the customer web (discovery, booking, confirmation) and the staff/owner app (schedules, requests, alerts, absence, settings, service list), plus the reviewer flow. Prepare Turkish interface wording. | Validate the prototype with the founder and initial Istanbul shops; document revisions. |
+| 3. Validate feasibility and prepare engineering handoff | Evaluate alerts in the native app on Android and iOS (4.5), the web map approach, subscription collection with iyzico, e-invoicing (e-arşiv / e-fatura), and SMS delivery. Review privacy and messaging requirements: KVKK (including VERBİS registration and data transfer abroad, which affects hosting choice), SMS sender-name registration, and whether İYS applies to appointment messages. Check app-store rules for a subscription sold outside the app. Define the data model and acceptance scenarios. | Select the technical approach and document platform limits and unresolved dependencies. Any experimental coding requires the founder's go-ahead to begin code work. |
+| 4. Implement the agreed first release | Build customer web booking and map discovery, the staff/owner native app for Android and iOS, review/activation, subscription access, and SMS and in-app notifications. | Agreed acceptance scenarios pass on the customer web and both mobile platforms; any staged rollout is explicitly agreed. |
+| 5. Run an Istanbul pilot | Onboard reviewed shops face-to-face, verify their service lists and schedules, and observe real booking and alert behavior. | Pilot findings are recorded and release-blocking issues are resolved. |
 
-**Proposed pilot measures:** Completed booking rate, staff response time, share automatically confirmed by timeout, missed-alert reports, schedule conflicts, cancellations/no-shows, and active shops. Targets and pilot size remain open.
+*(Proposed, v1.1)* Run a small alert prototype on Android and iOS before Phase 2, so the alert design is based on what the platforms allow. This needs the founder's go-ahead because it involves code.
+
+**Proposed pilot measures:** Completed booking rate, staff response time, share confirmed after the reminder, share automatically confirmed by timeout, missed-alert reports, schedule conflicts, cancellations/no-shows, active shops, and *(v1.1)* booking source (shop link, staff link, QR code, map). Targets and pilot size remain open.
 
 ## 8. Decisions to close before implementation
 
+**Closed in v1.1:** platforms (customer web only; native staff/owner app); owner tools location (same app); contact matching (removed); shop-level service list with custom and renamed services; staff select their services and durations; customer phone visibility (owner and staff); approval reminder at 10 minutes; customer SMS with the final result; booking for someone else (in principle); shop tablet mode (not pursued).
+
 | Priority | Decision needed | Reason |
 | --- | --- | --- |
-| First | “Any available” assignment and eligible-service rules | Determines which staff member is reserved and alerted. |
-| First | Automatic-confirmation hours: shop-wide or per staff, and whether rules use appointment start time or request time | Prevents inconsistent confirmation behavior. |
-| First | Cancellation and rescheduling, including pending requests, after-cutoff changes, and shop-initiated changes | Determines when reservations are released or replaced and who is notified. |
-| First | Staff duration editing: service default, individual appointment, or both; owner control | Establishes edit permissions and conflict handling. |
-| First | Alert recipients and exact behavior on each platform | Defines the central staff experience and realistic delivery expectations. |
-| First | Phone verification, sign-in, and duplicate-account handling | Defines how an appointment is tied to the correct customer. |
-| Before pilot | Start-time increments, booking horizon, delays, completion, and no-show states | Completes day-to-day scheduling. |
-| Before pilot | Reminder channels, timing, and customer preferences | Makes appointment communication concrete. |
-| Before pilot | Subscription price, included staff, extra-staff billing, and failed-payment behavior | Makes shop access and charges predictable. |
+| First | “Any available” assignment rule (proposal in Section 5) | Determines which staff member is reserved and alerted. |
+| First | Automatic-confirmation hours: shop-wide or per staff; appointment start time or request time (proposal in 2.1) | Prevents inconsistent confirmation behavior. |
+| First | Cancellation and rescheduling, including pending requests, after-cutoff changes, and shop-initiated changes (proposals in 2.1, 4.6, 4.8) | Determines when reservations are released or replaced and who is notified. |
+| First | Duration editing for an individual appointment, and whether the owner can override staff durations | Staff service durations are agreed; per-appointment edits and owner control are not. |
+| First | Alert recipients, owner escalation, and exact behavior on Android and iOS | Defines the central staff experience and realistic delivery expectations. |
+| First | Phone verification, sign-in, and duplicate-account handling (proposal in 2.1) | Defines how an appointment is tied to the correct customer. |
+| First | Who sets service prices (proposal in 2.1) | Needed for the service-list and booking screens. |
+| First | Booking limit, no-show record, and customer blocking (proposals in 2.1) | Main protection against abuse without deposits. |
+| Before pilot | Start-time increments, minimum lead time, buffer, booking horizon, delays, completion, and no-show states (proposals in Section 5 and 5.1) | Completes day-to-day scheduling. |
+| Before pilot | Booking-for-someone-else details and staff-absence workflow (proposals in 4.7 and 4.8) | Common real-world cases. |
+| Before pilot | Shop closures and special hours | Holidays affect existing bookings. |
+| Before pilot | Reminder timing and customer preferences (channel is SMS) | Makes appointment communication concrete. |
+| Before pilot | Subscription price, included staff, seat definition, payment provider (iyzico preferred), and failed-payment behavior (proposal in 2.1) | Makes shop access and charges predictable. |
 | Before pilot | Shop review criteria and location verification | Makes map listings and activation consistent. |
-| Before pilot | Contact matching, map ranking, permissions, and data handling | Defines discovery behavior and privacy requirements. |
-| Before pilot | Catalog coverage and “starting from” price presentation | Confirms that the initial services meet participating men's and women's salons' needs. |
+| Before pilot | Map ranking and data handling | Defines discovery behavior and privacy requirements. |
+| Before pilot | Catalog coverage for women's salons, items in 6.1, and “starting from” price presentation | Confirms that the template meets participating men's and women's salons' needs. |
 
-A privacy and consent review is a future work item. This document does not assert that a particular contact-access or notification design has been legally or technically validated.
+A privacy and consent review is a future work item. This document does not assert that a particular notification or data-handling design has been legally or technically validated.
 
 ## 9. Proposed acceptance scenarios
 
@@ -237,32 +374,98 @@ Use these to review the design and, after implementation is authorized, verify t
 1. A customer books from a shop link on the web without installing an app.
 2. A shop with several staff members maintains separate, conflict-free schedules.
 3. A pending request reserves the full service duration, and another customer cannot take overlapping time for that staff member.
-4. A normal request automatically confirms after 15 minutes if unanswered; a last-minute request confirms at its start time.
+4. A normal request receives a reminder alert at 10 minutes and automatically confirms at 15 minutes if unanswered; a last-minute request confirms at its start time.
 5. Staff confirmation or decline before the deadline produces one consistent outcome; a decline releases the slot.
-6. Automatic-confirmation hours bypass pending approval and still trigger the prominent appointment alert.
-7. “Any available” assigns an eligible staff member and respects their actual schedule and service duration.
-8. Multiple services use their total duration; a combined catalog service uses its own duration.
-9. Customers see the owner's cancellation rule and the applicable service price before submitting.
-10. Reviewed, subscribed shops can be discovered on the map; optional contact discovery does not block ordinary booking.
-11. Staff can add walk-ins and block time without creating conflicting customer availability.
-12. The catalog contains the 45 listed services, and home visits cannot be booked.
+6. The customer receives an SMS with the final result (confirmed or declined).
+7. Automatic-confirmation hours bypass pending approval and still trigger the prominent appointment alert.
+8. “Any available” assigns an eligible staff member and respects their actual schedule and service duration.
+9. Multiple services use their total duration; a combined catalog service uses its own duration.
+10. Customers see the owner's cancellation rule and the applicable service price before submitting.
+11. Reviewed, subscribed shops can be discovered on the web map.
+12. Staff can add walk-ins and block time without creating conflicting customer availability.
+13. A shop starts from the 45-service template, adds a custom service, renames a service, and staff select their own services and durations. Home visits cannot be booked.
+14. A customer books an appointment for someone else, and the staff app shows both names.
+15. The owner and staff can both see the customer's phone number on an appointment.
 
-Exact alert-delivery acceptance criteria must be added after platform feasibility checks. Reminder, cancellation, rescheduling, and billing scenarios must be completed once their rules are settled.
+Exact alert-delivery acceptance criteria must be added after platform feasibility checks. Reminder, cancellation, rescheduling, staff-absence, and billing scenarios must be completed once their rules are settled.
 
 ## 10. Scope boundaries and continuation instructions
 
-**Explicitly outside the first release:** Home visits; online customer payments or deposits; appointments split between multiple staff members.
+**Explicitly outside the first release:** Home visits; online customer payments or deposits; appointments split between multiple staff members; *(v1.1)* contact matching; native customer apps.
+
+**Not pursued:** *(v1.1)* A dedicated shop tablet mode for alerts.
 
 **Not part of the agreed baseline unless added later:** Ratings and reviews, in-app chat, loyalty programs, advertising, retail checkout, and multi-branch management.
 
-No product name, technology stack, hosting provider, budget, delivery date, or implementation order among Android, iOS, and web has been selected. No Notion page or external project has been created for this plan.
+No product name, technology stack, hosting provider, budget, or delivery date has been selected. The product-level platforms are agreed (customer web; native staff/owner app on Android and iOS), but no order between Android and iOS and no development technology has been chosen. No Notion page or external project has been created for this plan.
 
-**Next action:** Resolve the first-priority decisions in Section 8, then produce the screen flows and appointment-state specification. Continue product and workflow planning before writing application code.
+**Next action:** Confirm or adjust the proposals in 2.1, 4.7, 4.8, and 5.1, resolve the remaining first-priority decisions in Section 8, then produce the screen flows. Continue product and workflow planning before writing application code.
 
-**Handoff instruction:** Read this document as the current planning baseline. Preserve the founder's decisions, particularly automatic confirmation at the earlier deadline, alerts for every new appointment, map discovery in the first release, owner-defined cancellation cutoffs, payment at the shop, and the removal of home visits. Advance open items without presenting proposals as already agreed.
+**Handoff instruction:** Read this document as the current planning baseline. Preserve the founder's decisions, particularly automatic confirmation at the earlier deadline with a reminder at 10 minutes, the special alert for every new appointment, map discovery in the first release, web-only customers with a native staff/owner app, a shop-level service list that shops can extend and rename, owner-defined cancellation cutoffs, payment at the shop, and the removal of home visits and contact matching. Advance open items without presenting proposals as already agreed.
+
+## 11. Risk register *(v1.1, proposed)*
+
+| Risk | Effect | Mitigation |
+| --- | --- | --- |
+| Fake or abusive bookings | A staff member's day is blocked by bookings that never arrive. | SMS verification, booking limit, no-show record, customer blocking (2.1). |
+| Platform alert limits | The special alert cannot be as prominent as intended on Android or iOS. | Early alert prototype; design around custom sound and high-priority notifications (4.5). |
+| Unanswered requests | Bookings auto-confirm while staff are unavailable. | 10-minute reminder; decline-after-confirmation path with alternatives (4.6). |
+| Sparse map at launch | Customers see few shops and lose interest. | Pilot in one or two districts; lead with shop and staff links. |
+| SMS costs | Each booking costs several texts. | Budget about 3 texts per booking in subscription pricing (2.1). |
+| Catalog fit for women's salons | Women's salons cannot represent their services. | Shop-level custom services; women's template additions; length variants (6.1). |
+| Failed subscription payments | Shops lose access unexpectedly, or keep access without paying. | Grace period with owner reminders; existing bookings kept (2.1). |
+
+## Appendix A. Competitor booking flow review *(v1.1)*
+
+Reviewed on 24 October 2026 from founder-supplied screenshots of the customer web booking flow at kuaforumyanimda.com (a men's barbershop with three staff). All items are **proposed** for Phase 2 design.
+
+**Worth adopting:**
+
+- A 4-step progress bar and a fixed bottom bar with a running total (for example “1 hizmet · 30 dk · ₺450”).
+- Services listed per staff member, with search and a “Seçili” (selected) filter.
+- An “İlk uygun saat” (first available time) shortcut.
+- Times grouped into morning, afternoon, and evening, with a horizontal row of day chips.
+- Recognising a returning customer by phone, with “Randevularım” (my appointments) always visible.
+
+**Do better than the competitor:**
+
+| Competitor behavior | Problem | Proposal |
+| --- | --- | --- |
+| No “any available staff” option | The customer must pick a person. | Keep “Fark etmez (ilk müsait)”. |
+| Staff cards show service count and working hours | Does not help the customer choose. | Show a photo and the next free time (for example “Bugün 18:45”). |
+| Fixed 45-minute steps for a 30-minute service | Wastes time, or hides a buffer. | Start-time rule and explicit buffer in Section 5. |
+| A slot shifted to the current minute (“18:02” at 18:01) | Looks broken and gives no notice. | Minimum lead time and 5-minute rounding (Section 5). |
+| Most of the day shown as greyed-out past slots | Free times sit at the bottom. | Hide past times; mark fully booked days on the day chips. |
+| “Popüler” badge on every service | Carries no meaning. | Base it on real booking data, top 3 at most. |
+| Manual “Yenile” (refresh) button | Times can be stale. | Re-check at submission with alternatives (4.3). |
+| Summary labelled “Onayınız bekleniyor” | Easily confused with the shop's approval. | “Kontrol edin” before submitting; the pending wording in 4.4 after. |
+| Summary omits cancellation rule, payment, and address | Customers are surprised later. | Step 6 in 4.3. |
+| Women / men / unisex filter on staff | Mixes up who the service is for with who the staff member is. | Tag services or shops by audience (6.1). |
+| Staff first, then services | Does not suit “any available”. | Keep services first; staff links skip the staff step (4.2). |
+| Sign-in before the first step | Adds friction before the customer has seen anything. | Browse freely; verify at the final step (4.3). |
+
+## Appendix B. Interface wording *(v1.1, proposed)*
+
+| Concept | Turkish interface wording |
+| --- | --- |
+| Pending | Salon onayı bekleniyor |
+| Confirmed | Onaylandı |
+| Declined | Reddedildi |
+| Cancelled | İptal edildi |
+| Late cancellation | Geç iptal |
+| Any available staff member | Fark etmez (ilk müsait) |
+| Instant confirmation | Anında onay |
+| First available time | İlk uygun saat |
+| Who is the appointment for? | Randevu kimin için? |
+| Myself / Someone else | Kendim / Başka biri |
+| Add another person | Bir kişi daha ekle |
+| Payment at the shop | Ödeme salonda |
+| Out today | Bugün yokum |
+| This time was just taken | Bu saat az önce doldu |
 
 ## Change record
 
 | Version | Date | Change |
 | --- | --- | --- |
 | 1.0 | 6 October 2026 | Consolidated planning decisions and created the initial handoff. Included 45 services; removed home visits; preserved the last-minute confirmation rule. |
+| 1.1 | 24 October 2026 | Founder decisions: customers on the web only, with one native staff/owner app on Android and iOS; contact matching removed; shop-level service list from the platform template, with custom and renamed services; staff select their services and durations; customer phone numbers visible to owner and staff; reminder alert at 10 minutes with automatic confirmation unchanged at 15; customer SMS with the final result; booking for someone else; special alert kept for every booking; shop tablet mode not pursued; iyzico preferred for subscriptions. Added proposals for prices, verification, abuse protection, late cancellation, booking groups, staff absence, scheduling, appointment states, women's catalog coverage, and Turkey-specific feasibility checks. Added catalog items to confirm, a risk register, a competitor review, and interface wording. |
