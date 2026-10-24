@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+  <!-- Test build only: exact timing for the delayed test alert. Production alerts arrive by push. -->
+  <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+  <application>
+    <receiver android:name=".AlertReceiver" android:exported="false" />
+  </application>
+</manifest>

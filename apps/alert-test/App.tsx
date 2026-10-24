@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  AppState,
   Modal,
   Platform,
   Pressable,
@@ -12,6 +13,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import * as Speech from 'expo-speech';
+import { FullScreenAlert, type LaunchAlert } from './modules/full-screen-alert';
 
 // Milestone 0: measures how prominent a new-appointment alert can be on a real
 // phone. Local notifications stand in for server push; sound, lock-screen,
@@ -100,6 +102,8 @@ function clock(ms: number) {
 
 export default function App() {
   const [permission, setPermission] = useState('kontrol ediliyor…');
+  const [fullScreenAllowed, setFullScreenAllowed] = useState<boolean | null>(null);
+  const activeNotificationId = useRef<number | null>(null);
   const [useAlarmSound, setUseAlarmSound] = useState(false);
   const [speak, setSpeak] = useState(true);
   const [active, setActive] = useState<AlertData | null>(null);
@@ -111,10 +115,41 @@ export default function App() {
     setLog((prev) => [{ at: Date.now(), text }, ...prev].slice(0, 30));
   }, []);
 
-  const show = useCallback((data: AlertData) => {
-    setActive(data);
-    if (speakRef.current) Speech.speak(speechText(data), { language: 'tr-TR' });
-  }, []);
+  const sayAloud = useCallback(
+    (text: string) =>
+      Speech.speak(text, {
+        language: 'tr-TR',
+        onStart: () => addLog('Sesli okuma başladı'),
+        onDone: () => addLog('Sesli okuma bitti'),
+        onError: (e) => addLog(`Sesli okuma hatası: ${e.message}`),
+      }),
+    [addLog],
+  );
+
+  const show = useCallback(
+    (data: AlertData) => {
+      setActive(data);
+      if (speakRef.current) sayAloud(speechText(data));
+    },
+    [sayAloud],
+  );
+
+  // A full-screen alert (or one of its buttons) opened the app.
+  const handleNativeAlert = useCallback(
+    (alert: LaunchAlert) => {
+      const data = JSON.parse(alert.payload) as AlertData;
+      const delay = ((Date.now() - data.scheduledFor) / 1000).toFixed(1);
+      if (alert.action) {
+        addLog(`Tam ekran bildirimi: ${alert.action === 'onayla' ? 'Onayla' : 'Reddet'} düğmesi`);
+        FullScreenAlert?.dismiss(alert.notificationId);
+        return;
+      }
+      addLog(`Tam ekran açıldı (gecikme ${delay} sn)`);
+      activeNotificationId.current = alert.notificationId;
+      show(data);
+    },
+    [addLog, show],
+  );
 
   const refreshPermission = useCallback(async () => {
     const status = await Notifications.getPermissionsAsync();
@@ -125,6 +160,14 @@ export default function App() {
   useEffect(() => {
     setUpNotifications().catch((e) => addLog(`Kurulum hatası: ${String(e)}`));
     refreshPermission();
+    setFullScreenAllowed(FullScreenAlert?.canUseFullScreenIntent() ?? null);
+    const launch = FullScreenAlert?.takeLaunchAlert();
+    if (launch) handleNativeAlert(launch);
+    const nativeAlerts = FullScreenAlert?.addListener('onAlert', handleNativeAlert);
+    // Re-check the full-screen permission when coming back from settings.
+    const appState = AppState.addEventListener('change', (state) => {
+      if (state === 'active') setFullScreenAllowed(FullScreenAlert?.canUseFullScreenIntent() ?? null);
+    });
 
     const received = Notifications.addNotificationReceivedListener((n) => {
       const data = n.request.content.data as AlertData;
@@ -149,21 +192,46 @@ export default function App() {
     return () => {
       received.remove();
       response.remove();
+      nativeAlerts?.remove();
+      appState.remove();
     };
-  }, [addLog, refreshPermission, show]);
+  }, [addLog, refreshPermission, show, handleNativeAlert]);
 
-  async function schedule(kind: Kind, seconds: number) {
+  async function ensurePermission() {
     let granted = await refreshPermission();
     if (!granted) {
       await Notifications.requestPermissionsAsync({
         ios: { allowAlert: true, allowSound: true, allowBadge: false },
       });
       granted = await refreshPermission();
-      if (!granted) {
-        addLog('Bildirim izni verilmedi. Ayarlardan izin verin.');
-        return;
-      }
+      if (!granted) addLog('Bildirim izni verilmedi. Ayarlardan izin verin.');
     }
+    return granted;
+  }
+
+  async function scheduleFullScreen(seconds: number) {
+    if (!FullScreenAlert || !(await ensurePermission())) return;
+    const data: AlertData = { kind: 'request', ...SAMPLE, scheduledFor: Date.now() + seconds * 1000 };
+    FullScreenAlert.schedule(
+      seconds,
+      useAlarmSound ? CHANNEL_ALARM : CHANNEL_NORMAL,
+      TITLES.request,
+      `${SAMPLE.customer} · ${SAMPLE.services} · ${SAMPLE.time}`,
+      JSON.stringify(data),
+      true,
+    );
+    addLog(`Tam ekran talep ${seconds} sn sonra gelecek (${clock(data.scheduledFor)}). Telefonu kilitleyin.`);
+  }
+
+  async function testSpeech() {
+    const voices = await Speech.getAvailableVoicesAsync();
+    const turkish = voices.filter((v) => v.language.toLowerCase().startsWith('tr'));
+    addLog(`Türkçe ses: ${turkish.length} (toplam ${voices.length})`);
+    sayAloud(speechText({ kind: 'request', ...SAMPLE, scheduledFor: Date.now() }));
+  }
+
+  async function schedule(kind: Kind, seconds: number) {
+    if (!(await ensurePermission())) return;
     const data: AlertData = { kind, ...SAMPLE, scheduledFor: Date.now() + seconds * 1000 };
     const channelId = useAlarmSound ? CHANNEL_ALARM : CHANNEL_NORMAL;
     await Notifications.scheduleNotificationAsync({
@@ -195,6 +263,9 @@ export default function App() {
   function respond(label: string) {
     if (active) addLog(`Tam ekran görünüm: ${label}`);
     Speech.stop();
+    // Answering stops the repeating ring of a full-screen alert.
+    if (activeNotificationId.current !== null) FullScreenAlert?.dismiss(activeNotificationId.current);
+    activeNotificationId.current = null;
     setActive(null);
   }
 
@@ -208,10 +279,29 @@ export default function App() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Ayarlar</Text>
           {Platform.OS === 'android' && (
-            <Row label="Alarm sesi kanalını kullan" value={useAlarmSound} onChange={setUseAlarmSound} />
+            <Row label="Sessiz modda da çal (alarm sesi)" value={useAlarmSound} onChange={setUseAlarmSound} />
           )}
           <Row label="Ayrıntıları sesli oku" value={speak} onChange={setSpeak} />
+          <Button label="Sesli okumayı şimdi dene" onPress={testSpeech} />
         </View>
+
+        {FullScreenAlert && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Tam ekran alarm (test 2)</Text>
+            <Text style={styles.muted}>
+              Tam ekran izni: {fullScreenAllowed === false ? 'kapalı' : 'açık'}
+            </Text>
+            {fullScreenAllowed === false && (
+              <Button label="Tam ekran iznini aç" onPress={() => FullScreenAlert?.openFullScreenSettings()} primary />
+            )}
+            <Text style={styles.muted}>
+              Düğmeye basın ve telefonu kilitleyin. Ekran açılmalı, ses yanıt verene kadar tekrar etmeli ve
+              ayrıntılar sesli okunmalı.
+            </Text>
+            <Button label="Tam ekran talep · 10 sn sonra" onPress={() => scheduleFullScreen(10)} primary />
+            <Button label="Tam ekran talep · 60 sn sonra" onPress={() => scheduleFullScreen(60)} />
+          </View>
+        )}
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Test bildirimleri</Text>
@@ -229,8 +319,10 @@ export default function App() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Kontrol listesi</Text>
           {[
-            'Ekran kilitliyken ses çaldı ve ekran yandı mı?',
-            'Telefon sessiz moddayken ses çaldı mı? (iki kanalı da deneyin)',
+            'Tam ekran talep: kilitliyken ekran açıldı ve tam ekran görünüm geldi mi?',
+            'Tam ekran talep: ayrıntılar sesli okundu mu?',
+            'Tam ekran talep: ses yanıt verene kadar tekrar etti mi?',
+            'Sessiz modda, "Sessiz modda da çal" açıkken ses çaldı mı?',
             'Rahatsız Etmeyin açıkken bildirim geldi mi?',
             'Bildirimde Onayla / Reddet düğmeleri göründü mü?',
             'Uygulama tamamen kapalıyken (son uygulamalardan kaydırın) bildirim geldi mi?',
