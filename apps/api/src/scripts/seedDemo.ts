@@ -44,6 +44,7 @@ type DemoShop = {
   longitude: number;
   audience: 'men' | 'women' | 'unisex';
   district: string;
+  city: string;
   phone: string;
   whatsapp: string;
   instagram: string;
@@ -63,6 +64,7 @@ const shops: DemoShop[] = [
     longitude: 29.0262,
     audience: 'men',
     district: 'Kadıköy',
+    city: 'İstanbul',
     phone: '+905320000001',
     whatsapp: '+905320000001',
     instagram: 'demoberber',
@@ -100,6 +102,7 @@ const shops: DemoShop[] = [
     longitude: 29.0301,
     audience: 'unisex',
     district: 'Kadıköy',
+    city: 'İstanbul',
     phone: '+905320000011',
     whatsapp: '+905320000011',
     instagram: 'demokuafor',
@@ -157,6 +160,7 @@ for (const demo of shops) {
   const owner = await userByPhone(demo.owner.phone, 'owner');
   await updateShopSettings(deps, owner, shopId, {
     district: demo.district,
+    city: demo.city,
     phone: demo.phone,
     whatsapp: demo.whatsapp,
     instagram: demo.instagram,

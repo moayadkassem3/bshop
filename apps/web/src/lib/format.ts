@@ -1,4 +1,4 @@
-// Everything customers see is in Istanbul time (handoff Section 5).
+// Everything customers see is in Türkiye time: one time zone nationwide, named Europe/Istanbul.
 export const TZ = 'Europe/Istanbul';
 
 const lira = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 });
@@ -27,23 +27,23 @@ export function formatDuration(minutes: number): string {
   return m ? `${h} sa ${m} dk` : `${h} sa`;
 }
 
-/** YYYY-MM-DD of an instant in Istanbul. */
-export function istanbulDate(instant: Date): string {
+/** YYYY-MM-DD of an instant in Türkiye. */
+export function turkeyDate(instant: Date): string {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(
     instant,
   );
   return parts;
 }
 
-export function istanbulHour(iso: string): number {
+export function turkeyHour(iso: string): number {
   return Number(new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', hourCycle: 'h23' }).format(new Date(iso)));
 }
 
 export type Day = { date: string; weekday: string; day: string; month: string; isToday: boolean };
 
-/** The next `count` days in Istanbul, for the day chips. */
+/** The next `count` days in Türkiye, for the day chips. */
 export function upcomingDays(count: number, now = new Date()): Day[] {
-  const today = istanbulDate(now);
+  const today = turkeyDate(now);
   const days: Day[] = [];
   for (let i = 0; i < count; i++) {
     // Noon UTC on each date avoids any day-boundary surprises.
@@ -62,7 +62,7 @@ export function upcomingDays(count: number, now = new Date()): Day[] {
 
 /** "Bugün 18:45", "Yarın 10:00", or "28 Ekim 10:00". */
 export function relativeDayTime(iso: string, now = new Date()): string {
-  const date = istanbulDate(new Date(iso));
+  const date = turkeyDate(new Date(iso));
   const days = upcomingDays(2, now);
   const time = formatTime(iso);
   if (date === days[0]!.date) return `Bugün ${time}`;

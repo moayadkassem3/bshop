@@ -29,6 +29,7 @@ export function adminRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
         phone: z.string().min(7).max(20).optional(),
         address: z.string().max(300).optional(),
         district: z.string().max(80).optional(),
+        city: z.string().max(40).optional(),
         whatsapp: z.string().min(7).max(20).optional(),
         instagram: z.string().max(120).optional(),
         latitude: z.number().min(-90).max(90).optional(),

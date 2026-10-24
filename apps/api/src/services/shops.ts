@@ -12,6 +12,7 @@ export type Shop = {
   phone: string | null;
   address: string | null;
   district: string | null;
+  city: string | null;
   whatsapp: string | null;
   instagram: string | null;
   about: string | null;
@@ -28,13 +29,13 @@ export type Shop = {
   reviewed_at: Date | null;
 };
 
-const SHOP_COLUMNS = `s.id, s.slug, s.name, s.phone, s.address, s.district, s.whatsapp, s.instagram, s.about,
+const SHOP_COLUMNS = `s.id, s.slug, s.name, s.phone, s.address, s.district, s.city, s.whatsapp, s.instagram, s.about,
   s.latitude, s.longitude, s.timezone, s.audience,
   s.cancellation_cutoff_minutes, s.min_lead_minutes, s.buffer_minutes, s.slot_step_minutes,
   s.booking_horizon_days, s.max_future_bookings, s.reviewed_at`;
 
 /** Public = reviewed by our team and paid up (trial, active, or past due within the grace period). */
-const PUBLIC_CONDITION = `s.reviewed_at IS NOT NULL AND (
+export const PUBLIC_CONDITION = `s.reviewed_at IS NOT NULL AND (
   sub.status IN ('trial', 'active') OR (sub.status = 'past_due' AND sub.grace_until > $1))`;
 
 export async function getShopById(q: Queryable, shopId: string): Promise<Shop> {
@@ -57,10 +58,10 @@ export async function getPublicShopBySlug(q: Queryable, now: Date, slug: string)
 /** Home-page search by shop name or address. */
 export async function searchPublicShops(deps: Deps, query: string) {
   const { rows } = await deps.db.query(
-    `SELECT s.slug, s.name, s.address, s.district, s.audience,
+    `SELECT s.slug, s.name, s.address, s.district, s.city, s.audience,
        (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id
      FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
-     WHERE ${PUBLIC_CONDITION} AND (s.name ILIKE $2 OR s.address ILIKE $2 OR s.district ILIKE $2)
+     WHERE ${PUBLIC_CONDITION} AND (s.name ILIKE $2 OR s.address ILIKE $2 OR s.district ILIKE $2 OR s.city ILIKE $2)
      ORDER BY s.name LIMIT 20`,
     [deps.clock.now(), `%${query.replace(/[%_\\]/g, (c) => `\\${c}`)}%`],
   );
@@ -73,6 +74,7 @@ export type CreateShopInput = {
   phone?: string;
   address?: string;
   district?: string;
+  city?: string;
   whatsapp?: string;
   instagram?: string;
   latitude?: number;
@@ -100,14 +102,15 @@ export async function createShop(deps: Deps, admin: User, input: CreateShopInput
     if (exists.rowCount) throw conflict('SLUG_TAKEN', 'This shop link is already used');
     const shop = (
       await tx.query<{ id: string }>(
-        `INSERT INTO shops (name, slug, phone, address, district, whatsapp, instagram, latitude, longitude, audience)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+        `INSERT INTO shops (name, slug, phone, address, district, city, whatsapp, instagram, latitude, longitude, audience)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
         [
           input.name,
           input.slug,
           input.phone ? normalizePhone(input.phone) : null,
           input.address ?? null,
           input.district ?? null,
+          input.city ?? null,
           input.whatsapp ? normalizePhone(input.whatsapp) : null,
           input.instagram ? normalizeInstagram(input.instagram) : null,
           input.latitude ?? null,
@@ -176,6 +179,7 @@ export type ShopSettingsInput = Partial<{
   phone: string | null;
   address: string | null;
   district: string | null;
+  city: string | null;
   whatsapp: string | null;
   instagram: string | null;
   about: string | null;
@@ -195,6 +199,7 @@ const SETTING_COLUMNS: Record<keyof ShopSettingsInput, string> = {
   phone: 'phone',
   address: 'address',
   district: 'district',
+  city: 'city',
   whatsapp: 'whatsapp',
   instagram: 'instagram',
   about: 'about',

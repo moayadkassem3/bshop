@@ -426,3 +426,46 @@ describe('shop profile page (handoff v1.3)', () => {
     expect(r.body.error).toBe('INVALID_INSTAGRAM');
   });
 });
+
+describe('Salonlarım: favourites and shops booked before (handoff v1.4)', () => {
+  it('lists favourites first, then shops the customer booked, only while public', async () => {
+    const a = await setupShop(t);
+    const b = await setupShop(t, { slug: 'other-shop', ownerPhone: '+905320000099' });
+    const c = await customer();
+    expect((await t.call('GET', '/me/shops', { token: c })).body).toEqual([]);
+
+    await book(t, a, c, { serviceIds: [a.services.haircut], staffId: a.staff.cumali, startsAt: at('16:00') });
+    expect((await t.call('PUT', `/me/favorites/${b.slug}`, { token: c })).status).toBe(204);
+    await t.call('PUT', `/me/favorites/${b.slug}`, { token: c }); // saving twice is harmless
+
+    const mine = (await t.call('GET', '/me/shops', { token: c })).body;
+    expect(mine.map((s: { slug: string; favorite: boolean }) => [s.slug, s.favorite])).toEqual([
+      [b.slug, true],
+      [a.slug, false],
+    ]);
+    expect(mine[1].last_visit).not.toBeNull();
+
+    await t.call('PUT', `/admin/shops/${b.shopId}/subscription`, { token: b.tokens.admin, body: { status: 'canceled' } });
+    expect((await t.call('GET', '/me/shops', { token: c })).body.map((s: { slug: string }) => s.slug)).toEqual([a.slug]);
+
+    await t.call('DELETE', `/me/favorites/${b.slug}`, { token: c });
+    await t.call('PUT', `/admin/shops/${b.shopId}/subscription`, { token: b.tokens.admin, body: { status: 'active' } });
+    expect((await t.call('GET', '/me/shops', { token: c })).body.map((s: { slug: string }) => s.slug)).toEqual([a.slug]);
+  });
+
+  it('favourites need sign-in; phones can look up saved shops without it', async () => {
+    const shop = await setupShop(t);
+    expect((await t.call('PUT', `/me/favorites/${shop.slug}`)).status).toBe(401);
+    expect((await t.call('PUT', `/me/favorites/no-such-shop`, { token: await customer() })).status).toBe(404);
+    const summaries = await t.call('GET', `/public/shop-summaries?slugs=no-such-shop,${shop.slug}`);
+    expect(summaries.body.map((s: { slug: string }) => s.slug)).toEqual([shop.slug]);
+  });
+
+  it('search matches the city, for shops anywhere in Türkiye', async () => {
+    const shop = await setupShop(t);
+    await t.call('PATCH', `${shop.base}/settings`, { token: shop.tokens.owner, body: { city: 'Ankara', district: 'Çankaya' } });
+    const r = await t.call('GET', '/public/search?q=ankara');
+    expect(r.body.map((s: { slug: string; city: string }) => [s.slug, s.city])).toEqual([[shop.slug, 'Ankara']]);
+    expect((await t.call('GET', `/public/shops/${shop.slug}`)).body.city).toBe('Ankara');
+  });
+});

@@ -243,6 +243,7 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
         phone: z.string().min(7).max(20).nullable(),
         address: z.string().max(300).nullable(),
         district: z.string().max(80).nullable(),
+        city: z.string().max(40).nullable(),
         whatsapp: z.string().min(7).max(20).nullable(),
         instagram: z.string().max(120).nullable(),
         about: z.string().max(600).nullable(),

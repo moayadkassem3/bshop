@@ -1,4 +1,5 @@
 import { BusinessEntrances } from '@/components/BusinessEntrances';
+import { MyShops } from '@/components/MyShops';
 import { SearchBox } from '@/components/SearchBox';
 import styles from './page.module.css';
 
@@ -6,11 +7,12 @@ export default function HomePage() {
   return (
     <div className="container">
       <section className={styles.hero}>
-        <p className={styles.eyebrow}>Berber · Kuaför · İstanbul</p>
+        <p className={styles.eyebrow}>Berber · Kuaför</p>
         <h1 className={styles.title}>Randevunuzu arayıp beklemeden alın.</h1>
         <p className={styles.lead}>
           Ustanız müşteriyle meşgulken bile boş saatleri görün ve randevunuzu oluşturun. Uygulama indirmenize gerek yok.
         </p>
+        <MyShops />
         <div className={styles.search}>
           <SearchBox />
         </div>

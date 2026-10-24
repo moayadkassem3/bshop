@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api, errorMessage } from '@/lib/api';
-import { formatTime, istanbulHour, upcomingDays } from '@/lib/format';
+import { formatTime, turkeyHour, upcomingDays } from '@/lib/format';
 import type { Availability, Slot } from '@/lib/types';
 import styles from './booking.module.css';
 
@@ -92,7 +92,7 @@ export function TimeStep(props: {
       )}
       {slots &&
         PARTS.map((part) => {
-          const inPart = slots.filter((s) => part.test(istanbulHour(s.startsAt)));
+          const inPart = slots.filter((s) => part.test(turkeyHour(s.startsAt)));
           if (!inPart.length) return null;
           return (
             <div key={part.label} className={styles.slotGroup}>

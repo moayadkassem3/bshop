@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { FavoriteButton } from '@/components/FavoriteButton';
 import { PhotoGallery, PhotoGrid } from '@/components/PhotoGallery';
 import { formatDuration, formatPrice } from '@/lib/format';
 import { loadProfile } from '@/lib/server';
-import { AUDIENCE, directionsUrl, formatPhone, istanbulWeekday, todayHours, WEEKDAYS, whatsappUrl } from '@/lib/shop';
+import { AUDIENCE, directionsUrl, formatPhone, placeLabel, todayHours, turkeyWeekday, WEEKDAYS, whatsappUrl } from '@/lib/shop';
 import { ServiceList } from './ServiceList';
 import styles from './shop.module.css';
 
@@ -28,7 +29,7 @@ export default async function ShopProfilePage({ params }: Props) {
 
   const directions = directionsUrl(profile);
   const today = todayHours(profile.openingHours);
-  const weekday = istanbulWeekday();
+  const weekday = turkeyWeekday();
   const bookUrl = `/${profile.slug}/randevu`;
 
   return (
@@ -37,10 +38,13 @@ export default async function ShopProfilePage({ params }: Props) {
 
       <div className="container narrow">
         <header className={styles.profileHeader}>
-          <h1 className={styles.name}>{profile.name}</h1>
+          <div className={styles.titleRow}>
+            <h1 className={styles.name}>{profile.name}</h1>
+            <FavoriteButton slug={profile.slug} />
+          </div>
           <p className={styles.subline}>
             {AUDIENCE[profile.audience]}
-            {profile.district ? ` · ${profile.district}` : ''}
+            {placeLabel(profile) ? ` · ${placeLabel(profile)}` : ''}
           </p>
           <p className={today?.open ? styles.openNow : styles.closedNow}>
             {today?.open ? `Bugün açık · ${today.open}–${today.close}` : 'Bugün kapalı'}

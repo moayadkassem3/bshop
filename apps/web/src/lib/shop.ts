@@ -12,6 +12,11 @@ export function directionsUrl(shop: Pick<ShopProfile, 'latitude' | 'longitude' |
   return null;
 }
 
+/** "Kadıköy, İstanbul", or whichever part is known. */
+export function placeLabel(shop: { district: string | null; city: string | null }): string | null {
+  return [shop.district, shop.city].filter(Boolean).join(', ') || null;
+}
+
 export const whatsappUrl = (phone: string) => `https://wa.me/${phone.replace(/\D/g, '')}`;
 
 /** +905320000001 → 0532 000 00 01 */
@@ -28,12 +33,12 @@ export const AUDIENCE: Record<ShopProfile['audience'], string> = {
 
 export const WEEKDAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
 
-/** ISO weekday (1 = Monday) in Istanbul right now. */
-export function istanbulWeekday(now = new Date()): number {
+/** ISO weekday (1 = Monday) in Türkiye right now. */
+export function turkeyWeekday(now = new Date()): number {
   const name = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Istanbul', weekday: 'short' }).format(now);
   return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(name) + 1;
 }
 
 export function todayHours(hours: OpeningHours[], now = new Date()): OpeningHours | undefined {
-  return hours.find((h) => h.weekday === istanbulWeekday(now));
+  return hours.find((h) => h.weekday === turkeyWeekday(now));
 }

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { AppointmentStatus } from '@/components/AppointmentStatus';
+import { FavoriteButton } from '@/components/FavoriteButton';
 import { api } from '@/lib/api';
 import { formatLongDate, formatTime } from '@/lib/format';
 import type { CustomerAppointment } from '@/lib/types';
@@ -10,7 +11,7 @@ import type { BookingResult } from './ConfirmStep';
 import styles from './booking.module.css';
 
 /** After booking: shows pending or confirmed, and refreshes until the shop answers. */
-export function DoneStep({ result }: { result: BookingResult }) {
+export function DoneStep({ result, slug }: { result: BookingResult; slug: string }) {
   const [appointments, setAppointments] = useState<CustomerAppointment[] | null>(null);
   const ids = result.appointments.map((a) => a.id);
   const key = ids.join(',');
@@ -56,6 +57,10 @@ export function DoneStep({ result }: { result: BookingResult }) {
           <AppointmentStatus appointment={a} />
         </div>
       ))}
+      <div className={styles.doneFavorite}>
+        <p className="muted">Bir dahaki sefere hızlıca bulmak için:</p>
+        <FavoriteButton slug={slug} label />
+      </div>
       <div className={styles.doneActions}>
         <Link href="/randevularim" className="btn btn-primary">
           Randevularım

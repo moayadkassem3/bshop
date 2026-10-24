@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api, errorMessage } from '@/lib/api';
+import { moveLocalFavoritesToAccount } from '@/lib/favorites';
 import { setToken } from '@/lib/session';
 import type { Me } from '@/lib/types';
 import styles from './PhoneSignIn.module.css';
@@ -58,6 +59,7 @@ export function PhoneSignIn({ askNames, onSignedIn }: Props) {
         },
       });
       setToken(res.token);
+      await moveLocalFavoritesToAccount();
       onSignedIn(res.user);
     } catch (err) {
       setError(errorMessage(err));

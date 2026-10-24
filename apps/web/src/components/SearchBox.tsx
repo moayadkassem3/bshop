@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import { photoUrl } from '@/lib/shop';
+import { photoUrl, placeLabel } from '@/lib/shop';
 import type { ShopSummary } from '@/lib/types';
 import styles from './SearchBox.module.css';
 
@@ -38,7 +38,7 @@ export function SearchBox() {
         <input
           id="shop-search"
           className={styles.input}
-          placeholder="Salon adı veya semt yazın"
+          placeholder="Salon adı, semt veya şehir"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoComplete="off"
@@ -58,7 +58,7 @@ export function SearchBox() {
                 )}
                 <span className={styles.resultText}>
                   <span className={styles.resultName}>{shop.name}</span>
-                  <span className={styles.resultAddress}>{shop.district ?? shop.address}</span>
+                  <span className={styles.resultAddress}>{placeLabel(shop) ?? shop.address}</span>
                 </span>
               </Link>
             </li>

@@ -123,6 +123,7 @@ export async function getShopProfile(deps: Deps, slug: string) {
     about: shop.about,
     address: shop.address,
     district: shop.district,
+    city: shop.city,
     phone: shop.phone,
     whatsapp: shop.whatsapp,
     instagram: shop.instagram,

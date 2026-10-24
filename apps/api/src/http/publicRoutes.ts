@@ -4,6 +4,7 @@ import type { Deps } from '../deps.js';
 import { requestOtp, verifyOtp } from '../services/auth.js';
 import { firstAvailable, getAvailability, getShopProfile } from '../services/availability.js';
 import { readPhoto } from '../services/photos.js';
+import { shopSummaries } from '../services/favorites.js';
 import { searchPublicShops } from '../services/shops.js';
 import type { AuthFn } from './app.js';
 import { csvIds, id } from './schemas.js';
@@ -34,6 +35,14 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
   app.get('/public/search', async (req) => {
     const { q } = z.object({ q: z.string().trim().min(2).max(60) }).parse(req.query);
     return searchPublicShops(deps, q);
+  });
+
+  // Favourites saved on a phone before signing in.
+  app.get('/public/shop-summaries', async (req) => {
+    const { slugs } = z
+      .object({ slugs: z.string().transform((s) => s.split(',').filter(Boolean)).pipe(z.array(z.string().max(60)).max(30)) })
+      .parse(req.query);
+    return shopSummaries(deps, slugs);
   });
 
   app.get('/public/shops/:slug', async (req) => {

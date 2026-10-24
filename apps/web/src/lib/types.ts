@@ -18,6 +18,7 @@ export type ShopProfile = {
   about: string | null;
   address: string | null;
   district: string | null;
+  city: string | null;
   phone: string | null;
   whatsapp: string | null;
   instagram: string | null;
@@ -45,9 +46,13 @@ export type ShopSummary = {
   name: string;
   address: string | null;
   district: string | null;
+  city: string | null;
   audience: string;
   cover_photo_id: string | null;
 };
+
+/** A shop in "Salonlarım": a favourite, or one booked before. */
+export type MyShop = Omit<ShopSummary, 'address'> & { favorite: boolean; last_visit: string | null };
 
 export type Me = { id: string; phone: string; first_name: string | null; last_name: string | null };
 

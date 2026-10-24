@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Deps } from '../deps.js';
 import { updateProfile } from '../services/auth.js';
 import { cancelByCustomer, createBooking, listCustomerAppointments } from '../services/booking.js';
+import { addFavorite, listCustomerShops, removeFavorite } from '../services/favorites.js';
 import type { AuthFn } from './app.js';
 import { id, timestamp } from './schemas.js';
 
@@ -37,6 +38,21 @@ export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
       })
       .parse(req.body);
     return reply.status(201).send(await createBooking(deps, user, slug, body));
+  });
+
+  // "Salonlarım": favourites and shops booked before.
+  app.get('/me/shops', async (req) => listCustomerShops(deps, await auth(req)));
+
+  app.put('/me/favorites/:slug', async (req, reply) => {
+    const { slug } = z.object({ slug: z.string() }).parse(req.params);
+    await addFavorite(deps, await auth(req), slug);
+    return reply.status(204).send();
+  });
+
+  app.delete('/me/favorites/:slug', async (req, reply) => {
+    const { slug } = z.object({ slug: z.string() }).parse(req.params);
+    await removeFavorite(deps, await auth(req), slug);
+    return reply.status(204).send();
   });
 
   app.get('/me/appointments', async (req) => listCustomerAppointments(deps, await auth(req)));

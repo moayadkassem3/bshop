@@ -48,7 +48,7 @@ export const MONDAY_9AM = '2026-10-26T06:00:00.000Z';
 /** Istanbul local time on Monday 26 October 2026, as an ISO instant. */
 export const at = (hhmm: string, date = '2026-10-26') => new Date(`${date}T${hhmm}:00+03:00`).toISOString();
 
-const TABLES = `shop_photos, notifications, appointment_services, appointments, booking_groups, shop_customers, member_services,
+const TABLES = `customer_favorites, shop_photos, notifications, appointment_services, appointments, booking_groups, shop_customers, member_services,
   services, auto_confirm_hours, time_off, working_hours, shop_members, subscriptions, shops, sessions, otp_codes, users`;
 
 export function useTestApp() {

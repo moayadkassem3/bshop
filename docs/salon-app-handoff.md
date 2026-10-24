@@ -1,10 +1,10 @@
 # Salon Booking Platform — Handoff & Planning Baseline
 
-**Version:** 1.3  
+**Version:** 1.4  
 **Baseline date:** 24 October 2026  
-**Previous versions:** 1.2 and 1.1 (24 October 2026), 1.0 (6 October 2026)  
+**Previous versions:** 1.3, 1.2 and 1.1 (24 October 2026), 1.0 (6 October 2026)  
 **Status:** Build in progress. The founder authorized application code on 24 October 2026 (Section 12).  
-**Working market:** Istanbul, Türkiye  
+**Working market:** All of Türkiye *(v1.4)*  
 **Product name:** To be decided
 
 This document is the reference point for continuing product design and handing the project to a designer or development team. It consolidates the founder's decisions from the planning conversations. It is a planning baseline, not a claim that every design or technical question has been resolved.
@@ -17,7 +17,7 @@ This document is the reference point for continuing product design and handing t
 - **Proposed** — a recommendation recorded for design review; it needs the founder's confirmation before it becomes agreed.
 - **Open** — not yet decided.
 
-Rows and sections new or changed in version 1.1 are marked *(v1.1)*, and in version 1.3 *(v1.3)*; version 1.2 adds Section 12. The change record at the end summarises each version.
+Rows and sections new or changed in version 1.1 are marked *(v1.1)*, in version 1.3 *(v1.3)*, and in version 1.4 *(v1.4)*; version 1.2 adds Section 12. The change record at the end summarises each version.
 
 ## 1. Product purpose
 
@@ -25,7 +25,7 @@ A customer wants to book an appointment, but the barber or stylist may be busy s
 
 The product also gives each participating shop a public profile page. Its two core benefits are easier appointment management and shop visibility. *(v1.3)* Map discovery is removed; customers reach a shop through its link or QR code, or by searching its name.
 
-Initial customers are men's barbershops and women's salons in Istanbul. Initial shop acquisition will happen through face-to-face visits.
+Customers are men's barbershops and women's salons across Türkiye *(v1.4)*; the plan started from İstanbul, and where the pilot runs is open. Initial shop acquisition will happen through face-to-face visits.
 
 *(v1.1)* Customers use the product on the **web only**; there is no customer app to install. Staff and shop owners use **one native app on Android and iOS**. No delivery order between Android and iOS has been chosen.
 
@@ -34,7 +34,7 @@ Initial customers are men's barbershops and women's salons in Istanbul. Initial 
 | Area | Baseline decision |
 | --- | --- |
 | Customer identity | Phone number, first name, and surname; easy account creation. |
-| Booking access *(v1.3)* | Shop link or QR code, and search by shop name or district. Map discovery and contact matching are removed from the first release. |
+| Booking access *(v1.4)* | Shop link or QR code, and search by shop name, district, or city. Map discovery and contact matching are removed from the first release. |
 | Platforms *(v1.1)* | Customers find shops, book, and track appointments on the web only. Staff and owners use a native app on Android and iOS. |
 | Owner tools *(v1.1)* | Inside the same native app as staff, unlocked by owner permissions. No separate owner web dashboard in the first release. |
 | Separate sign-in *(v1.2)* | Owners and staff sign in through separate entrances: “Salon Sahibi Girişi” and “Çalışan Girişi”. Each accepts only phones with that role, checked before an SMS code is sent. Owner powers are available only after owner sign-in; an owner who also cuts hair sees their own schedule there. |
@@ -43,7 +43,8 @@ Initial customers are men's barbershops and women's salons in Istanbul. Initial 
 | Staff services and durations *(v1.1)* | Each staff member selects which of the shop's services they perform and sets their own durations for them. |
 | Subscription | Monthly shop subscription, with an extra fee per additional barber or stylist. |
 | Public visibility *(v1.3)* | Only reviewed, subscribed shops have a public profile, appear in search, and take bookings. |
-| Shop profile page *(v1.3)* | Every shop has a public profile: photos (up to 12, the first is the cover), shop type and district, today's hours and the weekly hours, address with “Yol tarifi” (directions in the phone's maps app), phone, WhatsApp, Instagram, a short description, the price list, and the staff, each with their own booking link. A fixed bar offers WhatsApp, Call, Directions, and “Randevu al”. |
+| Salonlarım *(v1.4)* | The home page starts with the customer's own shops: favourites (a heart on the profile page and after booking) first, then shops they booked before, each with a direct “Randevu al”. Favourites work without signing in (kept on the phone) and move to the customer's account at sign-in. |
+| Shop profile page *(v1.3)* | Every shop has a public profile: photos (up to 12, the first is the cover), shop type, district and city *(v1.4)*, today's hours and the weekly hours, address with “Yol tarifi” (directions in the phone's maps app), phone, WhatsApp, Instagram, a short description, the price list, and the staff, each with their own booking link. A fixed bar offers WhatsApp, Call, Directions, and “Randevu al”. |
 | Shop activation | Our team reviews shops before public visibility and booking activation. |
 | Owner permissions | Manage the shop, all staff, and all appointments. |
 | Staff permissions *(v1.1)* | Manage their own appointments; select which shop services they perform and modify their durations. |
@@ -239,7 +240,7 @@ Owners set the cancellation cutoff. Reminder timing, cancellation after the cuto
 - **Buffer:** an optional per-shop or per-staff gap after each appointment for cleanup, set explicitly rather than hidden in the time grid.
 - **Booking horizon:** open (how far ahead customers can book).
 
-Use Istanbul local time in customer and shop displays. Türkiye has used UTC+3 all year with no daylight saving time since 2016; store times in UTC regardless.
+Use Türkiye time (one time zone nationwide, Europe/Istanbul) in customer and shop displays. Türkiye has used UTC+3 all year with no daylight saving time since 2016; store times in UTC regardless.
 
 ### 5.1 Draft appointment states *(v1.1, proposed)*
 
@@ -335,10 +336,10 @@ This is a sequence of deliverables, not a development schedule or technology com
 | Phase | Work | Completion condition |
 | --- | --- | --- |
 | 1. Finish system definition | Resolve the booking, cancellation, assignment, identity, and alert decisions listed below. Confirm the appointment states (5.1) and role permissions. | Founder has a coherent set of workflows, including exceptional cases. |
-| 2. Design customer and shop experiences | Create screen flows and a clickable prototype for the customer web (discovery, booking, confirmation) and the staff/owner app (schedules, requests, alerts, absence, settings, service list), plus the reviewer flow. Prepare Turkish interface wording. | Validate the prototype with the founder and initial Istanbul shops; document revisions. |
+| 2. Design customer and shop experiences | Create screen flows and a clickable prototype for the customer web (discovery, booking, confirmation) and the staff/owner app (schedules, requests, alerts, absence, settings, service list), plus the reviewer flow. Prepare Turkish interface wording. | Validate the prototype with the founder and the first shops; document revisions. |
 | 3. Validate feasibility and prepare engineering handoff | Evaluate alerts in the native app on Android and iOS (4.5), photo storage, subscription collection with iyzico, e-invoicing (e-arşiv / e-fatura), and SMS delivery. Review privacy and messaging requirements: KVKK (including VERBİS registration and data transfer abroad, which affects hosting choice), SMS sender-name registration, and whether İYS applies to appointment messages. Check app-store rules for a subscription sold outside the app. Define the data model and acceptance scenarios. | Select the technical approach and document platform limits and unresolved dependencies. Any experimental coding requires the founder's go-ahead to begin code work. |
 | 4. Implement the agreed first release | Build customer web booking and shop profile pages, the staff/owner native app for Android and iOS, review/activation, subscription access, and SMS and in-app notifications. | Agreed acceptance scenarios pass on the customer web and both mobile platforms; any staged rollout is explicitly agreed. |
-| 5. Run an Istanbul pilot | Onboard reviewed shops face-to-face, verify their service lists and schedules, and observe real booking and alert behavior. | Pilot findings are recorded and release-blocking issues are resolved. |
+| 5. Run a pilot *(city open, v1.4)* | Onboard reviewed shops face-to-face, verify their service lists and schedules, and observe real booking and alert behavior. | Pilot findings are recorded and release-blocking issues are resolved. |
 
 *(Proposed, v1.1)* Run a small alert prototype on Android and iOS before Phase 2, so the alert design is based on what the platforms allow. This needs the founder's go-ahead because it involves code.
 
@@ -511,3 +512,4 @@ Reviewed on 24 October 2026 from founder-supplied screenshots of the customer we
 | 1.1 | 24 October 2026 | Founder decisions: customers on the web only, with one native staff/owner app on Android and iOS; contact matching removed; shop-level service list from the platform template, with custom and renamed services; staff select their services and durations; customer phone numbers visible to owner and staff; reminder alert at 10 minutes with automatic confirmation unchanged at 15; customer SMS with the final result; booking for someone else; special alert kept for every booking; shop tablet mode not pursued; iyzico preferred for subscriptions. Added proposals for prices, verification, abuse protection, late cancellation, booking groups, staff absence, scheduling, appointment states, women's catalog coverage, and Turkey-specific feasibility checks. Added catalog items to confirm, a risk register, a competitor review, and interface wording. |
 | 1.2 | 24 October 2026 | Founder authorized application code, approved the technology, and asked for proposals to be built as adjustable defaults; per-staff monthly fee to be set later. Alert keeps ringing until answered. Separate sign-in for owners and staff. Added Section 12 (build status). Corrected the last-minute reminder threshold to 6 minutes to match the 4.4 example. |
 | 1.3 | 24 October 2026 | Founder decisions: map discovery removed; every shop gets a public profile page with photos, hours, address and directions, phone, WhatsApp, and Instagram, and a WhatsApp · Call · Directions · Randevu al bar. Customers reach shops by link, QR code, or name search. |
+| 1.4 | 24 October 2026 | Founder decisions: the app serves all of Türkiye (shops record their city; search matches it; “İstanbul” removed from the website; pilot city open); “Salonlarım” on the home page with favourite shops and shops booked before. |

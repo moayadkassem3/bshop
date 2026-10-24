@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { formatDuration, formatPrice, istanbulDate } from '@/lib/format';
+import { formatDuration, formatPrice, turkeyDate } from '@/lib/format';
 import type { ShopProfile, Slot } from '@/lib/types';
 import { ConfirmStep, type BookingResult } from './ConfirmStep';
 import { DoneStep } from './DoneStep';
@@ -28,7 +28,7 @@ export function BookingFlow({ profile, presetStaffId }: { profile: ShopProfile; 
   const [step, setStep] = useState<Step>('services');
   const [serviceIds, setServiceIds] = useState<string[]>([]);
   const [staffId, setStaffId] = useState<string | null>(presetStaff?.id ?? null);
-  const [date, setDate] = useState(() => istanbulDate(new Date()));
+  const [date, setDate] = useState(() => turkeyDate(new Date()));
   const [slot, setSlot] = useState<Slot | null>(null);
   const [result, setResult] = useState<BookingResult | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -153,7 +153,7 @@ export function BookingFlow({ profile, presetStaffId }: { profile: ShopProfile; 
           }}
         />
       )}
-      {step === 'done' && result && <DoneStep result={result} />}
+      {step === 'done' && result && <DoneStep result={result} slug={profile.slug} />}
 
       {step !== 'done' && step !== 'confirm' && (
         <div className={styles.bottomBar}>
