@@ -157,7 +157,7 @@ There is no fixed advance-booking requirement. Available start-time increments a
 
 ### 4.5 Appointment alerts
 
-Every new appointment uses the special, prominent alert, regardless of its confirmation route. Desired features are a distinctive ringtone, a prominent presentation potentially using the full screen, and optional spoken appointment details. *(v1.1)* The founder confirmed keeping this for every booking, accepting that it may reach staff while they are serving a customer.
+Every new appointment uses the special, prominent alert, regardless of its confirmation route. Desired features are a distinctive ringtone, a prominent presentation potentially using the full screen, and optional spoken appointment details. *(v1.1)* The founder confirmed keeping this for every booking, accepting that it may reach staff while they are serving a customer. *(v1.2)* For a pending request, the alert keeps ringing until the staff member answers (founder, after alert test 1).
 
 - Pending request: Show the requested time, services, and Confirm / Decline actions.
 - *(v1.1)* Reminder at 10 minutes: The same request and actions, presented again.
@@ -508,4 +508,4 @@ Reviewed on 24 October 2026 from founder-supplied screenshots of the customer we
 | --- | --- | --- |
 | 1.0 | 6 October 2026 | Consolidated planning decisions and created the initial handoff. Included 45 services; removed home visits; preserved the last-minute confirmation rule. |
 | 1.1 | 24 October 2026 | Founder decisions: customers on the web only, with one native staff/owner app on Android and iOS; contact matching removed; shop-level service list from the platform template, with custom and renamed services; staff select their services and durations; customer phone numbers visible to owner and staff; reminder alert at 10 minutes with automatic confirmation unchanged at 15; customer SMS with the final result; booking for someone else; special alert kept for every booking; shop tablet mode not pursued; iyzico preferred for subscriptions. Added proposals for prices, verification, abuse protection, late cancellation, booking groups, staff absence, scheduling, appointment states, women's catalog coverage, and Turkey-specific feasibility checks. Added catalog items to confirm, a risk register, a competitor review, and interface wording. |
-| 1.2 | 24 October 2026 | Founder authorized application code, approved the technology, and asked for proposals to be built as adjustable defaults; per-staff monthly fee to be set later. Added Section 12 (build status). Corrected the last-minute reminder threshold to 6 minutes to match the 4.4 example. |
+| 1.2 | 24 October 2026 | Founder authorized application code, approved the technology, and asked for proposals to be built as adjustable defaults; per-staff monthly fee to be set later. Alert keeps ringing until answered. Added Section 12 (build status). Corrected the last-minute reminder threshold to 6 minutes to match the 4.4 example. |
