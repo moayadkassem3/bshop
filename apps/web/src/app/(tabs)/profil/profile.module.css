@@ -19,22 +19,24 @@
 .heroMark {
   display: grid;
   place-items: center;
-  width: 92px;
-  height: 92px;
-  border-radius: 28px;
+  width: 84px;
+  height: 84px;
+  border-radius: 24px;
   background: var(--primary);
-  box-shadow: 0 0 0 10px rgb(255 255 255 / 0.05);
+  color: #fff;
+  box-shadow: 0 0 0 10px #111a33;
 }
 
 .brand {
-  margin: 12px 0 0;
-  font-size: 34px;
-  letter-spacing: -0.03em;
+  margin: 22px 0 0;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
 }
 
 .tagline {
   margin: 0;
-  color: #c9c2b6;
+  color: var(--dark-muted);
   font-size: 17px;
 }
 
@@ -168,7 +170,7 @@
 
 .accountPhone {
   margin: 0;
-  color: #c9c2b6;
+  color: var(--dark-muted);
 }
 
 .modeBadge {

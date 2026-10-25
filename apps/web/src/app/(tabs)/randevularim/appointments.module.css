@@ -1,3 +1,77 @@
+.header {
+  padding-bottom: 20px;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 18px;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--dark-2);
+}
+
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 11px;
+  background: none;
+  color: var(--dark-muted);
+  font-weight: 750;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.segmented .segOn {
+  background: var(--primary);
+  color: #fff;
+}
+
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.body {
+  padding-top: 18px;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.chip {
+  min-height: 40px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chip.chipOn {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
 .wrap {
   display: grid;
   gap: 12px;
@@ -11,23 +85,37 @@
   margin: 0 0 14px;
 }
 
-.sectionTitle {
-  margin: 12px 0 0;
-  font-size: 15px;
-  color: var(--muted);
-  font-weight: 650;
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 36px 20px;
+  text-align: center;
 }
 
-.empty {
-  padding: 24px;
-  text-align: center;
-  border: 1px dashed var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
+.empty h2 {
+  margin: 10px 0 0;
+  font-size: 20px;
 }
 
 .empty p {
-  margin: 0 0 12px;
+  margin: 0;
+  color: var(--muted);
+}
+
+.empty .btn {
+  margin-top: 14px;
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
 }
 
 .card {

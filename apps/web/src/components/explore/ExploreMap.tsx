@@ -218,7 +218,13 @@ export function ExploreMap() {
           Yakındaki kuaförler
         </h1>
         <p className={styles.sheetMeta}>
-          {sorted ? `${user ? 'Yakınınızda' : 'Bu bölgede'} ${sorted.length} kuaför · en yakından uzağa` : 'Kuaförler yükleniyor…'}
+          {sorted ? (
+            <>
+              {user ? 'Yakınınızda' : 'Bu bölgede'} <strong>{sorted.length} kuaför</strong> · en yakından uzağa
+            </>
+          ) : (
+            'Kuaförler yükleniyor…'
+          )}
         </p>
         {!user && (
           <div className={styles.locationHint}>

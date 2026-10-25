@@ -16,7 +16,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--primary);
 }
 
 .title {
@@ -92,8 +92,8 @@
   margin: 0 0 14px;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
-  background: var(--gold-soft);
-  color: var(--gold);
+  background: var(--primary-soft);
+  color: var(--primary);
   font-weight: 650;
 }
 

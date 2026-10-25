@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import '@fontsource-variable/inter';
 import { BRAND } from '@/lib/config';
 import './globals.css';
 import './layout.css';
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
   description: 'Yakınınızdaki kuaförleri bulun, boş saatleri görün ve randevunuzu hemen oluşturun.',
 };
 
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#14120f', viewportFit: 'cover' };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#0e1013', viewportFit: 'cover' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

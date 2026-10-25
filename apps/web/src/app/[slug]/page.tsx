@@ -5,7 +5,7 @@ import { FavoriteButton } from '@/components/FavoriteButton';
 import { PhotoGallery, PhotoGrid } from '@/components/PhotoGallery';
 import { formatDuration, formatPrice } from '@/lib/format';
 import { loadProfile } from '@/lib/server';
-import { AUDIENCE, directionsUrl, formatPhone, placeLabel, todayHours, turkeyWeekday, WEEKDAYS, whatsappUrl } from '@/lib/shop';
+import { AUDIENCE, directionsUrl, formatPhone, todayHours, turkeyWeekday, WEEKDAYS, whatsappUrl } from '@/lib/shop';
 import { ServiceList } from './ServiceList';
 import styles from './shop.module.css';
 
@@ -41,14 +41,14 @@ export default async function ShopProfilePage({ params }: Props) {
 
       <div className="container narrow">
         <header className={styles.profileHeader}>
+          <p className={styles.kicker}>
+            {AUDIENCE[profile.audience]}
+            {profile.district || profile.city ? ` · ${profile.district || profile.city}` : ''}
+          </p>
           <div className={styles.titleRow}>
             <h1 className={styles.name}>{profile.name}</h1>
             <FavoriteButton slug={profile.slug} />
           </div>
-          <p className={styles.subline}>
-            {AUDIENCE[profile.audience]}
-            {placeLabel(profile) ? ` · ${placeLabel(profile)}` : ''}
-          </p>
           <p className={today?.open ? styles.openNow : styles.closedNow}>
             {today?.open ? `Bugün açık · ${today.open}–${today.close}` : 'Bugün kapalı'}
           </p>
@@ -88,7 +88,7 @@ export default async function ShopProfilePage({ params }: Props) {
           )}
           {profile.whatsapp && (
             <a href={whatsappUrl(profile.whatsapp)} target="_blank" rel="noreferrer" className={styles.infoRow}>
-              <span className={`${styles.infoIcon} ${styles.whatsappIcon}`} aria-hidden>
+              <span className={styles.infoIcon} aria-hidden>
                 <WhatsAppIcon />
               </span>
               <span className={styles.infoText}>WhatsApp ile yazın</span>
@@ -102,7 +102,7 @@ export default async function ShopProfilePage({ params }: Props) {
               rel="noreferrer"
               className={styles.infoRow}
             >
-              <span className={`${styles.infoIcon} ${styles.instagramIcon}`} aria-hidden>
+              <span className={styles.infoIcon} aria-hidden>
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="3" width="18" height="18" rx="5" />
                   <circle cx="12" cy="12" r="4" />
@@ -131,7 +131,10 @@ export default async function ShopProfilePage({ params }: Props) {
           <dl className={styles.hours}>
             {profile.openingHours.map((h) => (
               <div key={h.weekday} className={h.weekday === weekday ? styles.hoursToday : undefined}>
-                <dt>{WEEKDAYS[h.weekday - 1]}</dt>
+                <dt>
+                  {WEEKDAYS[h.weekday - 1]}
+                  {h.weekday === weekday && ' · Bugün'}
+                </dt>
                 <dd>{h.open ? `${h.open}–${h.close}` : 'Kapalı'}</dd>
               </div>
             ))}
@@ -182,7 +185,7 @@ export default async function ShopProfilePage({ params }: Props) {
       <nav className={styles.actionBar} aria-label="Salonla iletişim">
         <div className={styles.actionInner}>
           {profile.whatsapp && (
-            <a href={whatsappUrl(profile.whatsapp)} target="_blank" rel="noreferrer" className={`${styles.action} ${styles.actionWhatsapp}`} aria-label="WhatsApp">
+            <a href={whatsappUrl(profile.whatsapp)} target="_blank" rel="noreferrer" className={styles.action} aria-label="WhatsApp">
               <WhatsAppIcon />
             </a>
           )}

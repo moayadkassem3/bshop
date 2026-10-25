@@ -535,6 +535,7 @@ The founder answered the questions left open after v1.5 (25 October 2026).
 | Co-owner | An “Ortak” (co-owner) label with the same permissions as the owner. The owner and co-owners can choose whether they take appointments. |
 | Owner who also works *(proposed default)* | Counts as one of the plan's staff only when “Ben de randevu alıyorum” is ticked. Co-owners follow the same rule; staff always count. |
 | Product name | Still open. The build shows “Salon Randevu” and reads the name from `NEXT_PUBLIC_BRAND_NAME`, so changing it is one setting. |
+| Visual identity | Blue (#1F48C9) and near-black (#0E1013) on a light grey background (#F3F5F8), with bold, tightly spaced headings (Inter). The logo is a white scissors mark on black; on the dark sign-in screen it sits on a blue tile. It is used as the browser and home-screen icon. The founder's mockups are the reference for the screens. |
 
 **Built in v1.6:**
 
@@ -560,6 +561,7 @@ The founder answered the questions left open after v1.5 (25 October 2026).
   - Veri İşleme Sözleşmesi
 
   Every acceptance is recorded with the document's version and time. Customers accept the user agreement at sign-in; marketing permission is optional and can be withdrawn. Businesses accept both business agreements when registering. The drafts have placeholders (company title, address, MERSİS, KEP, e-mail) and **must be reviewed by a lawyer before launch**.
+- **Theme.** All screens use the brand colours and logo. Randevular is split into “Randevular” (accepted by the salon) and “Talepler” (waiting for the salon, or declined), each with Yaklaşan / Geçmiş. A new request opens on Talepler.
 - **Names in Turkish order.** Staff and shop names are sorted in Turkish alphabetical order (Ç after C, Ş after S).
 
 | Version | Date | Change |

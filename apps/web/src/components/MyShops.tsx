@@ -26,7 +26,9 @@ export function MyShops() {
     return (
       <div className={`card ${styles.empty}`}>
         <span className={styles.emptyIcon} aria-hidden>
-          ♥
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+            <path d="M12 20s-7-4.4-9.2-8.6C1.3 8.4 3 5 6.4 5c2 0 3.2 1.1 3.9 2.2.4.6 1 .6 1.4 0C12.4 6.1 13.6 5 15.6 5 19 5 20.7 8.4 19.2 11.4 17 15.6 12 20 12 20z" />
+          </svg>
         </span>
         <h2>Henüz favori kuaförünüz yok</h2>
         <p className="muted">Bir kuaförün sayfasındaki kalbe dokunun; burada hep elinizin altında olsun.</p>

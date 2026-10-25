@@ -46,7 +46,7 @@
   bottom: 12px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgb(28 25 23 / 0.7);
+  background: rgb(14 16 19 / 0.7);
   color: #fff;
   font-size: 13px;
   font-weight: 600;
@@ -58,8 +58,8 @@
   max-width: 720px;
   margin: 0 auto;
   aspect-ratio: 16 / 7;
-  background: radial-gradient(circle at 30% 20%, #3b342c, var(--ink));
-  color: #f5e6c8;
+  background: radial-gradient(circle at 30% 20%, var(--dark-2), var(--ink));
+  color: var(--primary-light);
   font-size: 44px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -71,7 +71,7 @@
   z-index: 100;
   display: grid;
   place-items: center;
-  background: rgb(10 9 8 / 0.95);
+  background: rgb(14 16 19 / 0.95);
 }
 
 .full {

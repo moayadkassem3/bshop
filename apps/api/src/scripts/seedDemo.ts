@@ -70,11 +70,11 @@ const shops: DemoShop[] = [
     instagram: 'demoberber',
     about: 'Moda’nın klasik erkek kuaförü. Saç, sakal ve damat tıraşında 15 yıllık deneyim.',
     colors: [
-      ['#2b2420', '#8a6a4c'],
-      ['#1f2a2a', '#4f7c75'],
-      ['#3a2a22', '#b0835a'],
-      ['#24221f', '#6b6457'],
-      ['#2d241d', '#9c7a52'],
+      ['#0e1013', '#1c2027'],
+      ['#0e1013', '#1f48c9'],
+      ['#111a33', '#2b3550'],
+      ['#1c2027', '#3a3f48'],
+      ['#0e1013', '#16307f'],
     ],
     owner: { phone: '+905320000001', firstName: 'Salih', lastName: 'Demir' },
     staff: [
@@ -108,9 +108,9 @@ const shops: DemoShop[] = [
     instagram: 'demokuafor',
     about: 'Kadın ve erkek için kesim, fön, boya ve bakım.',
     colors: [
-      ['#3b2433', '#b07a95'],
-      ['#2a2434', '#7d6aa8'],
-      ['#33262a', '#c4917a'],
+      ['#111a33', '#1f48c9'],
+      ['#0e1013', '#2b3550'],
+      ['#1c2027', '#8daeff'],
     ],
     owner: { phone: '+905320000011', firstName: 'Elif', lastName: 'Kaya' },
     staff: [{ phone: '+905320000012', displayName: 'Zeynep Arslan' }],
@@ -130,10 +130,15 @@ function samplePhoto([from, to]: [string, string], n: number) {
     <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient></defs>
     <rect width="100%" height="100%" fill="url(#g)"/>
-    <g fill="none" stroke="#f5e6c8" stroke-width="16" stroke-linecap="round" opacity="0.22"
-       transform="translate(600 430) rotate(${-20 + n * 9}) translate(-180 -180)">
-      <circle cx="80" cy="80" r="60"/><circle cx="80" cy="280" r="60"/>
-      <path d="M330 40 L125 235 M235 235 L330 320 M125 125 L180 180"/>
+    <g fill="#fff" opacity="0.2" transform="translate(600 430) rotate(${-20 + n * 9}) scale(1.4) translate(-78 -110)">
+      <path d="M28 2C18 36 49 94 75 130L89 120C67 84 42 30 28 2Z"/>
+      <path d="M128 2C138 36 107 94 81 130L67 120C89 84 114 30 128 2Z"/>
+      <ellipse cx="78" cy="127" rx="15" ry="13"/>
+      <path d="M72 132 58 152M84 132l14 20" stroke="#fff" stroke-width="12" stroke-linecap="round"/>
+      <g fill="none" stroke="#fff" stroke-width="14">
+        <ellipse cx="35" cy="181" rx="30" ry="24" transform="rotate(-33 35 181)"/>
+        <ellipse cx="121" cy="181" rx="30" ry="24" transform="rotate(33 121 181)"/>
+      </g>
     </g>
     <text x="60" y="840" font-family="sans-serif" font-size="40" fill="#fff" opacity="0.9">Örnek fotoğraf ${n}</text>
   </svg>`;

@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { BrandName, LogoMark } from '@/components/Logo';
 import { PhoneSignIn } from '@/components/PhoneSignIn';
 import { api, ApiError, errorMessage } from '@/lib/api';
-import { BRAND } from '@/lib/config';
 import { formatPhone } from '@/lib/shop';
 import { getToken, setToken } from '@/lib/session';
 import type { Me } from '@/lib/types';
@@ -40,13 +40,11 @@ function SignIn(props: {
     <div className={styles.signInPage}>
       <div className={styles.hero}>
         <span className={styles.heroMark} aria-hidden>
-          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            <circle cx="6" cy="6" r="3" />
-            <circle cx="6" cy="18" r="3" />
-            <path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12" />
-          </svg>
+          <LogoMark size={52} />
         </span>
-        <h1 className={styles.brand}>{BRAND}</h1>
+        <h1 className={styles.brand}>
+          <BrandName />
+        </h1>
         <p className={styles.tagline}>Kuaförünü bul, randevunu hemen al.</p>
       </div>
 
@@ -235,7 +233,7 @@ function businessStatus(b: MyBusiness): { label: string; tone: string } {
   if (!b.reviewed_at) return { label: 'İncelemede', tone: 'badge-warning' };
   if (b.subscription_status === 'trial' && b.current_period_end) {
     const days = Math.max(0, Math.ceil((new Date(b.current_period_end).getTime() - Date.now()) / 86_400_000));
-    return days ? { label: `Deneme · ${days} gün kaldı`, tone: 'badge-gold' } : { label: 'Deneme bitti', tone: 'badge-danger' };
+    return days ? { label: `Deneme · ${days} gün kaldı`, tone: 'badge-info' } : { label: 'Deneme bitti', tone: 'badge-danger' };
   }
   if (b.subscription_status === 'active') return { label: 'Aktif', tone: 'badge-success' };
   if (b.subscription_status === 'past_due') return { label: 'Ödeme bekleniyor', tone: 'badge-danger' };

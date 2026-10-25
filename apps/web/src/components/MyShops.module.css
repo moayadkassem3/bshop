@@ -77,8 +77,8 @@
 }
 
 .empty h2 {
-  margin: 4px 0 0;
-  font-size: 19px;
+  margin: 10px 0 0;
+  font-size: 20px;
 }
 
 .empty p {
@@ -89,10 +89,9 @@
 .emptyIcon {
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
-  background: #fdf0f2;
-  color: #d1344a;
-  font-size: 26px;
+  background: var(--primary-soft);
+  color: var(--primary);
 }

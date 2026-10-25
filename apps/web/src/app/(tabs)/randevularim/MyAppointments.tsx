@@ -40,61 +40,145 @@ export function MyAppointments() {
     return () => clearInterval(timer);
   }, [items, load]);
 
-  if (signedIn === null) return null;
+  if (signedIn === null) return <Header />;
   if (!signedIn) {
     return (
-      <div className={`card ${styles.signIn}`}>
-        <p className="muted">Randevularınızı görmek için telefon numaranızı doğrulayın.</p>
-        <PhoneSignIn
-          askNames={false}
-          onSignedIn={() => {
-            setSignedIn(true);
-            load();
-          }}
-        />
-      </div>
+      <>
+        <Header />
+        <div className={`container narrow ${styles.body}`}>
+          <div className={`card ${styles.signIn}`}>
+            <p className="muted">Randevularınızı görmek için telefon numaranızı doğrulayın.</p>
+            <PhoneSignIn
+              askNames={false}
+              onSignedIn={() => {
+                setSignedIn(true);
+                load();
+              }}
+            />
+          </div>
+        </div>
+      </>
     );
   }
 
+  return (
+    <List
+      items={items}
+      error={error}
+      onChanged={load}
+      onSignOut={() => {
+        setToken(null);
+        setItems(null);
+        setSignedIn(false);
+      }}
+    />
+  );
+}
+
+type Tab = 'appointments' | 'requests';
+type When = 'upcoming' | 'past';
+
+// Talepler: requests the salon has not answered yet, and declined ones. Randevular: everything the salon accepted.
+const isRequest = (a: CustomerAppointment) => a.status === 'pending' || a.status === 'declined';
+const isUpcoming = (a: CustomerAppointment, now: number) =>
+  ['pending', 'confirmed'].includes(a.status) && new Date(a.starts_at).getTime() > now;
+
+const EMPTY: Record<Tab, Record<When, { title: string; text: string | null }>> = {
+  appointments: {
+    upcoming: { title: 'Yaklaşan randevun yok', text: 'Bir kuaför seçip randevu oluşturabilirsin.' },
+    past: { title: 'Geçmiş randevun yok', text: 'Tamamlanan randevuların burada görünür.' },
+  },
+  requests: {
+    upcoming: { title: 'Bekleyen talebin yok', text: 'Gönderdiğin talepler salon yanıtlayana kadar burada görünür.' },
+    past: { title: 'Geçmiş talebin yok', text: null },
+  },
+};
+
+function Header({ children }: { children?: React.ReactNode }) {
+  return (
+    <header className={`page-header ${styles.header}`}>
+      <div className="container narrow">
+        <h1>Randevular</h1>
+        {children}
+      </div>
+    </header>
+  );
+}
+
+function List(props: { items: CustomerAppointment[] | null; error: string | null; onChanged: () => void; onSignOut: () => void }) {
   const now = Date.now();
-  const upcoming = (items ?? []).filter((a) => ['pending', 'confirmed'].includes(a.status) && new Date(a.starts_at).getTime() > now);
-  const past = (items ?? []).filter((a) => !upcoming.includes(a));
+  const all = props.items ?? [];
+  const waiting = all.filter((a) => a.status === 'pending' && isUpcoming(a, now)).length;
+  const [tab, setTab] = useState<Tab | null>(null);
+  const [when, setWhen] = useState<When>('upcoming');
+  // A new request opens on Talepler, so it is the first thing the customer sees after booking.
+  const shownTab: Tab = tab ?? (waiting && !all.some((a) => a.status === 'confirmed' && isUpcoming(a, now)) ? 'requests' : 'appointments');
+  const shown = all.filter((a) => (shownTab === 'requests') === isRequest(a) && (when === 'upcoming') === isUpcoming(a, now));
+  const empty = EMPTY[shownTab][when];
 
   return (
-    <div className={styles.wrap}>
-      {error && <p className="alert alert-danger">{error}</p>}
-      <h2 className={styles.sectionTitle}>Yaklaşan</h2>
-      {items && upcoming.length === 0 && (
-        <div className={styles.empty}>
-          <p className="muted">Yaklaşan randevunuz yok.</p>
-          <Link href="/" className="btn btn-primary">
-            Kuaför keşfet
-          </Link>
-        </div>
-      )}
-      {upcoming.map((a) => (
-        <AppointmentCard key={a.id} appointment={a} onChanged={load} />
-      ))}
-      {past.length > 0 && (
-        <>
-          <h2 className={styles.sectionTitle}>Geçmiş</h2>
-          {past.map((a) => (
-            <AppointmentCard key={a.id} appointment={a} onChanged={load} />
+    <>
+      <Header>
+        <div className={styles.segmented} role="tablist" aria-label="Randevular veya talepler">
+          {(['appointments', 'requests'] as const).map((t) => (
+            <button key={t} type="button" role="tab" aria-selected={shownTab === t} className={shownTab === t ? styles.segOn : ''} onClick={() => setTab(t)}>
+              {t === 'appointments' ? 'Randevular' : 'Talepler'}
+              {t === 'requests' && waiting > 0 && <span className={styles.count}>{waiting}</span>}
+            </button>
           ))}
-        </>
-      )}
-      <button
-        type="button"
-        className={styles.signOut}
-        onClick={() => {
-          setToken(null);
-          setItems(null);
-          setSignedIn(false);
-        }}
-      >
-        Çıkış yap
-      </button>
-    </div>
+        </div>
+      </Header>
+      <div className={`container narrow ${styles.body}`}>
+        <div className={styles.chips} role="radiogroup" aria-label="Zaman">
+          {(['upcoming', 'past'] as const).map((w) => (
+            <button key={w} type="button" role="radio" aria-checked={when === w} className={`${styles.chip} ${when === w ? styles.chipOn : ''}`} onClick={() => setWhen(w)}>
+              {w === 'upcoming' ? 'Yaklaşan' : 'Geçmiş'}
+            </button>
+          ))}
+        </div>
+        <div className={styles.wrap}>
+          {props.error && <p className="alert alert-danger">{props.error}</p>}
+          {props.items && shown.length === 0 && (
+            <div className={`card ${styles.empty}`}>
+              <span className={styles.emptyIcon} aria-hidden>
+                <CalendarIcon />
+              </span>
+              <h2>{empty.title}</h2>
+              {empty.text && <p>{empty.text}</p>}
+              {shownTab === 'appointments' && when === 'upcoming' && (
+                <Link href="/" className="btn btn-primary">
+                  <MapIcon /> Kuaför keşfet
+                </Link>
+              )}
+            </div>
+          )}
+          {shown.map((a) => (
+            <AppointmentCard key={a.id} appointment={a} onChanged={props.onChanged} />
+          ))}
+          <button type="button" className={styles.signOut} onClick={props.onSignOut}>
+            Çıkış yap
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <rect x="3" y="5" width="18" height="16" rx="2.5" />
+      <path d="M3 10h18M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01" />
+    </svg>
+  );
+}
+
+function MapIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+      <path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z" />
+      <path d="M9 3v15M15 6v15" />
+    </svg>
   );
 }
 
