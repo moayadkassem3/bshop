@@ -17,8 +17,8 @@ const portal = z.enum(['customer', 'business', 'staff', 'owner']).default('custo
 export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
   app.post('/auth/otp/request', async (req, reply) => {
     const body = z.object({ phone: z.string().min(7).max(20), portal }).parse(req.body);
-    await requestOtp(deps, body.phone, body.portal);
-    return reply.status(204).send();
+    const { demoCode } = await requestOtp(deps, body.phone, body.portal);
+    return demoCode ? reply.send({ demoCode }) : reply.status(204).send();
   });
 
   app.post('/auth/otp/verify', async (req) => {

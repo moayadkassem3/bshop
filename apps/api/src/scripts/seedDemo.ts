@@ -5,7 +5,7 @@ import { loadConfig } from '../config.js';
 import { createPool, migrate } from '../db.js';
 import type { Deps } from '../deps.js';
 import { consolePush, consoleSms } from '../notifications.js';
-import { diskStorage } from '../storage.js';
+import { photoStorageFor } from '../storage.js';
 import type { User } from '../services/auth.js';
 import { createStaffAppointment } from '../services/booking.js';
 import { addPhoto } from '../services/photos.js';
@@ -18,7 +18,7 @@ const ADMIN_PHONE = process.env.ADMIN_PHONE ?? '+905000000000';
 
 const config = loadConfig();
 const db = createPool(config.databaseUrl);
-const deps: Deps = { db, clock: systemClock, sms: consoleSms, push: consolePush, photos: diskStorage(config.uploadsDir), config };
+const deps: Deps = { db, clock: systemClock, sms: consoleSms, push: consolePush, photos: photoStorageFor(config, db), config };
 await migrate(db);
 
 const userByPhone = async (phone: string, portal: User['portal']): Promise<User> => {

@@ -6,7 +6,7 @@ import { RESERVED_SLUGS, slugify } from '../domain/slug.js';
 import { normalizePhone, normalizeShopPhone } from '../phone.js';
 import { createSession, upsertUserByPhone, type User } from './auth.js';
 import { assertIncludesRequired, recordConsents, type ConsentInput } from './consents.js';
-import { normalizeInstagram, type Shop } from './shops.js';
+import { approveShop, normalizeInstagram, type Shop } from './shops.js';
 import type { WeeklyWindowInput } from './shops.js';
 
 export type RegistrationService =
@@ -62,7 +62,7 @@ export async function registerShop(deps: Deps, user: User, input: RegistrationIn
   }
   const now = deps.clock.now();
 
-  return withTx(deps.db, async (tx) => {
+  const result = await withTx(deps.db, async (tx) => {
     // One registration under review at a time, per person.
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`register:${user.id}`]);
     const pending = await tx.query('SELECT 1 FROM shops WHERE registered_by = $1 AND reviewed_at IS NULL LIMIT 1', [user.id]);
@@ -152,4 +152,7 @@ export async function registerShop(deps: Deps, user: User, input: RegistrationIn
     const token = await createSession(tx, deps, user.id, 'owner', now);
     return { shopId: shop.id, slug, staffCount, token };
   });
+  // Test deployments skip our team's review so testers see their shop right away.
+  if (deps.config.demoMode) await approveShop(deps, result.shopId, null);
+  return result;
 }

@@ -38,6 +38,7 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptMarketing, setAcceptMarketing] = useState(false);
+  const [demoCode, setDemoCode] = useState<string | null>(null);
   const versions = useLegalVersions();
   const customer = as === 'customer';
 
@@ -53,7 +54,12 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
     setBusy(true);
     setError(null);
     try {
-      await api('/auth/otp/request', { method: 'POST', body: { phone, portal: as } });
+      const res = await api<{ demoCode?: string } | undefined>('/auth/otp/request', { method: 'POST', body: { phone, portal: as } });
+      // Test deployments have no SMS provider yet, so the code is shown here instead.
+      if (res?.demoCode) {
+        setDemoCode(res.demoCode);
+        setCode(res.demoCode);
+      }
       setCodeSent(true);
       setResendIn(60);
     } catch (err) {
@@ -173,6 +179,11 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
         </button>
       ) : (
         <>
+          {demoCode && (
+            <p className={styles.demo} role="status">
+              <strong>Test sürümü:</strong> SMS gönderilmez. Kodunuz <strong>{demoCode}</strong> ve aşağıya yazıldı.
+            </p>
+          )}
           <div className="field">
             <label htmlFor="otp">SMS ile gelen 6 haneli kod</label>
             <input

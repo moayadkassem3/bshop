@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { currentVersion } from '../src/domain/legal.js';
 import { slugify } from '../src/domain/slug.js';
+import { databaseStorage } from '../src/storage.js';
 import { at, book, PHONES, setupShop, useTestApp } from './helpers.js';
 
 const t = useTestApp();
@@ -163,5 +164,36 @@ describe('co-owner (Ortak) (v1.6)', () => {
     expect((await t.call('GET', '/me', { token: coOwner })).body.portal).toBe('owner');
     const price = await t.call('PATCH', `${shop.base}/services/${shop.services.haircut}`, { token: coOwner, body: { priceKurus: 55000 } });
     expect(price.status).toBe(204);
+  });
+});
+
+describe('test deployments (DEMO_MODE)', () => {
+  it('shows the sign-in code and approves registrations straight away; off by default', async () => {
+    const request = () => t.call('POST', '/auth/otp/request', { body: { phone: PHONES.customer } });
+    expect((await request()).status).toBe(204);
+
+    t.deps.config.demoMode = true;
+    try {
+      t.clock.advance(2);
+      const res = await request();
+      expect(res.body.demoCode).toMatch(/^\d{6}$/);
+      const verified = await t.call('POST', '/auth/otp/verify', {
+        body: { phone: PHONES.customer, code: res.body.demoCode, firstName: 'A', lastName: 'B' },
+      });
+      expect(verified.status).toBe(200);
+
+      const r = await t.call('POST', '/registrations', { token: verified.body.token, body: registration() });
+      expect((await t.call('GET', `/public/shops/${r.body.slug}`)).status).toBe(200);
+    } finally {
+      t.deps.config.demoMode = false;
+    }
+  });
+
+  it('can keep photos in the database', async () => {
+    const store = databaseStorage(t.db);
+    await store.put('shop/a.webp', Buffer.from('photo'));
+    expect((await store.get('shop/a.webp'))?.toString()).toBe('photo');
+    await store.delete('shop/a.webp');
+    expect(await store.get('shop/a.webp')).toBeNull();
   });
 });

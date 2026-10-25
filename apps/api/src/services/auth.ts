@@ -56,12 +56,13 @@ async function resolvePortal(q: Queryable, phone: string, as: SignInAs): Promise
   throw new AppError(403, 'NOT_BUSINESS', 'This number is not registered with a business');
 }
 
-export async function requestOtp(deps: Deps, rawPhone: string, as: SignInAs = 'customer'): Promise<void> {
+/** Returns the code itself only in DEMO_MODE, where no SMS provider is connected. */
+export async function requestOtp(deps: Deps, rawPhone: string, as: SignInAs = 'customer'): Promise<{ demoCode?: string }> {
   const phone = normalizePhone(rawPhone);
   const now = deps.clock.now();
   // Checked before any SMS is sent, so wrong-entrance attempts cost nothing.
   await resolvePortal(deps.db, phone, as);
-  await withTx(deps.db, async (tx) => {
+  return withTx(deps.db, async (tx) => {
     // Serialise requests per phone so the rate limits hold under concurrency.
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [phone]);
     const { rows } = await tx.query<{ last: Date | null; hour_count: number }>(
@@ -81,6 +82,10 @@ export async function requestOtp(deps: Deps, rawPhone: string, as: SignInAs = 'c
       [phone, sha256(`${deps.config.otpSecret}:${phone}:${code}`), new Date(now.getTime() + OTP_TTL_MINUTES * MINUTE), now],
     );
     await queueSms(tx, now, { shopId: null, phone, template: 'otp', body: sms.otp(code) });
+    // Never for platform admins, so a public test link cannot open the admin account.
+    if (!deps.config.demoMode) return {};
+    const admin = await tx.query('SELECT 1 FROM users WHERE phone = $1 AND is_platform_admin', [phone]);
+    return admin.rowCount ? {} : { demoCode: code };
   });
 }
 

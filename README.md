@@ -37,6 +37,12 @@ Open `http://localhost:3001` for the Keşfet map (it opens on Kadıköy until yo
 
 Website settings: `NEXT_PUBLIC_BRAND_NAME` (working name “Salon Randevu” until the product name is chosen) and `NEXT_PUBLIC_SALES_EMAIL` (where shops with more than 10 staff ask for a quote).
 
+## Test deployment (Render)
+
+`render.yaml` describes a free test deployment in Frankfurt: one web service that runs the website and backend together (`scripts/render-start.sh`), and a free PostgreSQL database. In the Render dashboard choose **New → Blueprint**, connect this repository, pick the branch named in `render.yaml`, and apply. The first deploy takes a few minutes; the link is shown on the service page (`https://<name>.onrender.com`).
+
+It runs with `DEMO_MODE=true`: sign-in codes are shown on screen because no SMS provider is connected, and newly registered salons are approved at once. Platform admins never get an on-screen code. Photos are kept in the database (`PHOTO_STORAGE=database`) because the free service's disk is wiped on restart. Free services sleep after 15 minutes without visitors (the next visit takes about a minute), and Render's free database expires after 30 days. Do not use it for real customers.
+
 ## Alert test app
 
 Every push that changes `apps/alert-test` builds an Android APK in GitHub Actions and publishes it under **Releases** as a pre-release (`alert-test-N`). Open the release on an Android phone, download `randevu-alarm-testi.apk`, and allow installing from that source.

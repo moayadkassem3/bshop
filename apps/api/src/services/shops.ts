@@ -182,9 +182,14 @@ export async function createShop(deps: Deps, admin: User, input: CreateShopInput
 /** Approval by our team. A shop without a subscription yet starts its free trial now (v1.6). */
 export async function markReviewed(deps: Deps, admin: User, shopId: string) {
   requirePlatformAdmin(admin);
+  await approveShop(deps, shopId, admin.id);
+}
+
+/** Approves a shop; reviewerId is null when a test deployment approves it automatically (DEMO_MODE). */
+export async function approveShop(deps: Deps, shopId: string, reviewerId: string | null) {
   const now = deps.clock.now();
   await withTx(deps.db, async (tx) => {
-    const { rowCount } = await tx.query('UPDATE shops SET reviewed_at = $2, reviewed_by = $3 WHERE id = $1', [shopId, now, admin.id]);
+    const { rowCount } = await tx.query('UPDATE shops SET reviewed_at = $2, reviewed_by = $3 WHERE id = $1', [shopId, now, reviewerId]);
     if (!rowCount) throw notFound('Shop');
     const trial = await tx.query(
       `UPDATE subscriptions SET status = 'trial', current_period_end = $2, updated_at = $3
