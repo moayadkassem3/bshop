@@ -19,7 +19,7 @@ export function ServiceStep(props: { services: Service[]; selected: string[]; on
       <h2 id="services-title" className={styles.stepTitle}>
         Hizmet seçin
       </h2>
-      <p className={styles.stepHint}>Birden fazla hizmet seçebilirsiniz; aynı usta sırayla yapar.</p>
+      <p className={styles.stepHint}>Birden fazla hizmet seçebilirsiniz; aynı personel sırayla yapar.</p>
       {props.services.length > 6 && (
         <input
           className="input"

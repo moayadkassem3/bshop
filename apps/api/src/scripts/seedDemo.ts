@@ -58,7 +58,7 @@ type DemoShop = {
 const shops: DemoShop[] = [
   {
     slug: 'demo-berber',
-    name: 'Demo Berber Kadıköy',
+    name: 'Demo Erkek Kuaförü',
     address: 'Caferağa Mah. Moda Cad. No: 12, Kadıköy, İstanbul',
     latitude: 40.9867,
     longitude: 29.0262,
@@ -68,7 +68,7 @@ const shops: DemoShop[] = [
     phone: '+905320000001',
     whatsapp: '+905320000001',
     instagram: 'demoberber',
-    about: 'Moda’nın klasik berberi. Saç, sakal ve damat tıraşında 15 yıllık deneyim.',
+    about: 'Moda’nın klasik erkek kuaförü. Saç, sakal ve damat tıraşında 15 yıllık deneyim.',
     colors: [
       ['#2b2420', '#8a6a4c'],
       ['#1f2a2a', '#4f7c75'],

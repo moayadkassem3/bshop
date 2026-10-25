@@ -469,3 +469,77 @@ describe('Salonlarım: favourites and shops booked before (handoff v1.4)', () =>
     expect((await t.call('GET', `/public/shops/${shop.slug}`)).body.city).toBe('Ankara');
   });
 });
+
+describe('Keşfet map: nearby shops (v1.5)', () => {
+  it('returns public shops nearest first, within the radius, matching name, service, or audience', async () => {
+    const near = await setupShop(t);
+    const far = await setupShop(t, { slug: 'far-shop', ownerPhone: '+905320000099' });
+    // About 2.2 km from the first shop, and a women's salon.
+    await t.call('PATCH', `${far.base}/settings`, {
+      token: far.tokens.owner,
+      body: { latitude: 41.01, longitude: 29.03, audience: 'women', name: 'Moda Kadın Kuaförü' },
+    });
+    const kadikoy = 'lat=40.9905&lng=29.0290';
+
+    const all = (await t.call('GET', `/public/nearby?${kadikoy}`)).body;
+    expect(all.map((s: { slug: string }) => s.slug)).toEqual([near.slug, far.slug]);
+    expect(all[0].distance_m).toBeLessThan(300);
+    expect(all[1].distance_m).toBeGreaterThan(2000);
+
+    expect((await t.call('GET', `/public/nearby?${kadikoy}&radiusKm=1`)).body.map((s: { slug: string }) => s.slug)).toEqual([near.slug]);
+    expect((await t.call('GET', `/public/nearby?${kadikoy}&audience=women`)).body.map((s: { slug: string }) => s.slug)).toEqual([far.slug]);
+    // "Sakal" matches services; the second shop stops offering both of its beard services.
+    for (const id of [far.services.beard, far.services.combo]) {
+      await t.call('PATCH', `${far.base}/services/${id}`, { token: far.tokens.owner, body: { active: false } });
+    }
+    expect((await t.call('GET', `/public/nearby?${kadikoy}&q=sakal`)).body.map((s: { slug: string }) => s.slug)).toEqual([near.slug]);
+
+    await t.call('PUT', `/admin/shops/${near.shopId}/subscription`, { token: near.tokens.admin, body: { status: 'none' } });
+    expect((await t.call('GET', `/public/nearby?${kadikoy}`)).body.map((s: { slug: string }) => s.slug)).toEqual([far.slug]);
+  });
+});
+
+describe('subscription plans (v1.5)', () => {
+  it('prices by number of staff', async () => {
+    const { planForStaff } = await import('../src/domain/plans.js');
+    expect([1, 2, 3, 5, 6, 10].map((n) => planForStaff(n)?.monthlyPriceKurus)).toEqual([60000, 80000, 110000, 110000, 135000, 135000]);
+    expect(planForStaff(11)).toBeNull();
+    const plans = (await t.call('GET', '/public/plans')).body;
+    expect(plans.plans).toHaveLength(4);
+    expect(plans.features).toContain('SMS bildirimleri');
+  });
+
+  it("shows each shop's plan to our team", async () => {
+    const shop = await setupShop(t);
+    const list = (await t.call('GET', '/admin/shops', { token: shop.tokens.admin })).body;
+    expect(list[0]).toMatchObject({ seats: 3, plan: { id: 'staff-5', monthlyPriceKurus: 110000 } });
+  });
+});
+
+describe('one app: customer or business sign-in, and switching (v1.5)', () => {
+  it('business sign-in gives owners owner tools and staff staff tools', async () => {
+    const shop = await setupShop(t);
+    t.clock.advance(5);
+    const owner = await t.login(PHONES.owner, { portal: 'business' });
+    const staff = await t.login(PHONES.cumali, { portal: 'business' });
+    expect((await t.call('GET', '/me', { token: owner })).body.portal).toBe('owner');
+    expect((await t.call('GET', '/me', { token: staff })).body.portal).toBe('staff');
+    const stranger = await t.call('POST', '/auth/otp/request', { body: { phone: PHONES.customer, portal: 'business' } });
+    expect(stranger.body.error).toBe('NOT_BUSINESS');
+    expect((await t.call('GET', `${shop.base}/members`, { token: staff })).status).toBe(200);
+  });
+
+  it('switches between customer and business mode without a new code', async () => {
+    const shop = await setupShop(t);
+    const asCustomer = await t.login(PHONES.cumali);
+    expect((await t.call('GET', `${shop.base}/members`, { token: asCustomer })).status).toBe(403);
+    const switched = await t.call('POST', '/me/switch', { token: asCustomer, body: { to: 'business' } });
+    expect(switched.body.user.portal).toBe('staff');
+    expect((await t.call('GET', `${shop.base}/members`, { token: switched.body.token })).status).toBe(200);
+    const back = await t.call('POST', '/me/switch', { token: switched.body.token, body: { to: 'customer' } });
+    expect(back.body.user.portal).toBe('customer');
+
+    const plain = await customer();
+    expect((await t.call('POST', '/me/switch', { token: plain, body: { to: 'business' } })).body.error).toBe('NOT_BUSINESS');
+  });
+});

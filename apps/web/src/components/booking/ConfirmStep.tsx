@@ -106,8 +106,8 @@ export function ConfirmStep(props: {
             <dd>{props.profile.name}</dd>
           </div>
           <div>
-            <dt>Usta</dt>
-            <dd>{props.staffName ?? 'İlk müsait usta (randevu oluşunca belli olur)'}</dd>
+            <dt>Personel</dt>
+            <dd>{props.staffName ?? 'İlk müsait personel (randevu oluşunca belli olur)'}</dd>
           </div>
           <div>
             <dt>Hizmetler</dt>

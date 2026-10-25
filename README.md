@@ -7,7 +7,7 @@ Appointment booking for barbershops and salons in Istanbul, sold to shops as a m
 | Path | What it is |
 | --- | --- |
 | `apps/api` | Backend: Node.js + TypeScript (Fastify) and PostgreSQL. Booking rules, timers, and the outgoing SMS/push queue. |
-| `apps/web` | Customer website: Next.js. Shop profile pages, booking, “Randevularım”, and the business page with separate owner and staff entrances. |
+| `apps/web` | The app on the web (Next.js): Keşfet map, Randevular, Favoriler, Profil (customer or business sign-in), shop profile pages, booking, and the business page with prices. |
 | `apps/alert-test` | Milestone 0: an Android test app for the new-appointment alert (Expo). |
 | `docs/` | Product handoff. |
 
@@ -33,7 +33,7 @@ npm run dev --workspace apps/api         # backend on :3000
 npm run dev --workspace apps/web         # website on http://localhost:3001
 ```
 
-Open `http://localhost:3001/demo-berber` for a shop's profile page; booking is at `/<shop>/randevu`, and a staff member's personal link is `/<shop>/randevu?personel=<staff id>`. The website forwards `/api/*` to the backend (`API_URL`, default `http://localhost:3000`). SMS codes appear in the backend log. Demo photos are generated placeholders marked “Örnek fotoğraf”.
+Open `http://localhost:3001` for the Keşfet map (it opens on Kadıköy until you share your location) or `http://localhost:3001/demo-berber` for a shop's profile page; booking is at `/<shop>/randevu`, and a staff member's personal link is `/<shop>/randevu?personel=<staff id>`. The website forwards `/api/*` to the backend (`API_URL`, default `http://localhost:3000`). SMS codes appear in the backend log. Demo photos are generated placeholders marked “Örnek fotoğraf”. The map uses MapLibre with OpenFreeMap tiles; `npm run dev`/`build` copy MapLibre's worker files into `public/maplibre/` first.
 
 ## Alert test app
 

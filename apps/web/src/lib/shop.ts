@@ -42,3 +42,17 @@ export function turkeyWeekday(now = new Date()): number {
 export function todayHours(hours: OpeningHours[], now = new Date()): OpeningHours | undefined {
   return hours.find((h) => h.weekday === turkeyWeekday(now));
 }
+
+/** "850 m" or "2,3 km". */
+export function formatDistance(meters: number): string {
+  if (meters < 1000) return `${Math.round(meters / 10) * 10} m`;
+  return `${(meters / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} km`;
+}
+
+/** Straight-line distance in metres between two points. */
+export function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const rad = (d: number) => (d * Math.PI) / 180;
+  const h =
+    Math.sin(rad(b.lat - a.lat) / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(rad(b.lng - a.lng) / 2) ** 2;
+  return 2 * 6_371_000 * Math.asin(Math.sqrt(h));
+}

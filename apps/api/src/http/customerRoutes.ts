@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Deps } from '../deps.js';
-import { updateProfile } from '../services/auth.js';
+import { switchMode, updateProfile } from '../services/auth.js';
 import { cancelByCustomer, createBooking, listCustomerAppointments } from '../services/booking.js';
 import { addFavorite, listCustomerShops, removeFavorite } from '../services/favorites.js';
 import type { AuthFn } from './app.js';
@@ -9,6 +9,12 @@ import { id, timestamp } from './schemas.js';
 
 export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.get('/me', async (req) => auth(req));
+
+  app.post('/me/switch', async (req) => {
+    const user = await auth(req);
+    const { to } = z.object({ to: z.enum(['customer', 'business']) }).parse(req.body);
+    return switchMode(deps, user, to);
+  });
 
   app.patch('/me', async (req) => {
     const user = await auth(req);

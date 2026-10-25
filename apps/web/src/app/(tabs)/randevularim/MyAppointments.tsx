@@ -68,7 +68,7 @@ export function MyAppointments() {
         <div className={styles.empty}>
           <p className="muted">Yaklaşan randevunuz yok.</p>
           <Link href="/" className="btn btn-primary">
-            Randevu al
+            Kuaför keşfet
           </Link>
         </div>
       )}

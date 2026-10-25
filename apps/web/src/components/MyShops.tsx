@@ -8,22 +8,49 @@ import { photoUrl, placeLabel } from '@/lib/shop';
 import type { MyShop } from '@/lib/types';
 import styles from './MyShops.module.css';
 
-/** "Salonlarım": the customer's own shops at the top of the home page, one tap from booking. */
+/** Favoriler tab: favourite shops, then shops booked before, each one tap from booking. */
 export function MyShops() {
-  const [shops, setShops] = useState<MyShop[]>([]);
+  const [shops, setShops] = useState<MyShop[] | null>(null);
 
   useEffect(() => {
-    const load = () => loadMyShops().then(setShops).catch(() => undefined);
+    const load = () =>
+      loadMyShops()
+        .then(setShops)
+        .catch(() => setShops([]));
     load();
     return onFavoritesChanged(load);
   }, []);
 
-  if (!shops.length) return null;
+  if (!shops) return null;
+  if (!shops.length) {
+    return (
+      <div className={`card ${styles.empty}`}>
+        <span className={styles.emptyIcon} aria-hidden>
+          ♥
+        </span>
+        <h2>Henüz favori kuaförünüz yok</h2>
+        <p className="muted">Bir kuaförün sayfasındaki kalbe dokunun; burada hep elinizin altında olsun.</p>
+        <Link href="/" className="btn btn-primary">
+          Kuaför keşfet
+        </Link>
+      </div>
+    );
+  }
+
+  const favorites = shops.filter((s) => s.favorite);
+  const visited = shops.filter((s) => !s.favorite);
   return (
-    <section className={styles.section} aria-labelledby="my-shops-title">
-      <h2 id="my-shops-title" className={styles.title}>
-        Salonlarım
-      </h2>
+    <>
+      {favorites.length > 0 && <Group title="Favorilerim" shops={favorites} />}
+      {visited.length > 0 && <Group title="Daha önce gittiklerim" shops={visited} />}
+    </>
+  );
+}
+
+function Group({ title, shops }: { title: string; shops: MyShop[] }) {
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.title}>{title}</h2>
       <ul className={styles.list} role="list">
         {shops.map((shop) => (
           <li key={shop.slug} className={`card ${styles.card}`}>
@@ -36,10 +63,7 @@ export function MyShops() {
               )}
               <span className={styles.text}>
                 <span className={styles.name}>{shop.name}</span>
-                <span className={styles.meta}>
-                  {shop.favorite ? '♥ Favori' : 'Daha önce gittiniz'}
-                  {placeLabel(shop) ? ` · ${placeLabel(shop)}` : ''}
-                </span>
+                {placeLabel(shop) && <span className={styles.meta}>{placeLabel(shop)}</span>}
                 {shop.last_visit && <span className={styles.meta}>Son randevu: {formatLongDate(shop.last_visit)}</span>}
               </span>
             </Link>

@@ -41,6 +41,7 @@ const MESSAGES: Record<string, string> = {
   NOT_CANCELLABLE: 'Bu randevu artık iptal edilemiyor.',
   UNAUTHENTICATED: 'Devam etmek için telefon numaranızı doğrulayın.',
   NOT_FOUND: 'Salon bulunamadı veya şu anda randevu almıyor.',
+  NOT_BUSINESS: 'Bu numara kayıtlı bir işletmeye ait değil.',
 };
 
 export function errorMessage(err: unknown): string {

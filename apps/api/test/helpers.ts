@@ -91,7 +91,7 @@ export function useTestApp() {
     /** Signs in through the real SMS-code flow and returns a session token (reused per phone within a test). */
     async login(
       phone: string,
-      opts: { names?: { firstName: string; lastName: string }; portal?: 'customer' | 'staff' | 'owner' } = {},
+      opts: { names?: { firstName: string; lastName: string }; portal?: 'customer' | 'business' | 'staff' | 'owner' } = {},
     ) {
       const portal = opts.portal ?? 'customer';
       const key = `${portal}:${phone}`;

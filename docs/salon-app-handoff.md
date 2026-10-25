@@ -1,8 +1,8 @@
 # Salon Booking Platform — Handoff & Planning Baseline
 
-**Version:** 1.4  
+**Version:** 1.5  
 **Baseline date:** 24 October 2026  
-**Previous versions:** 1.3, 1.2 and 1.1 (24 October 2026), 1.0 (6 October 2026)  
+**Previous versions:** 1.4, 1.3, 1.2 and 1.1 (24 October 2026), 1.0 (6 October 2026)  
 **Status:** Build in progress. The founder authorized application code on 24 October 2026 (Section 12).  
 **Working market:** All of Türkiye *(v1.4)*  
 **Product name:** To be decided
@@ -17,7 +17,7 @@ This document is the reference point for continuing product design and handing t
 - **Proposed** — a recommendation recorded for design review; it needs the founder's confirmation before it becomes agreed.
 - **Open** — not yet decided.
 
-Rows and sections new or changed in version 1.1 are marked *(v1.1)*, in version 1.3 *(v1.3)*, and in version 1.4 *(v1.4)*; version 1.2 adds Section 12. The change record at the end summarises each version.
+Rows and sections new or changed in version 1.1 are marked *(v1.1)*, in version 1.3 *(v1.3)*, in version 1.4 *(v1.4)*, and in version 1.5 *(v1.5)*; version 1.2 adds Section 12. The change record at the end summarises each version.
 
 ## 1. Product purpose
 
@@ -34,18 +34,18 @@ Customers are men's barbershops and women's salons across Türkiye *(v1.4)*; the
 | Area | Baseline decision |
 | --- | --- |
 | Customer identity | Phone number, first name, and surname; easy account creation. |
-| Booking access *(v1.4)* | Shop link or QR code, and search by shop name, district, or city. Map discovery and contact matching are removed from the first release. |
-| Platforms *(v1.1)* | Customers find shops, book, and track appointments on the web only. Staff and owners use a native app on Android and iOS. |
-| Owner tools *(v1.1)* | Inside the same native app as staff, unlocked by owner permissions. No separate owner web dashboard in the first release. |
-| Separate sign-in *(v1.2)* | Owners and staff sign in through separate entrances: “Salon Sahibi Girişi” and “Çalışan Girişi”. Each accepts only phones with that role, checked before an SMS code is sent. Owner powers are available only after owner sign-in; an owner who also cuts hair sees their own schedule there. |
+| Booking access *(v1.5)* | Shop link or QR code, search by shop name, district, or city, and the Keşfet map (v1.5 brings map discovery back; see Section 13). Contact matching stays removed. |
+| Platforms *(v1.5)* | One app for customers and businesses, built in this order: web, Android, iOS (Section 13). Replaces “customers on the web only” (v1.1). |
+| Owner tools *(v1.5)* | In the same app, in business mode, unlocked by the owner role. |
+| Sign-in *(v1.5)* | At sign-in the user chooses “Müşteriyim” or “İşletmeyim”. Business sign-in accepts only phones registered with a shop and gives owners owner tools and staff staff tools. A signed-in user can switch to business mode from Profil without a new SMS code. Replaces the separate owner and staff entrances (v1.2). |
 | Shop structure | A shop can have multiple barbers or stylists. |
 | Shop service list *(v1.1)* | Each shop keeps one service list, set up once at shop level rather than by each staff member. It starts from the platform catalog (Section 6). Shops can add their own services and rename services. |
 | Staff services and durations *(v1.1)* | Each staff member selects which of the shop's services they perform and sets their own durations for them. |
-| Subscription | Monthly shop subscription, with an extra fee per additional barber or stylist. |
-| Public visibility *(v1.3)* | Only reviewed, subscribed shops have a public profile, appear in search, and take bookings. |
+| Subscription *(v1.5)* | Monthly, priced by the number of bookable staff: 1 staff ₺600, 2 staff ₺800, up to 5 staff ₺1,100, up to 10 staff ₺1,350. Every plan includes the booking page with QR code, SMS notifications, and map visibility. |
+| Public visibility *(v1.5)* | Only reviewed, subscribed shops have a public profile, appear in search and on the map, and take bookings. |
 | Salonlarım *(v1.4)* | The home page starts with the customer's own shops: favourites (a heart on the profile page and after booking) first, then shops they booked before, each with a direct “Randevu al”. Favourites work without signing in (kept on the phone) and move to the customer's account at sign-in. |
 | Shop profile page *(v1.3)* | Every shop has a public profile: photos (up to 12, the first is the cover), shop type, district and city *(v1.4)*, today's hours and the weekly hours, address with “Yol tarifi” (directions in the phone's maps app), phone, WhatsApp, Instagram, a short description, the price list, and the staff, each with their own booking link. A fixed bar offers WhatsApp, Call, Directions, and “Randevu al”. |
-| Shop activation | Our team reviews shops before public visibility and booking activation. |
+| Shop activation *(v1.5)* | Shops register themselves through a multi-step form (Section 13); our team reviews each shop before it becomes public and bookable. |
 | Owner permissions | Manage the shop, all staff, and all appointments. |
 | Staff permissions *(v1.1)* | Manage their own appointments; select which shop services they perform and modify their durations. |
 | Customer phone numbers *(v1.1)* | Visible to both the owner and staff. |
@@ -504,6 +504,24 @@ Reviewed on 24 October 2026 from founder-supplied screenshots of the customer we
 
 **Correction made during the build:** the last-minute reminder rule in 4.4 said “skip if the window is under 4 minutes”, which contradicted its own example (a 5-minute window with no reminder). The threshold is now 6 minutes, matching the example.
 
+## 13. Decisions in version 1.5 *(v1.5)*
+
+These founder decisions (25 October 2026) replace the earlier rows they mention.
+
+| Area | Decision | Replaces |
+| --- | --- | --- |
+| One app | One app for customers and businesses: web first, then Android, then iOS. Sign-in asks “Müşteriyim” or “İşletmeyim”; Profil switches to business mode. | Customers on the web only and a staff-only native app (v1.1); separate owner and staff entrances (v1.2) |
+| Navigation | A fixed bottom bar: Keşfet · Randevular · Favoriler · Profil. Shop profile and booking pages open full screen without it. | The website header and footer |
+| Map | Keşfet is a full-screen map with a floating search (shops, districts, cities, services), salon-type filters (Tümü, Erkek kuaförü, Kadın kuaförü), and “Konumumu kullan”. Before the customer shares their location, it opens on Kadıköy, İstanbul. The list below shows shops nearest first. | Map removed (v1.3) |
+| Wording | “Personel” instead of “Usta”; “kuaför” and “erkek kuaförü” instead of “berber”. | Earlier interface wording |
+| Pricing | 1 staff ₺600, 2 staff ₺800, up to 5 staff ₺1,100, up to 10 staff ₺1,350 per month; QR booking page, SMS notifications, and map visibility included. | “Extra fee per additional staff” (open) |
+| Shop registration | Self-service, multi-step registration (“quiz”), followed by our team's review. | Shops created by our team during the visit |
+| Agreements | Sign-up shows the usual agreements; drafts to be prepared and reviewed by a lawyer before launch. | — |
+
+**Open after v1.5:** the product name; whether prices include KDV (VAT); the price for more than 10 staff; whether SMS is unlimited in every plan; a free trial; whether an owner who also works counts as one of the plan's staff.
+
+**Technology note:** the website uses React (Next.js). The map uses MapLibre with free OpenFreeMap vector tiles, no key needed; MapLibre also runs in React Native, so the Android and iOS apps can share it. A paid tile provider can replace OpenFreeMap at launch if traffic requires it.
+
 ## Change record
 
 | Version | Date | Change |
@@ -513,3 +531,4 @@ Reviewed on 24 October 2026 from founder-supplied screenshots of the customer we
 | 1.2 | 24 October 2026 | Founder authorized application code, approved the technology, and asked for proposals to be built as adjustable defaults; per-staff monthly fee to be set later. Alert keeps ringing until answered. Separate sign-in for owners and staff. Added Section 12 (build status). Corrected the last-minute reminder threshold to 6 minutes to match the 4.4 example. |
 | 1.3 | 24 October 2026 | Founder decisions: map discovery removed; every shop gets a public profile page with photos, hours, address and directions, phone, WhatsApp, and Instagram, and a WhatsApp · Call · Directions · Randevu al bar. Customers reach shops by link, QR code, or name search. |
 | 1.4 | 24 October 2026 | Founder decisions: the app serves all of Türkiye (shops record their city; search matches it; “İstanbul” removed from the website; pilot city open); “Salonlarım” on the home page with favourite shops and shops booked before. |
+| 1.5 | 25 October 2026 | Founder decisions: map discovery returns as the Keşfet tab; one app for customers and businesses with a Müşteriyim / İşletmeyim sign-in and mode switching; bottom navigation bar; “Personel” and “kuaför” wording; subscription prices by staff count; self-service shop registration; agreements at sign-up. Added Section 13. |

@@ -46,7 +46,7 @@ export function StaffStep(props: {
   return (
     <section aria-labelledby="staff-title">
       <h2 id="staff-title" className={styles.stepTitle}>
-        Usta seçin
+        Personel seçin
       </h2>
       <ul className={styles.list} role="list">
         <li>

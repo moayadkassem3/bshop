@@ -1,5 +1,13 @@
+.back {
+  display: inline-block;
+  margin-top: calc(20px + env(safe-area-inset-top));
+  color: var(--primary);
+  font-weight: 650;
+  text-decoration: none;
+}
+
 .hero {
-  padding: 32px 0 8px;
+  padding: 20px 0 8px;
 }
 
 .kicker {
@@ -25,37 +33,65 @@
   color: var(--ink-2);
 }
 
-.entry {
-  margin-top: 20px;
-  padding: 20px;
-  scroll-margin-top: 80px;
+.pricing {
+  margin-top: 28px;
 }
 
-.entry h2 {
-  margin: 0 0 8px;
-  font-size: 20px;
-}
-
-.entry p {
+.pricing h2 {
   margin: 0;
-  line-height: 1.55;
+}
+
+.pricing > p {
+  margin: 4px 0 14px;
+}
+
+.plans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.plan {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+}
+
+.planName {
+  font-weight: 650;
   color: var(--ink-2);
 }
 
-.badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
+.planPrice {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-.store {
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: var(--ink);
-  color: #f5f1ea;
-  font-size: 13px;
+.planPrice span {
+  margin-left: 2px;
+  font-size: 14px;
   font-weight: 600;
+  color: var(--muted);
+}
+
+.features {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.note {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--muted);
 }
 
 .apply {

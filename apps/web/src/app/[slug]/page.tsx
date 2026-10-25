@@ -34,6 +34,9 @@ export default async function ShopProfilePage({ params }: Props) {
 
   return (
     <div className={styles.profile}>
+      <Link href="/" className={styles.floatingBack} aria-label="Keşfet'e dön">
+        ←
+      </Link>
       <PhotoGallery photos={profile.photos} name={profile.name} />
 
       <div className="container narrow">
@@ -153,7 +156,7 @@ export default async function ShopProfilePage({ params }: Props) {
         {profile.staff.length > 0 && (
           <section className={`card ${styles.section}`} aria-labelledby="staff-title">
             <h2 id="staff-title" className={styles.sectionTitle}>
-              Ustalarımız
+              Personel
             </h2>
             <ul className={styles.staffList} role="list">
               {profile.staff.map((m) => (

@@ -54,7 +54,13 @@ export type ShopSummary = {
 /** A shop in "Salonlarım": a favourite, or one booked before. */
 export type MyShop = Omit<ShopSummary, 'address'> & { favorite: boolean; last_visit: string | null };
 
-export type Me = { id: string; phone: string; first_name: string | null; last_name: string | null };
+export type Me = {
+  id: string;
+  phone: string;
+  first_name: string | null;
+  last_name: string | null;
+  portal?: 'customer' | 'staff' | 'owner';
+};
 
 export type CustomerAppointment = {
   id: string;
@@ -74,3 +80,6 @@ export type CustomerAppointment = {
   staff_name: string;
   services: { name: string; durationMinutes: number; priceKurus: number }[];
 };
+
+/** A shop on the Keşfet map. */
+export type NearbyShop = Omit<ShopSummary, 'address'> & { latitude: number; longitude: number; distance_m: number };

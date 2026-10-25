@@ -13,13 +13,13 @@ import styles from './booking.module.css';
 type Step = 'services' | 'staff' | 'time' | 'confirm' | 'done';
 const STEPS: { key: Exclude<Step, 'done'>; label: string }[] = [
   { key: 'services', label: 'Hizmet' },
-  { key: 'staff', label: 'Usta' },
+  { key: 'staff', label: 'Personel' },
   { key: 'time', label: 'Saat' },
   { key: 'confirm', label: 'Onay' },
 ];
 
 /**
- * Customer booking (handoff 4.3): services first, then a staff member or
+ * Customer booking (handoff 4.3): services first, then a staff member ("Personel") or
  * "Fark etmez", then a time, then sign-in and the summary. A staff member's
  * own link (?personel=...) skips the staff step.
  */
@@ -61,7 +61,7 @@ export function BookingFlow({ profile, presetStaffId }: { profile: ShopProfile; 
       return;
     }
     if (presetStaff) {
-      setNotice(`${presetStaff.display_name} seçtiğiniz hizmetlerin hepsini vermiyor. Başka bir usta seçin.`);
+      setNotice(`${presetStaff.display_name} seçtiğiniz hizmetlerin hepsini vermiyor. Başka bir personel seçin.`);
       setStaffId(null);
     }
     setStep('staff');

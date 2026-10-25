@@ -5,12 +5,13 @@ import { requestOtp, verifyOtp } from '../services/auth.js';
 import { firstAvailable, getAvailability, getShopProfile } from '../services/availability.js';
 import { readPhoto } from '../services/photos.js';
 import { shopSummaries } from '../services/favorites.js';
-import { searchPublicShops } from '../services/shops.js';
+import { PLAN_FEATURES, PLANS } from '../domain/plans.js';
+import { nearbyShops, searchPublicShops } from '../services/shops.js';
 import type { AuthFn } from './app.js';
 import { csvIds, id } from './schemas.js';
 
 /** "Salon Sahibi Girişi" and "Çalışan Girişi" are separate entrances; the website signs customers in. */
-const portal = z.enum(['customer', 'staff', 'owner']).default('customer');
+const portal = z.enum(['customer', 'business', 'staff', 'owner']).default('customer');
 
 export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
   app.post('/auth/otp/request', async (req, reply) => {
@@ -31,6 +32,22 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
       .parse(req.body);
     return verifyOtp(deps, body);
   });
+
+  app.get('/public/nearby', async (req) => {
+    const q = z
+      .object({
+        lat: z.coerce.number().min(-90).max(90),
+        lng: z.coerce.number().min(-180).max(180),
+        q: z.string().max(60).optional(),
+        audience: z.enum(['men', 'women']).optional(),
+        radiusKm: z.coerce.number().min(1).max(100).default(30),
+        limit: z.coerce.number().int().min(1).max(200).default(100),
+      })
+      .parse(req.query);
+    return nearbyShops(deps, { latitude: q.lat, longitude: q.lng, query: q.q, audience: q.audience, radiusKm: q.radiusKm, limit: q.limit });
+  });
+
+  app.get('/public/plans', async () => ({ plans: PLANS, features: PLAN_FEATURES }));
 
   app.get('/public/search', async (req) => {
     const { q } = z.object({ q: z.string().trim().min(2).max(60) }).parse(req.query);

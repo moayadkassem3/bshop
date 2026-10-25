@@ -1,6 +1,7 @@
 import type { Deps } from '../deps.js';
 import { withTx, type Queryable } from '../db.js';
 import { badRequest, conflict, notFound } from '../errors.js';
+import { planForStaff } from '../domain/plans.js';
 import { normalizePhone } from '../phone.js';
 import { requireOwner, requirePlatformAdmin } from './access.js';
 import { upsertUserByPhone, type User } from './auth.js';
@@ -64,6 +65,43 @@ export async function searchPublicShops(deps: Deps, query: string) {
      WHERE ${PUBLIC_CONDITION} AND (s.name ILIKE $2 OR s.address ILIKE $2 OR s.district ILIKE $2 OR s.city ILIKE $2)
      ORDER BY s.name LIMIT 20`,
     [deps.clock.now(), `%${query.replace(/[%_\\]/g, (c) => `\\${c}`)}%`],
+  );
+  return rows;
+}
+
+export type NearbyQuery = {
+  latitude: number;
+  longitude: number;
+  query?: string;
+  audience?: 'men' | 'women';
+  radiusKm: number;
+  limit: number;
+};
+
+/**
+ * Keşfet map: public shops around a point, nearest first. Matches the shop's
+ * name, district, city, or one of its services. Unisex shops count for both audiences.
+ */
+export async function nearbyShops(deps: Deps, q: NearbyQuery) {
+  const distance = `(2 * 6371000 * asin(sqrt(
+    power(sin(radians($2 - s.latitude) / 2), 2) +
+    cos(radians($2)) * cos(radians(s.latitude)) * power(sin(radians($3 - s.longitude) / 2), 2))))`;
+  const text = q.query?.trim() ? `%${q.query.trim().replace(/[%_\\]/g, (c) => `\\${c}`)}%` : null;
+  const { rows } = await deps.db.query(
+    `SELECT * FROM (
+       SELECT s.slug, s.name, s.district, s.city, s.audience, s.latitude, s.longitude,
+         (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id,
+         round(${distance})::int AS distance_m
+       FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
+       WHERE ${PUBLIC_CONDITION} AND s.latitude IS NOT NULL AND s.longitude IS NOT NULL
+         AND ($4::text IS NULL OR s.name ILIKE $4 OR s.district ILIKE $4 OR s.city ILIKE $4
+              OR EXISTS (SELECT 1 FROM services sv WHERE sv.shop_id = s.id AND sv.active AND sv.name ILIKE $4))
+         AND ($5::text IS NULL OR s.audience IN ($5, 'unisex'))
+     ) found
+     WHERE distance_m <= $6
+     ORDER BY distance_m, name
+     LIMIT $7`,
+    [deps.clock.now(), q.latitude, q.longitude, text, q.audience ?? null, q.radiusKm * 1000, q.limit],
   );
   return rows;
 }
@@ -166,12 +204,12 @@ export async function setSubscription(deps: Deps, admin: User, shopId: string, i
 
 export async function listShopsForAdmin(deps: Deps, admin: User) {
   requirePlatformAdmin(admin);
-  const { rows } = await deps.db.query(
+  const { rows } = await deps.db.query<{ seats: number }>(
     `SELECT s.id, s.slug, s.name, s.reviewed_at, sub.status AS subscription_status, sub.grace_until,
        (SELECT count(*)::int FROM shop_members m WHERE m.shop_id = s.id AND m.active AND m.bookable) AS seats
      FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id ORDER BY s.created_at DESC`,
   );
-  return rows;
+  return rows.map((r) => ({ ...r, plan: planForStaff(r.seats) }));
 }
 
 export type ShopSettingsInput = Partial<{

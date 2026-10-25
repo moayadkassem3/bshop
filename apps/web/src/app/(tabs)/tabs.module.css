@@ -1,0 +1,3 @@
+.content {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}

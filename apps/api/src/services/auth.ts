@@ -18,6 +18,13 @@ const OTP_MAX_PER_HOUR = 5;
  */
 export type Portal = 'customer' | 'staff' | 'owner';
 
+/**
+ * How someone signs in (v1.5): as a customer, or as a business. A business
+ * sign-in becomes an owner session for owners and a staff session for staff.
+ * The 'staff' and 'owner' entrances remain for the staff app.
+ */
+export type SignInAs = Portal | 'business';
+
 export type User = {
   id: string;
   phone: string;
@@ -29,26 +36,30 @@ export type User = {
 
 const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 
-/** Staff and owner sign-in only accept phones with that role in an active shop membership. */
-async function assertPortalAllowed(q: Queryable, phone: string, portal: Portal) {
-  if (portal === 'customer') return;
-  const { rowCount } = await q.query(
-    `SELECT 1 FROM users u JOIN shop_members m ON m.user_id = u.id
-     WHERE u.phone = $1 AND m.active AND m.role = $2 LIMIT 1`,
-    [phone, portal],
+/**
+ * Business entrances only accept phones with an active shop membership (of that
+ * role, for 'owner' and 'staff'). Returns the portal the session will have.
+ */
+async function resolvePortal(q: Queryable, phone: string, as: SignInAs): Promise<Portal> {
+  if (as === 'customer') return 'customer';
+  const { rows } = await q.query<{ role: 'owner' | 'staff' }>(
+    `SELECT DISTINCT m.role FROM users u JOIN shop_members m ON m.user_id = u.id
+     WHERE u.phone = $1 AND m.active`,
+    [phone],
   );
-  if (!rowCount) {
-    throw portal === 'owner'
-      ? new AppError(403, 'NOT_OWNER', 'This number is not registered as a salon owner')
-      : new AppError(403, 'NOT_STAFF', 'This number is not registered as salon staff');
-  }
+  const roles = rows.map((r) => r.role);
+  if (as === 'business' && roles.length) return roles.includes('owner') ? 'owner' : 'staff';
+  if (as !== 'business' && roles.includes(as)) return as;
+  if (as === 'owner') throw new AppError(403, 'NOT_OWNER', 'This number is not registered as a salon owner');
+  if (as === 'staff') throw new AppError(403, 'NOT_STAFF', 'This number is not registered as salon staff');
+  throw new AppError(403, 'NOT_BUSINESS', 'This number is not registered with a business');
 }
 
-export async function requestOtp(deps: Deps, rawPhone: string, portal: Portal = 'customer'): Promise<void> {
+export async function requestOtp(deps: Deps, rawPhone: string, as: SignInAs = 'customer'): Promise<void> {
   const phone = normalizePhone(rawPhone);
   const now = deps.clock.now();
   // Checked before any SMS is sent, so wrong-entrance attempts cost nothing.
-  await assertPortalAllowed(deps.db, phone, portal);
+  await resolvePortal(deps.db, phone, as);
   await withTx(deps.db, async (tx) => {
     // Serialise requests per phone so the rate limits hold under concurrency.
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [phone]);
@@ -74,9 +85,8 @@ export async function requestOtp(deps: Deps, rawPhone: string, portal: Portal = 
 
 export async function verifyOtp(
   deps: Deps,
-  input: { phone: string; code: string; firstName?: string; lastName?: string; portal?: Portal },
+  input: { phone: string; code: string; firstName?: string; lastName?: string; portal?: SignInAs },
 ): Promise<{ token: string; user: User }> {
-  const portal = input.portal ?? 'customer';
   const phone = normalizePhone(input.phone);
   const now = deps.clock.now();
   const result = await withTx(deps.db, async (tx) => {
@@ -96,7 +106,7 @@ export async function verifyOtp(
       await tx.query('UPDATE otp_codes SET attempts = attempts + 1 WHERE id = $1', [otp.id]);
       return null;
     }
-    await assertPortalAllowed(tx, phone, portal);
+    const portal = await resolvePortal(tx, phone, input.portal ?? 'customer');
     await tx.query('UPDATE otp_codes SET consumed_at = $2 WHERE id = $1', [otp.id, now]);
 
     const row = (
@@ -110,16 +120,29 @@ export async function verifyOtp(
       )
     ).rows[0]!;
     const user: User = { ...row, portal };
-
-    const token = randomBytes(32).toString('base64url');
-    await tx.query(
-      'INSERT INTO sessions (token_hash, user_id, portal, created_at, expires_at) VALUES ($1, $2, $3, $4, $5)',
-      [sha256(token), user.id, portal, now, new Date(now.getTime() + deps.config.sessionDays * 24 * 60 * MINUTE)],
-    );
-    return { token, user };
+    return { token: await createSession(tx, deps, user.id, portal, now), user };
   });
   if (!result) throw badRequest('OTP_INVALID', 'Code is invalid or expired');
   return result;
+}
+
+async function createSession(q: Queryable, deps: Deps, userId: string, portal: Portal, now: Date): Promise<string> {
+  const token = randomBytes(32).toString('base64url');
+  await q.query(
+    'INSERT INTO sessions (token_hash, user_id, portal, created_at, expires_at) VALUES ($1, $2, $3, $4, $5)',
+    [sha256(token), userId, portal, now, new Date(now.getTime() + deps.config.sessionDays * 24 * 60 * MINUTE)],
+  );
+  return token;
+}
+
+/**
+ * "İşletme hesabına geç" / "Müşteri moduna geç" in Profil: the same verified
+ * phone gets a session for the other mode, without a new SMS code.
+ */
+export async function switchMode(deps: Deps, user: User, to: 'customer' | 'business') {
+  const portal = await resolvePortal(deps.db, user.phone, to);
+  const token = await createSession(deps.db, deps, user.id, portal, deps.clock.now());
+  return { token, user: { ...user, portal } };
 }
 
 export async function userForToken(deps: Deps, token: string): Promise<User | null> {

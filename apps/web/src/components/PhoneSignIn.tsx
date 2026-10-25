@@ -10,11 +10,13 @@ import styles from './PhoneSignIn.module.css';
 type Props = {
   /** Ask for first name and surname too (new customers booking for the first time). */
   askNames: boolean;
+  /** Customer or business sign-in (v1.5); business only accepts phones registered with a shop. */
+  as?: 'customer' | 'business';
   onSignedIn: (me: Me) => void;
 };
 
 /** Customer sign-in on the website: phone number, then the 6-digit SMS code. */
-export function PhoneSignIn({ askNames, onSignedIn }: Props) {
+export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
   const [phone, setPhone] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -36,7 +38,7 @@ export function PhoneSignIn({ askNames, onSignedIn }: Props) {
     setBusy(true);
     setError(null);
     try {
-      await api('/auth/otp/request', { method: 'POST', body: { phone } });
+      await api('/auth/otp/request', { method: 'POST', body: { phone, portal: as } });
       setCodeSent(true);
       setResendIn(60);
     } catch (err) {
@@ -55,6 +57,7 @@ export function PhoneSignIn({ askNames, onSignedIn }: Props) {
         body: {
           phone,
           code,
+          portal: as,
           ...(askNames ? { firstName: firstName.trim(), lastName: lastName.trim() } : {}),
         },
       });
