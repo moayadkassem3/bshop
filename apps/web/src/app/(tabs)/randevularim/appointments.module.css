@@ -116,6 +116,8 @@
   border-radius: 50%;
   background: var(--primary-soft);
   color: var(--primary);
+  font-size: 30px;
+  font-weight: 800;
 }
 
 .card {

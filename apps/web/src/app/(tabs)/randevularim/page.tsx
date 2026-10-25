@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { MyAppointments } from './MyAppointments';
+import { AppointmentsTab } from './AppointmentsTab';
 
 export const metadata: Metadata = { title: 'Randevularım' };
 
 export default function MyAppointmentsPage() {
-  return <MyAppointments />;
+  return <AppointmentsTab />;
 }

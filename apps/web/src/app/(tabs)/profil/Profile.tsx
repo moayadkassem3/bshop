@@ -160,7 +160,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
 
         <h2 className={styles.groupTitle}>İşlemlerim</h2>
         <ul className={`card ${styles.menu}`} role="list">
-          <MenuLink href="/randevularim" label="Randevu ve taleplerim" />
+          {mode === 'customer' && <MenuLink href="/randevularim" label="Randevu ve taleplerim" />}
           <MenuLink href="/favoriler" label="Favorilerim" />
         </ul>
 
@@ -267,7 +267,9 @@ function MyBusinesses() {
           );
         })}
       </ul>
-      <p className={styles.panelHint}>Randevu talepleri, takvim ve ayarlar personel uygulamasında olacak.</p>
+      <Link href="/randevularim" className={`btn btn-primary btn-block ${styles.panelLink}`}>
+        Randevu talepleri ve takvim
+      </Link>
     </>
   );
 }
