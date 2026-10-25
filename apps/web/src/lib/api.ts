@@ -42,6 +42,13 @@ const MESSAGES: Record<string, string> = {
   UNAUTHENTICATED: 'Devam etmek için telefon numaranızı doğrulayın.',
   NOT_FOUND: 'Salon bulunamadı veya şu anda randevu almıyor.',
   NOT_BUSINESS: 'Bu numara kayıtlı bir işletmeye ait değil.',
+  REGISTRATION_PENDING: 'Önceki başvurunuz hâlâ inceleniyor. Sonuçlandığında yeni bir işletme kaydedebilirsiniz.',
+  DUPLICATE_MEMBER: 'Her kişinin telefon numarası farklı olmalı.',
+  CONSENT_REQUIRED: 'Devam etmek için sözleşmeleri onaylayın.',
+  OUTDATED_DOCUMENT: 'Sözleşme güncellendi. Lütfen sayfayı yenileyip tekrar onaylayın.',
+  INVALID_INSTAGRAM: 'Instagram kullanıcı adı geçerli değil.',
+  INVALID_IMAGE: 'Fotoğraf JPEG, PNG veya WebP olmalı.',
+  PHOTO_LIMIT: 'En fazla 12 fotoğraf ekleyebilirsiniz.',
 };
 
 export function errorMessage(err: unknown): string {

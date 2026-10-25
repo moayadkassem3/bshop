@@ -139,7 +139,7 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
       .object({
         phone: z.string().min(7).max(20),
         displayName: z.string().trim().min(1).max(60),
-        role: z.enum(['owner', 'staff']).default('staff'),
+        role: z.enum(['owner', 'co_owner', 'staff']).default('staff'),
         bookable: z.boolean().default(true),
       })
       .parse(req.body);

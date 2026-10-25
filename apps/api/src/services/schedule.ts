@@ -40,7 +40,7 @@ export async function eligibleStaff(q: Queryable, shopId: string, serviceIds: st
      WHERE m.shop_id = $1 AND m.active AND m.bookable AND s.id = ANY($2::uuid[])
      GROUP BY m.id, m.display_name
      HAVING count(*) = $3
-     ORDER BY m.display_name, m.id`,
+     ORDER BY m.display_name COLLATE "tr-x-icu", m.id`,
     [shopId, serviceIds, serviceIds.length],
   );
   return rows.map((r) => ({ id: r.id, displayName: r.display_name, durationMinutes: r.duration }));

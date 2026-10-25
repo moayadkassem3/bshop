@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { candidateStarts, fits } from '../src/domain/availability.js';
 import { confirmationTimers, inAutoConfirmHours } from '../src/domain/confirmation.js';
 import { formatPrice } from '../src/messages.js';
-import { normalizePhone } from '../src/phone.js';
+import { normalizePhone, normalizeShopPhone } from '../src/phone.js';
 
 const T = (hhmm: string) => new Date(`2026-10-26T${hhmm}:00+03:00`);
 const ms = (hhmm: string) => T(hhmm).getTime();
@@ -116,5 +116,13 @@ describe('formatting and phone numbers', () => {
     expect(normalizePhone('5320000001')).toBe('+905320000001');
     expect(normalizePhone('+90 532 000 0001')).toBe('+905320000001');
     expect(() => normalizePhone('0212 000 00 00')).toThrow();
+  });
+
+  it('accepts landlines and 0850 numbers as a salon phone, not for sign-in', () => {
+    expect(normalizeShopPhone('0216 555 44 33')).toBe('+902165554433');
+    expect(normalizeShopPhone('0850 222 33 44')).toBe('+908502223344');
+    expect(normalizeShopPhone('0532 000 00 01')).toBe('+905320000001');
+    expect(() => normalizeShopPhone('0123 000 00 00')).toThrow();
+    expect(() => normalizePhone('0850 222 33 44')).toThrow();
   });
 });

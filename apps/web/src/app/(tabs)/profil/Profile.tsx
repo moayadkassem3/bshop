@@ -97,7 +97,7 @@ function SignIn(props: {
             <PhoneSignIn askNames={false} as="business" onSignedIn={props.onSignedIn} />
             <div className={styles.register}>
               <span>İşletmeniz henüz kayıtlı değil mi?</span>
-              <Link href="/isletmeler#basvuru">İşletmenizi kaydedin →</Link>
+              <Link href="/isletme-kaydi">İşletmenizi kaydedin →</Link>
             </div>
           </>
         )}
@@ -158,12 +158,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
       </header>
 
       <div className="container narrow">
-        {mode !== 'customer' && (
-          <div className={`card ${styles.panelNote}`}>
-            <strong>İşletme paneli</strong>
-            <p className="muted">Randevu talepleri, takvim, hizmetler ve ayarlar çok yakında burada olacak.</p>
-          </div>
-        )}
+        {mode !== 'customer' && <MyBusinesses />}
 
         <h2 className={styles.groupTitle}>İşlemlerim</h2>
         <ul className={`card ${styles.menu}`} role="list">
@@ -204,7 +199,9 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
               </button>
             )}
           </li>
-          <MenuLink href="/isletmeler" label="İşletmenizi kaydedin" />
+          <MenuLink href="/isletme-kaydi" label="İşletmenizi kaydedin" />
+          <MenuLink href="/isletmeler" label="Paketler ve fiyatlar" />
+          <MenuLink href="/sozlesmeler" label="Yasal metinler" />
         </ul>
         {message && <p className="alert alert-info">{message}</p>}
 
@@ -219,6 +216,60 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
           Çıkış yap
         </button>
       </div>
+    </>
+  );
+}
+
+type MyBusiness = {
+  id: string;
+  name: string;
+  slug: string;
+  role: 'owner' | 'staff';
+  owner_label: 'owner' | 'co_owner' | null;
+  reviewed_at: string | null;
+  subscription_status: 'none' | 'trial' | 'active' | 'past_due' | 'canceled';
+  current_period_end: string | null;
+};
+
+function businessStatus(b: MyBusiness): { label: string; tone: string } {
+  if (!b.reviewed_at) return { label: 'İncelemede', tone: 'badge-warning' };
+  if (b.subscription_status === 'trial' && b.current_period_end) {
+    const days = Math.max(0, Math.ceil((new Date(b.current_period_end).getTime() - Date.now()) / 86_400_000));
+    return days ? { label: `Deneme · ${days} gün kaldı`, tone: 'badge-gold' } : { label: 'Deneme bitti', tone: 'badge-danger' };
+  }
+  if (b.subscription_status === 'active') return { label: 'Aktif', tone: 'badge-success' };
+  if (b.subscription_status === 'past_due') return { label: 'Ödeme bekleniyor', tone: 'badge-danger' };
+  return { label: 'Pasif', tone: 'badge-muted' };
+}
+
+/** The shops this person belongs to, with their label (v1.6: owner, co-owner, staff) and review/trial state. */
+function MyBusinesses() {
+  const [shops, setShops] = useState<MyBusiness[] | null>(null);
+  useEffect(() => {
+    api<MyBusiness[]>('/staff/shops')
+      .then(setShops)
+      .catch(() => setShops([]));
+  }, []);
+  if (!shops) return null;
+  return (
+    <>
+      <h2 className={styles.groupTitle}>İşletmelerim</h2>
+      <ul className={`card ${styles.menu}`} role="list">
+        {shops.map((b) => {
+          const status = businessStatus(b);
+          const label = b.role === 'staff' ? 'Personel' : b.owner_label === 'co_owner' ? 'Ortak' : 'Sahibi';
+          return (
+            <li key={b.id} className={styles.business}>
+              <span>
+                <strong>{b.name}</strong>
+                <span className="muted">{label}</span>
+              </span>
+              <span className={`badge ${status.tone}`}>{status.label}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className={styles.panelHint}>Randevu talepleri, takvim ve ayarlar personel uygulamasında olacak.</p>
     </>
   );
 }

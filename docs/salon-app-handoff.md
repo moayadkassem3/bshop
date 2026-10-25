@@ -1,8 +1,8 @@
 # Salon Booking Platform — Handoff & Planning Baseline
 
-**Version:** 1.5  
+**Version:** 1.6  
 **Baseline date:** 24 October 2026  
-**Previous versions:** 1.4, 1.3, 1.2 and 1.1 (24 October 2026), 1.0 (6 October 2026)  
+**Previous versions:** 1.5 (25 October 2026), 1.4, 1.3, 1.2 and 1.1 (24 October 2026), 1.0 (6 October 2026)  
 **Status:** Build in progress. The founder authorized application code on 24 October 2026 (Section 12).  
 **Working market:** All of Türkiye *(v1.4)*  
 **Product name:** To be decided
@@ -17,7 +17,7 @@ This document is the reference point for continuing product design and handing t
 - **Proposed** — a recommendation recorded for design review; it needs the founder's confirmation before it becomes agreed.
 - **Open** — not yet decided.
 
-Rows and sections new or changed in version 1.1 are marked *(v1.1)*, in version 1.3 *(v1.3)*, in version 1.4 *(v1.4)*, and in version 1.5 *(v1.5)*; version 1.2 adds Section 12. The change record at the end summarises each version.
+Rows and sections new or changed in version 1.1 are marked *(v1.1)*, in version 1.3 *(v1.3)*, in version 1.4 *(v1.4)*, in version 1.5 *(v1.5)*, and in version 1.6 *(v1.6)*; version 1.2 adds Section 12. The change record at the end summarises each version.
 
 ## 1. Product purpose
 
@@ -518,11 +518,49 @@ These founder decisions (25 October 2026) replace the earlier rows they mention.
 | Shop registration | Self-service, multi-step registration (“quiz”), followed by our team's review. | Shops created by our team during the visit |
 | Agreements | Sign-up shows the usual agreements; drafts to be prepared and reviewed by a lawyer before launch. | — |
 
-**Open after v1.5:** the product name; whether prices include KDV (VAT); the price for more than 10 staff; whether SMS is unlimited in every plan; a free trial; whether an owner who also works counts as one of the plan's staff.
+**Open after v1.5:** the product name; whether prices include KDV (VAT); the price for more than 10 staff; whether SMS is unlimited in every plan; a free trial; whether an owner who also works counts as one of the plan's staff. *(v1.6: all answered in Section 14 except the product name.)*
 
 **Technology note:** the website uses React (Next.js). The map uses MapLibre with free OpenFreeMap vector tiles, no key needed; MapLibre also runs in React Native, so the Android and iOS apps can share it. A paid tile provider can replace OpenFreeMap at launch if traffic requires it.
 
-## Change record
+## 14. Decisions in version 1.6 *(v1.6)*
+
+The founder answered the questions left open after v1.5 (25 October 2026).
+
+| Area | Decision |
+| --- | --- |
+| KDV | Plan prices include KDV. The pricing page and the registration form say “Fiyatlara KDV dahildir”. |
+| More than 10 staff | Priced individually: shops ask for a quote by email. The sales address is still to be provided (`NEXT_PUBLIC_SALES_EMAIL`); until then the page says a custom offer is prepared. |
+| SMS | Unlimited in every plan. At about ₺1,500 per 10,000 SMS the cost is small; the business agreement keeps a fair-use clause against abuse. |
+| Free trial | One week. It starts when our team approves the shop, not at sign-up, so the review time is not lost; the shop owner gets an SMS on approval. |
+| Co-owner | An “Ortak” (co-owner) label with the same permissions as the owner. The owner and co-owners can choose whether they take appointments. |
+| Owner who also works *(proposed default)* | Counts as one of the plan's staff only when “Ben de randevu alıyorum” is ticked. Co-owners follow the same rule; staff always count. |
+| Product name | Still open. The build shows “Salon Randevu” and reads the name from `NEXT_PUBLIC_BRAND_NAME`, so changing it is one setting. |
+
+**Built in v1.6:**
+
+- **Shop registration (`/isletme-kaydi`).** One topic per page:
+  1. Phone verification, for anyone not yet signed in.
+  2. Salon type.
+  3. Name and contact details. The salon phone may be a landline or an 0850 number; WhatsApp and sign-in numbers stay mobile.
+  4. Province (all 81), district, address, and a pin on the map.
+  5. Working hours.
+  6. Services from the platform list with the owner's prices, plus custom services.
+  7. Staff and co-owners, with the matching plan shown live.
+  8. Summary, plan, 7-day trial, and the two business agreements.
+
+  After it is sent, the owner can add photos straight away. Each page is saved in the browser as a draft.
+- **Review.** A new shop stays hidden until our team approves it. Approval starts the trial and sends the owner an SMS. Each person can have one registration under review at a time.
+- **Profil.** Shows “İşletmelerim” with the person's label (Sahibi, Ortak, Personel) and the shop's state (İncelemede, Deneme · N gün kaldı, Aktif). Also links to registration, prices, and the legal texts.
+- **Agreements (`/sozlesmeler`).** Turkish drafts of six documents:
+  - Kullanıcı Sözleşmesi
+  - KVKK Aydınlatma Metni
+  - Çerez Politikası
+  - Ticari İleti İzni
+  - İşletme Hizmet Sözleşmesi
+  - Veri İşleme Sözleşmesi
+
+  Every acceptance is recorded with the document's version and time. Customers accept the user agreement at sign-in; marketing permission is optional and can be withdrawn. Businesses accept both business agreements when registering. The drafts have placeholders (company title, address, MERSİS, KEP, e-mail) and **must be reviewed by a lawyer before launch**.
+- **Names in Turkish order.** Staff and shop names are sorted in Turkish alphabetical order (Ç after C, Ş after S).
 
 | Version | Date | Change |
 | --- | --- | --- |
@@ -532,3 +570,4 @@ These founder decisions (25 October 2026) replace the earlier rows they mention.
 | 1.3 | 24 October 2026 | Founder decisions: map discovery removed; every shop gets a public profile page with photos, hours, address and directions, phone, WhatsApp, and Instagram, and a WhatsApp · Call · Directions · Randevu al bar. Customers reach shops by link, QR code, or name search. |
 | 1.4 | 24 October 2026 | Founder decisions: the app serves all of Türkiye (shops record their city; search matches it; “İstanbul” removed from the website; pilot city open); “Salonlarım” on the home page with favourite shops and shops booked before. |
 | 1.5 | 25 October 2026 | Founder decisions: map discovery returns as the Keşfet tab; one app for customers and businesses with a Müşteriyim / İşletmeyim sign-in and mode switching; bottom navigation bar; “Personel” and “kuaför” wording; subscription prices by staff count; self-service shop registration; agreements at sign-up. Added Section 13. |
+| 1.6 | 25 October 2026 | Founder decisions: prices include KDV; more than 10 staff priced by email quote; SMS unlimited with fair use; one-week free trial starting at approval; co-owner (“Ortak”) label with owner permissions; product name still open. Built self-service registration, approval SMS, agreement drafts with recorded acceptance, landline salon phones, and Turkish name sorting. Added Section 14. |

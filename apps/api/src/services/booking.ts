@@ -1,13 +1,14 @@
 import type pg from 'pg';
 import type { Deps } from '../deps.js';
 import { withTx, type Queryable } from '../db.js';
-import { badRequest, conflict, forbidden, notFound } from '../errors.js';
+import { AppError, badRequest, conflict, forbidden, notFound } from '../errors.js';
 import { fits } from '../domain/availability.js';
 import { confirmationTimers, inAutoConfirmHours, type WeeklyWindow } from '../domain/confirmation.js';
 import { localDayOf, MINUTE } from '../domain/time.js';
 import { formatTime, formatWhen, push, sms } from '../messages.js';
 import { queuePush, queueSms } from '../notifications.js';
 import { upsertUserByPhone, type User } from './auth.js';
+import { hasAccepted } from './consents.js';
 import { getPublicShopBySlug, type Shop } from './shops.js';
 import {
   assertWithinHorizon,
@@ -215,6 +216,9 @@ export async function createBooking(
       )
     ).rows[0]!;
     if (standing.blocked) throw forbidden('This shop is not accepting bookings from this account');
+    if (!(await hasAccepted(tx, user.id, 'kullanici-sozlesmesi'))) {
+      throw new AppError(403, 'TERMS_REQUIRED', 'Accept the user agreement to book');
+    }
 
     const pending = await tx.query(
       `SELECT 1 FROM appointments WHERE shop_id = $1 AND customer_id = $2 AND status = 'pending' LIMIT 1`,

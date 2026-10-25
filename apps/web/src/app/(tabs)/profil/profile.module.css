@@ -180,14 +180,29 @@
   font-weight: 650;
 }
 
-.panelNote {
-  margin-top: 16px;
-  padding: 16px;
+.business {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 16px;
 }
 
-.panelNote p {
-  margin: 4px 0 0;
-  font-size: 14px;
+.business > span:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.business .muted {
+  font-size: 13px;
+}
+
+.panelHint {
+  margin: 8px 4px 0;
+  font-size: 13px;
+  color: var(--muted);
 }
 
 .groupTitle {

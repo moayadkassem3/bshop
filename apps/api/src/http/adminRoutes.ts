@@ -2,14 +2,9 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Deps } from '../deps.js';
 import { createShop, listShopsForAdmin, markReviewed, setSubscription } from '../services/shops.js';
+import { RESERVED_SLUGS } from '../domain/slug.js';
 import type { AuthFn } from './app.js';
 import { shopParams, timestamp } from './schemas.js';
-
-/** Shop links live at the website's top level (/<slug>), so they must not clash with its pages. */
-const RESERVED_SLUGS = new Set([
-  'api', 'admin', 'harita', 'randevularim', 'isletmeler', 'giris', 'hesap', 'yardim', 'gizlilik', 'kvkk',
-  'sozlesme', 'iletisim', 'hakkimizda', 'arama', 'salon', 'salonlar', 'uygulama', 'static', 'favicon-ico',
-]);
 
 /** Back office for our team: create shops on site, review, and manage subscriptions. */
 export function adminRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {

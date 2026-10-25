@@ -1,8 +1,10 @@
 import type { Deps } from '../deps.js';
 import { withTx, type Queryable } from '../db.js';
 import { badRequest, conflict, notFound } from '../errors.js';
-import { planForStaff } from '../domain/plans.js';
-import { normalizePhone } from '../phone.js';
+import { PLAN_TERMS, planForStaff } from '../domain/plans.js';
+import { sms } from '../messages.js';
+import { queueSms } from '../notifications.js';
+import { normalizePhone, normalizeShopPhone } from '../phone.js';
 import { requireOwner, requirePlatformAdmin } from './access.js';
 import { upsertUserByPhone, type User } from './auth.js';
 
@@ -37,7 +39,9 @@ const SHOP_COLUMNS = `s.id, s.slug, s.name, s.phone, s.address, s.district, s.ci
 
 /** Public = reviewed by our team and paid up (trial, active, or past due within the grace period). */
 export const PUBLIC_CONDITION = `s.reviewed_at IS NOT NULL AND (
-  sub.status IN ('trial', 'active') OR (sub.status = 'past_due' AND sub.grace_until > $1))`;
+  sub.status = 'active'
+  OR (sub.status = 'trial' AND sub.current_period_end > $1)
+  OR (sub.status = 'past_due' AND sub.grace_until > $1))`;
 
 export async function getShopById(q: Queryable, shopId: string): Promise<Shop> {
   const { rows } = await q.query<Shop>(`SELECT ${SHOP_COLUMNS} FROM shops s WHERE s.id = $1`, [shopId]);
@@ -63,7 +67,7 @@ export async function searchPublicShops(deps: Deps, query: string) {
        (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id
      FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
      WHERE ${PUBLIC_CONDITION} AND (s.name ILIKE $2 OR s.address ILIKE $2 OR s.district ILIKE $2 OR s.city ILIKE $2)
-     ORDER BY s.name LIMIT 20`,
+     ORDER BY s.name COLLATE "tr-x-icu" LIMIT 20`,
     [deps.clock.now(), `%${query.replace(/[%_\\]/g, (c) => `\\${c}`)}%`],
   );
   return rows;
@@ -99,7 +103,7 @@ export async function nearbyShops(deps: Deps, q: NearbyQuery) {
          AND ($5::text IS NULL OR s.audience IN ($5, 'unisex'))
      ) found
      WHERE distance_m <= $6
-     ORDER BY distance_m, name
+     ORDER BY distance_m, name COLLATE "tr-x-icu"
      LIMIT $7`,
     [deps.clock.now(), q.latitude, q.longitude, text, q.audience ?? null, q.radiusKm * 1000, q.limit],
   );
@@ -145,7 +149,7 @@ export async function createShop(deps: Deps, admin: User, input: CreateShopInput
         [
           input.name,
           input.slug,
-          input.phone ? normalizePhone(input.phone) : null,
+          input.phone ? normalizeShopPhone(input.phone) : null,
           input.address ?? null,
           input.district ?? null,
           input.city ?? null,
@@ -166,8 +170,8 @@ export async function createShop(deps: Deps, admin: User, input: CreateShopInput
     );
     const member = (
       await tx.query<{ id: string }>(
-        `INSERT INTO shop_members (shop_id, user_id, role, display_name, bookable)
-         VALUES ($1, $2, 'owner', $3, $4) RETURNING id`,
+        `INSERT INTO shop_members (shop_id, user_id, role, owner_label, display_name, bookable)
+         VALUES ($1, $2, 'owner', 'owner', $3, $4) RETURNING id`,
         [shop.id, ownerId, input.owner.displayName, input.owner.bookable],
       )
     ).rows[0]!;
@@ -175,14 +179,35 @@ export async function createShop(deps: Deps, admin: User, input: CreateShopInput
   });
 }
 
+/** Approval by our team. A shop without a subscription yet starts its free trial now (v1.6). */
 export async function markReviewed(deps: Deps, admin: User, shopId: string) {
   requirePlatformAdmin(admin);
-  const { rowCount } = await deps.db.query('UPDATE shops SET reviewed_at = $2, reviewed_by = $3 WHERE id = $1', [
-    shopId,
-    deps.clock.now(),
-    admin.id,
-  ]);
-  if (!rowCount) throw notFound('Shop');
+  const now = deps.clock.now();
+  await withTx(deps.db, async (tx) => {
+    const { rowCount } = await tx.query('UPDATE shops SET reviewed_at = $2, reviewed_by = $3 WHERE id = $1', [shopId, now, admin.id]);
+    if (!rowCount) throw notFound('Shop');
+    const trial = await tx.query(
+      `UPDATE subscriptions SET status = 'trial', current_period_end = $2, updated_at = $3
+       WHERE shop_id = $1 AND status = 'none'`,
+      [shopId, new Date(now.getTime() + PLAN_TERMS.trialDays * 86_400_000), now],
+    );
+    // A self-registered shop hears about its approval by SMS (v1.6).
+    if (trial.rowCount) {
+      const { rows } = await tx.query<{ name: string; slug: string; phone: string }>(
+        'SELECT s.name, s.slug, u.phone FROM shops s JOIN users u ON u.id = s.registered_by WHERE s.id = $1',
+        [shopId],
+      );
+      const shop = rows[0];
+      if (shop) {
+        await queueSms(tx, now, {
+          shopId,
+          phone: shop.phone,
+          template: 'shop_approved',
+          body: sms.shopApproved({ shop: shop.name, trialDays: PLAN_TERMS.trialDays, link: `${deps.config.publicWebUrl}/${shop.slug}` }),
+        });
+      }
+    }
+  });
 }
 
 export type SubscriptionInput = {
@@ -205,7 +230,8 @@ export async function setSubscription(deps: Deps, admin: User, shopId: string, i
 export async function listShopsForAdmin(deps: Deps, admin: User) {
   requirePlatformAdmin(admin);
   const { rows } = await deps.db.query<{ seats: number }>(
-    `SELECT s.id, s.slug, s.name, s.reviewed_at, sub.status AS subscription_status, sub.grace_until,
+    `SELECT s.id, s.slug, s.name, s.reviewed_at, s.registered_by, sub.status AS subscription_status,
+       sub.current_period_end, sub.grace_until,
        (SELECT count(*)::int FROM shop_members m WHERE m.shop_id = s.id AND m.active AND m.bookable) AS seats
      FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id ORDER BY s.created_at DESC`,
   );
@@ -258,7 +284,7 @@ export async function updateShopSettings(deps: Deps, user: User, shopId: string,
   if (entries.length) {
     const sets = entries.map(([k], i) => `${SETTING_COLUMNS[k]} = $${i + 2}`);
     const values = entries.map(([k, v]) =>
-      typeof v !== 'string' ? v : k === 'phone' || k === 'whatsapp' ? normalizePhone(v) : k === 'instagram' ? normalizeInstagram(v) : v,
+      typeof v !== 'string' ? v : k === 'phone' ? normalizeShopPhone(v) : k === 'whatsapp' ? normalizePhone(v) : k === 'instagram' ? normalizeInstagram(v) : v,
     );
     await deps.db.query(`UPDATE shops SET ${sets.join(', ')} WHERE id = $1`, [shopId, ...values]);
   }

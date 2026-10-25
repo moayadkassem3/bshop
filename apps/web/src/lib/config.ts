@@ -3,3 +3,6 @@ export const BRAND = process.env.NEXT_PUBLIC_BRAND_NAME ?? 'Salon Randevu';
 
 /** Server-side calls go straight to the backend; the browser goes through the /api rewrite. */
 export const SERVER_API_URL = process.env.API_URL ?? 'http://localhost:3000';
+
+/** Where shops with more than 10 staff ask for a quote (v1.6). Unset until the sales address is chosen. */
+export const SALES_EMAIL = process.env.NEXT_PUBLIC_SALES_EMAIL || null;

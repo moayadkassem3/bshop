@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SERVER_API_URL } from '@/lib/config';
+import { SALES_EMAIL, SERVER_API_URL } from '@/lib/config';
 import { formatPrice } from '@/lib/format';
 import styles from './business.module.css';
 
@@ -9,9 +9,8 @@ export const metadata: Metadata = { title: 'İşletmeler için' };
 type Plans = {
   plans: { id: string; name: string; maxStaff: number; monthlyPriceKurus: number }[];
   features: string[];
+  terms: { vatIncluded: boolean; trialDays: number; customQuoteAboveStaff: number };
 };
-
-const salesPhone = process.env.NEXT_PUBLIC_SALES_PHONE;
 
 async function loadPlans(): Promise<Plans | null> {
   try {
@@ -42,7 +41,10 @@ export default async function BusinessPage() {
       {plans && (
         <section className={styles.pricing} aria-labelledby="pricing-title">
           <h2 id="pricing-title">Aylık abonelik</h2>
-          <p className="muted">Ücret, randevu alan personel sayınıza göre belirlenir.</p>
+          <p className="muted">
+            Ücret, randevu alan personel sayınıza göre belirlenir.{plans.terms.vatIncluded && ' Fiyatlara KDV dahildir.'}
+          </p>
+          <p className={styles.trial}>İlk {plans.terms.trialDays} gün ücretsiz: deneme, salonunuz onaylandığında başlar.</p>
           <ul className={styles.plans} role="list">
             {plans.plans.map((p) => (
               <li key={p.id} className={`card ${styles.plan}`}>
@@ -59,20 +61,24 @@ export default async function BusinessPage() {
               <li key={f}>✓ {f}</li>
             ))}
           </ul>
-          <p className={styles.note}>10’dan fazla personel için bizimle iletişime geçin.</p>
+          <p className={styles.note}>
+            {plans.terms.customQuoteAboveStaff}’dan fazla personel için{' '}
+            {SALES_EMAIL ? (
+              <a href={`mailto:${SALES_EMAIL}?subject=${encodeURIComponent('Fiyat teklifi')}`}>e-postayla teklif alın</a>
+            ) : (
+              'size özel teklif hazırlıyoruz'
+            )}
+            .
+          </p>
         </section>
       )}
 
       <section id="basvuru" className={styles.apply}>
         <h2>İşletmenizi kaydedin</h2>
         <p>Birkaç adımda işletmenizi, hizmetlerinizi ve ekibinizi ekleyin; ekibimiz inceledikten sonra randevu almaya başlarsınız.</p>
-        {salesPhone ? (
-          <a className="btn btn-primary" href={`tel:${salesPhone}`}>
-            Bizi arayın
-          </a>
-        ) : (
-          <p className="muted">Kayıt adımları çok yakında burada.</p>
-        )}
+        <Link className="btn btn-primary" href="/isletme-kaydi">
+          Kayda başla
+        </Link>
       </section>
     </div>
   );

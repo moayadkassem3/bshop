@@ -10,8 +10,10 @@ import type { WeeklyWindowInput } from './shops.js';
 export async function listMyShops(deps: Deps, user: User) {
   if (user.portal === 'customer') throw forbidden('Sign in through staff or owner sign-in');
   const { rows } = await deps.db.query<{ id: string; name: string; slug: string; member_id: string; role: string; display_name: string }>(
-    `SELECT s.id, s.name, s.slug, m.id AS member_id, m.role, m.display_name
-     FROM shop_members m JOIN shops s ON s.id = m.shop_id WHERE m.user_id = $1 AND m.active ORDER BY s.name`,
+    `SELECT s.id, s.name, s.slug, m.id AS member_id, m.role, m.owner_label, m.display_name,
+       s.reviewed_at, sub.status AS subscription_status, sub.current_period_end
+     FROM shop_members m JOIN shops s ON s.id = m.shop_id JOIN subscriptions sub ON sub.shop_id = s.id
+     WHERE m.user_id = $1 AND m.active ORDER BY s.name COLLATE "tr-x-icu"`,
     [user.id],
   );
   return rows.map((r) => (user.portal === 'owner' ? r : { ...r, role: 'staff' }));
@@ -20,9 +22,12 @@ export async function listMyShops(deps: Deps, user: User) {
 export async function listMembers(deps: Deps, user: User, shopId: string) {
   await requireMember(deps.db, user, shopId);
   const { rows } = await deps.db.query(
-    `SELECT m.id, m.role, m.display_name, m.bookable, m.active, u.phone
+    `SELECT m.id, m.role, m.owner_label, m.display_name, m.bookable, m.active, u.phone
      FROM shop_members m JOIN users u ON u.id = m.user_id
-     WHERE m.shop_id = $1 ORDER BY m.created_at`,
+     WHERE m.shop_id = $1
+     -- Members added together (registration) share created_at: owner, then co-owners, then staff.
+     ORDER BY m.created_at, CASE m.owner_label WHEN 'owner' THEN 0 WHEN 'co_owner' THEN 1 ELSE 2 END,
+       m.display_name COLLATE "tr-x-icu"`,
     [shopId],
   );
   return rows;
@@ -32,17 +37,20 @@ export async function addMember(
   deps: Deps,
   user: User,
   shopId: string,
-  input: { phone: string; displayName: string; role: 'owner' | 'staff'; bookable: boolean },
+  input: { phone: string; displayName: string; role: 'owner' | 'co_owner' | 'staff'; bookable: boolean },
 ) {
   await requireOwner(deps.db, user, shopId);
+  // "Ortak" (co-owner) has the owner's permissions; only the label differs (v1.6).
+  const role = input.role === 'staff' ? 'staff' : 'owner';
+  const label = input.role === 'staff' ? null : input.role;
   return withTx(deps.db, async (tx) => {
     const userId = await upsertUserByPhone(tx, normalizePhone(input.phone));
     const existing = await tx.query('SELECT 1 FROM shop_members WHERE shop_id = $1 AND user_id = $2', [shopId, userId]);
     if (existing.rowCount) throw conflict('ALREADY_MEMBER', 'This phone number is already on the team');
     const { rows } = await tx.query<{ id: string }>(
-      `INSERT INTO shop_members (shop_id, user_id, role, display_name, bookable)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [shopId, userId, input.role, input.displayName, input.bookable],
+      `INSERT INTO shop_members (shop_id, user_id, role, owner_label, display_name, bookable)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+      [shopId, userId, role, label, input.displayName, input.bookable],
     );
     return { memberId: rows[0]!.id };
   });
@@ -179,7 +187,7 @@ export async function listServices(deps: Deps, user: User, shopId: string) {
   await requireMember(deps.db, user, shopId);
   const { rows } = await deps.db.query(
     `SELECT id, catalog_service_id, name, duration_minutes, price_kurus, price_is_starting_from, active
-     FROM services WHERE shop_id = $1 ORDER BY sort_order, name`,
+     FROM services WHERE shop_id = $1 ORDER BY sort_order, name COLLATE "tr-x-icu"`,
     [shopId],
   );
   return rows;

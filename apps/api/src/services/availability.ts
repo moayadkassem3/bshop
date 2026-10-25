@@ -93,14 +93,14 @@ export async function getShopProfile(deps: Deps, slug: string) {
   const shop = await getPublicShopBySlug(deps.db, deps.clock.now(), slug);
   const services = await deps.db.query(
     `SELECT id, name, duration_minutes, price_kurus, price_is_starting_from FROM services
-     WHERE shop_id = $1 AND active ORDER BY sort_order, name`,
+     WHERE shop_id = $1 AND active ORDER BY sort_order, name COLLATE "tr-x-icu"`,
     [shop.id],
   );
   const staff = await deps.db.query(
     `SELECT m.id, m.display_name, COALESCE(array_agg(ms.service_id) FILTER (WHERE ms.service_id IS NOT NULL), '{}') AS service_ids
      FROM shop_members m LEFT JOIN member_services ms ON ms.member_id = m.id
      WHERE m.shop_id = $1 AND m.active AND m.bookable
-     GROUP BY m.id ORDER BY m.display_name`,
+     GROUP BY m.id ORDER BY m.display_name COLLATE "tr-x-icu"`,
     [shop.id],
   );
   // Shop hours = from the earliest start to the latest end of anyone bookable that weekday.

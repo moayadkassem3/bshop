@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PhoneSignIn } from '@/components/PhoneSignIn';
+import { PhoneSignIn, useLegalVersions } from '@/components/PhoneSignIn';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { formatDuration, formatLongDate, formatPrice, formatTime } from '@/lib/format';
 import { getToken, setToken } from '@/lib/session';
@@ -38,6 +38,9 @@ export function ConfirmStep(props: {
   const [lastName, setLastName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsTerms, setNeedsTerms] = useState(false);
+  const [termsTicked, setTermsTicked] = useState(false);
+  const versions = useLegalVersions();
 
   useEffect(() => {
     if (!getToken()) {
@@ -62,6 +65,13 @@ export function ConfirmStep(props: {
     setBusy(true);
     setError(null);
     try {
+      if (needsTerms) {
+        await api('/me/consents', {
+          method: 'POST',
+          body: [{ key: 'kullanici-sozlesmesi', version: versions['kullanici-sozlesmesi'] }],
+        });
+        setNeedsTerms(false);
+      }
       const result = await api<BookingResult>(`/shops/${props.profile.slug}/bookings`, {
         method: 'POST',
         body: {
@@ -79,6 +89,10 @@ export function ConfirmStep(props: {
       props.onBooked(result);
     } catch (err) {
       if (err instanceof ApiError && err.code === 'SLOT_TAKEN') return props.onSlotTaken();
+      if (err instanceof ApiError && err.code === 'TERMS_REQUIRED') {
+        setNeedsTerms(true);
+        return;
+      }
       if (err instanceof ApiError && err.code === 'UNAUTHENTICATED') {
         setToken(null);
         setMe(null);
@@ -206,13 +220,31 @@ export function ConfirmStep(props: {
         </div>
       )}
 
+      {needsTerms && (
+        <label className={`card ${styles.terms}`}>
+          <input type="checkbox" checked={termsTicked} onChange={(e) => setTermsTicked(e.target.checked)} />
+          <span>
+            Randevu almak için{' '}
+            <a href="/sozlesmeler/kullanici-sozlesmesi" target="_blank" rel="noreferrer">
+              Kullanıcı Sözleşmesi
+            </a>
+            ’ni okudum ve kabul ediyorum.
+          </span>
+        </label>
+      )}
+
       {error && (
         <p className="alert alert-danger" role="alert">
           {error}
         </p>
       )}
 
-      <button type="button" className="btn btn-primary btn-block" disabled={!ready || busy} onClick={submit}>
+      <button
+        type="button"
+        className="btn btn-primary btn-block"
+        disabled={!ready || busy || (needsTerms && !termsTicked)}
+        onClick={submit}
+      >
         {busy ? 'Oluşturuluyor…' : 'Randevuyu oluştur'}
       </button>
     </section>

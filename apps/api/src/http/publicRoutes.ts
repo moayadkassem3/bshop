@@ -5,7 +5,8 @@ import { requestOtp, verifyOtp } from '../services/auth.js';
 import { firstAvailable, getAvailability, getShopProfile } from '../services/availability.js';
 import { readPhoto } from '../services/photos.js';
 import { shopSummaries } from '../services/favorites.js';
-import { PLAN_FEATURES, PLANS } from '../domain/plans.js';
+import { LEGAL_DOCUMENTS } from '../domain/legal.js';
+import { PLAN_FEATURES, PLAN_TERMS, PLANS } from '../domain/plans.js';
 import { nearbyShops, searchPublicShops } from '../services/shops.js';
 import type { AuthFn } from './app.js';
 import { csvIds, id } from './schemas.js';
@@ -28,6 +29,7 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
         firstName: z.string().trim().min(1).max(60).optional(),
         lastName: z.string().trim().min(1).max(60).optional(),
         portal,
+        consents: z.array(z.object({ key: z.string().max(60), version: z.string().max(20) })).max(10).optional(),
       })
       .parse(req.body);
     return verifyOtp(deps, body);
@@ -47,7 +49,9 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
     return nearbyShops(deps, { latitude: q.lat, longitude: q.lng, query: q.q, audience: q.audience, radiusKm: q.radiusKm, limit: q.limit });
   });
 
-  app.get('/public/plans', async () => ({ plans: PLANS, features: PLAN_FEATURES }));
+  app.get('/public/plans', async () => ({ plans: PLANS, features: PLAN_FEATURES, terms: PLAN_TERMS }));
+
+  app.get('/public/legal', async () => LEGAL_DOCUMENTS);
 
   app.get('/public/search', async (req) => {
     const { q } = z.object({ q: z.string().trim().min(2).max(60) }).parse(req.query);

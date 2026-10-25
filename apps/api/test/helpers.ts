@@ -4,6 +4,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { loadConfig } from '../src/config.js';
+import { currentVersion } from '../src/domain/legal.js';
 import { createPool } from '../src/db.js';
 import type { Deps } from '../src/deps.js';
 import { buildApp } from '../src/http/app.js';
@@ -48,7 +49,7 @@ export const MONDAY_9AM = '2026-10-26T06:00:00.000Z';
 /** Istanbul local time on Monday 26 October 2026, as an ISO instant. */
 export const at = (hhmm: string, date = '2026-10-26') => new Date(`${date}T${hhmm}:00+03:00`).toISOString();
 
-const TABLES = `customer_favorites, shop_photos, notifications, appointment_services, appointments, booking_groups, shop_customers, member_services,
+const TABLES = `consents, customer_favorites, shop_photos, notifications, appointment_services, appointments, booking_groups, shop_customers, member_services,
   services, auto_confirm_hours, time_off, working_hours, shop_members, subscriptions, shops, sessions, otp_codes, users`;
 
 export function useTestApp() {
@@ -91,7 +92,12 @@ export function useTestApp() {
     /** Signs in through the real SMS-code flow and returns a session token (reused per phone within a test). */
     async login(
       phone: string,
-      opts: { names?: { firstName: string; lastName: string }; portal?: 'customer' | 'business' | 'staff' | 'owner' } = {},
+      opts: {
+        names?: { firstName: string; lastName: string };
+        portal?: 'customer' | 'business' | 'staff' | 'owner';
+        /** Customers accept the user agreement at sign-in unless told otherwise. */
+        acceptTerms?: boolean;
+      } = {},
     ) {
       const portal = opts.portal ?? 'customer';
       const key = `${portal}:${phone}`;
@@ -104,7 +110,9 @@ export function useTestApp() {
       await tick(deps);
       const text = sms.to(phone).at(-1)!;
       const code = text.match(/(\d{6})/)![1];
-      const res = await ctx.call('POST', '/auth/otp/verify', { body: { phone, code, portal, ...opts.names } });
+      const consents =
+        portal === 'customer' && opts.acceptTerms !== false ? [{ key: 'kullanici-sozlesmesi', version: currentVersion('kullanici-sozlesmesi') }] : undefined;
+      const res = await ctx.call('POST', '/auth/otp/verify', { body: { phone, code, portal, consents, ...opts.names } });
       if (res.status !== 200) throw new Error(`OTP verify failed: ${JSON.stringify(res.body)}`);
       sessions.set(key, res.body.token);
       return res.body.token as string;

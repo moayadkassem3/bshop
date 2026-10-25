@@ -5,6 +5,7 @@ import { AppError, badRequest } from '../errors.js';
 import { sms } from '../messages.js';
 import { queueSms } from '../notifications.js';
 import { normalizePhone } from '../phone.js';
+import { recordConsents, type ConsentInput } from './consents.js';
 import { MINUTE } from '../domain/time.js';
 
 const OTP_TTL_MINUTES = 5;
@@ -85,7 +86,15 @@ export async function requestOtp(deps: Deps, rawPhone: string, as: SignInAs = 'c
 
 export async function verifyOtp(
   deps: Deps,
-  input: { phone: string; code: string; firstName?: string; lastName?: string; portal?: SignInAs },
+  input: {
+    phone: string;
+    code: string;
+    firstName?: string;
+    lastName?: string;
+    portal?: SignInAs;
+    /** Agreements ticked on the sign-in screen (v1.6). */
+    consents?: ConsentInput[];
+  },
 ): Promise<{ token: string; user: User }> {
   const phone = normalizePhone(input.phone);
   const now = deps.clock.now();
@@ -120,13 +129,14 @@ export async function verifyOtp(
       )
     ).rows[0]!;
     const user: User = { ...row, portal };
+    if (input.consents?.length) await recordConsents(tx, user.id, input.consents, now);
     return { token: await createSession(tx, deps, user.id, portal, now), user };
   });
   if (!result) throw badRequest('OTP_INVALID', 'Code is invalid or expired');
   return result;
 }
 
-async function createSession(q: Queryable, deps: Deps, userId: string, portal: Portal, now: Date): Promise<string> {
+export async function createSession(q: Queryable, deps: Deps, userId: string, portal: Portal, now: Date): Promise<string> {
   const token = randomBytes(32).toString('base64url');
   await q.query(
     'INSERT INTO sessions (token_hash, user_id, portal, created_at, expires_at) VALUES ($1, $2, $3, $4, $5)',

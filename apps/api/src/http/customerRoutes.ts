@@ -4,6 +4,8 @@ import type { Deps } from '../deps.js';
 import { switchMode, updateProfile } from '../services/auth.js';
 import { cancelByCustomer, createBooking, listCustomerAppointments } from '../services/booking.js';
 import { addFavorite, listCustomerShops, removeFavorite } from '../services/favorites.js';
+import { listConsents, recordConsents, withdrawConsent } from '../services/consents.js';
+import { registerShop } from '../services/registration.js';
 import type { AuthFn } from './app.js';
 import { id, timestamp } from './schemas.js';
 
@@ -59,6 +61,75 @@ export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     const { slug } = z.object({ slug: z.string() }).parse(req.params);
     await removeFavorite(deps, await auth(req), slug);
     return reply.status(204).send();
+  });
+
+  // Agreements: accept the current versions, list what was accepted, withdraw optional ones.
+  const consentList = z.array(z.object({ key: z.string().max(60), version: z.string().max(20) })).min(1).max(10);
+  app.get('/me/consents', async (req) => listConsents(deps, await auth(req)));
+  app.post('/me/consents', async (req, reply) => {
+    const user = await auth(req);
+    await recordConsents(deps.db, user.id, consentList.parse(req.body), deps.clock.now());
+    return reply.status(204).send();
+  });
+  app.post('/me/consents/:key/withdraw', async (req, reply) => {
+    const { key } = z.object({ key: z.string() }).parse(req.params);
+    await withdrawConsent(deps, await auth(req), key);
+    return reply.status(204).send();
+  });
+
+  // Self-service shop registration (v1.6): the signed-in person becomes the owner.
+  app.post('/registrations', async (req, reply) => {
+    const user = await auth(req);
+    const minute = z.number().int().min(0).max(1440);
+    const kurus = z.number().int().min(0).max(100_000_000);
+    const body = z
+      .object({
+        audience: z.enum(['men', 'women', 'unisex']),
+        name: z.string().trim().min(2).max(80),
+        phone: z.string().min(7).max(20),
+        whatsapp: z.string().min(7).max(20).nullish(),
+        instagram: z.string().max(120).nullish(),
+        about: z.string().max(600).nullish(),
+        city: z.string().trim().min(2).max(40),
+        district: z.string().trim().min(2).max(80),
+        address: z.string().trim().min(5).max(300),
+        latitude: z.number().min(35).max(43),
+        longitude: z.number().min(25).max(45),
+        hours: z
+          .array(
+            z
+              .object({ weekday: z.number().int().min(1).max(7), startMinute: minute, endMinute: minute })
+              .refine((w) => w.endMinute > w.startMinute, 'Closing time must be after opening time'),
+          )
+          .max(14),
+        services: z
+          .array(
+            z.union([
+              z.object({ catalogId: z.number().int(), priceKurus: kurus, priceIsStartingFrom: z.boolean().optional() }),
+              z.object({
+                name: z.string().trim().min(2).max(80),
+                durationMinutes: z.number().int().min(5).max(600),
+                priceKurus: kurus,
+                priceIsStartingFrom: z.boolean().optional(),
+              }),
+            ]),
+          )
+          .max(80),
+        owner: z.object({ displayName: z.string().trim().min(1).max(60), bookable: z.boolean() }),
+        members: z
+          .array(
+            z.object({
+              displayName: z.string().trim().min(1).max(60),
+              phone: z.string().min(7).max(20),
+              role: z.enum(['staff', 'co_owner']),
+              bookable: z.boolean().default(true),
+            }),
+          )
+          .max(30),
+        consents: consentList,
+      })
+      .parse(req.body);
+    return reply.status(201).send(await registerShop(deps, user, body));
   });
 
   app.get('/me/appointments', async (req) => listCustomerAppointments(deps, await auth(req)));

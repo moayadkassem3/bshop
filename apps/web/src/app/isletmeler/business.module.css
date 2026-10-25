@@ -88,6 +88,20 @@
   color: var(--primary);
 }
 
+.trial {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--gold-soft);
+  color: var(--gold);
+  font-weight: 650;
+}
+
+.note a {
+  color: var(--primary);
+  font-weight: 650;
+}
+
 .note {
   margin: 12px 0 0;
   font-size: 13px;

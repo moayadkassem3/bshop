@@ -15,6 +15,17 @@ type Props = {
   onSignedIn: (me: Me) => void;
 };
 
+/** Current agreement versions, so acceptance is recorded against the text that was shown. */
+export function useLegalVersions(): Record<string, string> {
+  const [versions, setVersions] = useState<Record<string, string>>({});
+  useEffect(() => {
+    api<{ key: string; version: string }[]>('/public/legal')
+      .then((docs) => setVersions(Object.fromEntries(docs.map((d) => [d.key, d.version]))))
+      .catch(() => undefined);
+  }, []);
+  return versions;
+}
+
 /** Customer sign-in on the website: phone number, then the 6-digit SMS code. */
 export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
   const [phone, setPhone] = useState('');
@@ -25,6 +36,10 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
   const [resendIn, setResendIn] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptMarketing, setAcceptMarketing] = useState(false);
+  const versions = useLegalVersions();
+  const customer = as === 'customer';
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -32,7 +47,7 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
     return () => clearTimeout(timer);
   }, [resendIn]);
 
-  const namesOk = !askNames || (firstName.trim() && lastName.trim());
+  const namesOk = (!askNames || (firstName.trim() && lastName.trim())) && (!customer || acceptTerms);
 
   async function sendCode() {
     setBusy(true);
@@ -59,6 +74,15 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
           code,
           portal: as,
           ...(askNames ? { firstName: firstName.trim(), lastName: lastName.trim() } : {}),
+          // Acceptance is recorded with the version shown (v1.6).
+          ...(customer
+            ? {
+                consents: [
+                  { key: 'kullanici-sozlesmesi', version: versions['kullanici-sozlesmesi'] },
+                  ...(acceptMarketing ? [{ key: 'ticari-ileti-izni', version: versions['ticari-ileti-izni'] }] : []),
+                ],
+              }
+            : {}),
         },
       });
       setToken(res.token);
@@ -113,6 +137,36 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
           }}
         />
       </div>
+      {customer && (
+        <div className={styles.consents}>
+          <label className={styles.check}>
+            <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} />
+            <span>
+              <a href="/sozlesmeler/kullanici-sozlesmesi" target="_blank" rel="noreferrer">
+                Kullanıcı Sözleşmesi
+              </a>
+              ’ni okudum ve kabul ediyorum.
+            </span>
+          </label>
+          <label className={styles.check}>
+            <input type="checkbox" checked={acceptMarketing} onChange={(e) => setAcceptMarketing(e.target.checked)} />
+            <span>
+              Kampanya ve yeniliklerden SMS/e-posta ile haberdar olmak istiyorum (
+              <a href="/sozlesmeler/ticari-ileti-izni" target="_blank" rel="noreferrer">
+                isteğe bağlı
+              </a>
+              ).
+            </span>
+          </label>
+          <p className={styles.notice}>
+            Kişisel verileriniz{' '}
+            <a href="/sozlesmeler/kvkk-aydinlatma" target="_blank" rel="noreferrer">
+              KVKK Aydınlatma Metni
+            </a>{' '}
+            kapsamında işlenir.
+          </p>
+        </div>
+      )}
       {!codeSent ? (
         <button type="button" className="btn btn-primary btn-block" disabled={busy || phone.length < 10 || !namesOk} onClick={sendCode}>
           Doğrulama kodu gönder

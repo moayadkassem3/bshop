@@ -11,8 +11,11 @@ export const PLANS: Plan[] = [
   { id: 'staff-10', name: '10 Personele kadar', maxStaff: 10, monthlyPriceKurus: 135_000 },
 ];
 
-/** Included in every plan. */
-export const PLAN_FEATURES = ['Randevu sayfası ve QR kod', 'SMS bildirimleri', 'Harita görünürlüğü'];
+/** Included in every plan. SMS is unlimited, under the fair-use clause of the business agreement. */
+export const PLAN_FEATURES = ['Randevu sayfası ve QR kod', 'Sınırsız SMS bildirimi', 'Harita görünürlüğü'];
+
+/** Prices include KDV; the trial starts when our team approves the shop. */
+export const PLAN_TERMS = { vatIncluded: true, trialDays: 7, customQuoteAboveStaff: 10 };
 
 /** The smallest plan that fits the shop's staff; null above 10 staff (priced individually). */
 export function planForStaff(staffCount: number): Plan | null {
