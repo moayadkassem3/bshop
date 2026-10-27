@@ -1,8 +1,8 @@
 # Salon Booking Platform — Handoff & Planning Baseline
 
-**Version:** 1.6  
+**Version:** 1.7  
 **Baseline date:** 24 October 2026  
-**Previous versions:** 1.5 (25 October 2026), 1.4, 1.3, 1.2 and 1.1 (24 October 2026), 1.0 (6 October 2026)  
+**Previous versions:** 1.6 and 1.5 (25 October 2026), 1.4, 1.3, 1.2 and 1.1 (24 October 2026), 1.0 (6 October 2026)  
 **Status:** Build in progress. The founder authorized application code on 24 October 2026 (Section 12).  
 **Working market:** All of Türkiye *(v1.4)*  
 **Product name:** To be decided
@@ -17,7 +17,7 @@ This document is the reference point for continuing product design and handing t
 - **Proposed** — a recommendation recorded for design review; it needs the founder's confirmation before it becomes agreed.
 - **Open** — not yet decided.
 
-Rows and sections new or changed in version 1.1 are marked *(v1.1)*, in version 1.3 *(v1.3)*, in version 1.4 *(v1.4)*, in version 1.5 *(v1.5)*, and in version 1.6 *(v1.6)*; version 1.2 adds Section 12. The change record at the end summarises each version.
+Rows and sections new or changed in version 1.1 are marked *(v1.1)*, in version 1.3 *(v1.3)*, in version 1.4 *(v1.4)*, in version 1.5 *(v1.5)*, in version 1.6 *(v1.6)*, and in version 1.7 *(v1.7)*; version 1.2 adds Section 12. The change record at the end summarises each version.
 
 ## 1. Product purpose
 
@@ -564,6 +564,21 @@ The founder answered the questions left open after v1.5 (25 October 2026).
 - **Theme.** All screens use the brand colours and logo. Randevular is split into “Randevular” (accepted by the salon) and “Talepler” (waiting for the salon, or declined), each with Yaklaşan / Geçmiş. A new request opens on Talepler.
 - **Names in Turkish order.** Staff and shop names are sorted in Turkish alphabetical order (Ç after C, Ş after S).
 
+## 15. Decisions in version 1.7 *(v1.7)*
+
+Founder requests from 27 October 2026, after trying the test link.
+
+| Area | Decision |
+| --- | --- |
+| Location | Keşfet remembers the customer's last shared location for 7 days and opens there. It refreshes quietly when the browser already allows location, and never asks on page load. |
+| Gender | New customers choose Erkek or Kadın at sign-up (editable in Profil). Keşfet and Popüler kesimler open on the matching salon type; a type the customer picks stays for the visit. Unisex salons appear under both. |
+| Geçmiş (businesses) | In business mode the bottom bar shows Geçmiş in place of Favoriler. It lists past appointments with their outcome and every cancellation, newest first, filterable, with who cancelled and when. Owners and co-owners, as well as the staff member, are notified when a customer cancels. Geçmiş shows a red count of new cancellations until it is opened. |
+| QR code | Each salon gets a printable QR code that opens its page, with the app logo in the middle and “Salon adı \| Uygulama adı” below (`/qr`). |
+| Popüler kesimler | Salons (owners and staff) post photos of their work tagged with a style. Customers see them on Keşfet and at `/kesimler`, ranked by likes and recency, and every photo leads to the salon. Salon pages show “Çalışmalarımız”. Owners remove any post, staff their own. This is the base for a later social section. |
+| Push notifications *(proposed)* | Firebase Cloud Messaging for Android, iOS (through APNs), and the web. The ringing alert needs high-priority data messages handled by the app's own code; Huawei phones without Google services need Huawei Push Kit later. |
+
+## Change record
+
 | Version | Date | Change |
 | --- | --- | --- |
 | 1.0 | 6 October 2026 | Consolidated planning decisions and created the initial handoff. Included 45 services; removed home visits; preserved the last-minute confirmation rule. |
@@ -573,3 +588,4 @@ The founder answered the questions left open after v1.5 (25 October 2026).
 | 1.4 | 24 October 2026 | Founder decisions: the app serves all of Türkiye (shops record their city; search matches it; “İstanbul” removed from the website; pilot city open); “Salonlarım” on the home page with favourite shops and shops booked before. |
 | 1.5 | 25 October 2026 | Founder decisions: map discovery returns as the Keşfet tab; one app for customers and businesses with a Müşteriyim / İşletmeyim sign-in and mode switching; bottom navigation bar; “Personel” and “kuaför” wording; subscription prices by staff count; self-service shop registration; agreements at sign-up. Added Section 13. |
 | 1.6 | 25 October 2026 | Founder decisions: prices include KDV; more than 10 staff priced by email quote; SMS unlimited with fair use; one-week free trial starting at approval; co-owner (“Ortak”) label with owner permissions; product name still open. Built self-service registration, approval SMS, agreement drafts with recorded acceptance, landline salon phones, and Turkish name sorting. Added Section 14. |
+| 1.7 | 27 October 2026 | Founder requests: remembered location; Erkek/Kadın at sign-up driving Keşfet's default; Geçmiş tab for businesses with cancellation alerts; QR code per salon; Popüler kesimler with likes and salon work on each page; Firebase proposed for push. Added Section 15. |
