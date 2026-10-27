@@ -180,12 +180,14 @@
   cursor: pointer;
 }
 
-.handleBar {
+.handleArrow {
   display: block;
-  width: 44px;
-  height: 5px;
-  border-radius: 999px;
-  background: var(--line);
+  color: #c9cfd8;
+  transition: transform 0.2s;
+}
+
+.sheetOpen .handleArrow {
+  transform: rotate(180deg);
 }
 
 .sheetTitle {

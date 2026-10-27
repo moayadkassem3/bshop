@@ -228,7 +228,10 @@ export function ExploreMap() {
 
       <section className={`${styles.sheet} ${sheetOpen ? styles.sheetOpen : ''}`} aria-labelledby="nearby-title">
         <button type="button" className={styles.handle} onClick={() => setSheetOpen((o) => !o)} aria-expanded={sheetOpen}>
-          <span className={styles.handleBar} aria-hidden />
+          {/* A wide arrow: tap to open the list (points up) or close it (points down). */}
+          <svg className={styles.handleArrow} viewBox="0 0 48 16" width="48" height="16" aria-hidden>
+            <path d="M5 12 24 4l19 8" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           <span className="sr-only">{sheetOpen ? 'Listeyi küçült' : 'Listeyi büyüt'}</span>
         </button>
         <h1 id="nearby-title" className={styles.sheetTitle}>
