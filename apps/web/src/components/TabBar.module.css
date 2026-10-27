@@ -23,6 +23,7 @@
 }
 
 .icon {
+  position: relative;
   display: grid;
   place-items: center;
   width: 56px;
@@ -41,4 +42,21 @@
 
 .label {
   line-height: 1.2;
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
 }

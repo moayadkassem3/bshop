@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { lastLocation, locationPermissionGranted, rememberLocation, type LatLng } from '@/lib/location';
-import { getToken } from '@/lib/session';
+import { getToken, rememberPortal } from '@/lib/session';
 import { AUDIENCE, distanceMeters, formatDistance, photoUrl, placeLabel } from '@/lib/shop';
 import type { Me, NearbyShop } from '@/lib/types';
 import styles from './ExploreMap.module.css';
@@ -49,6 +49,7 @@ export function ExploreMap() {
     if (!getToken()) return;
     api<Me>('/me')
       .then((me) => {
+        rememberPortal(me.portal);
         if (me.gender && !readAudience()) setAudience(me.gender === 'male' ? 'men' : 'women');
       })
       .catch(() => undefined);

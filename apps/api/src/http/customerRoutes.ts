@@ -5,6 +5,7 @@ import { switchMode, updateProfile } from '../services/auth.js';
 import { cancelByCustomer, createBooking, listCustomerAppointments } from '../services/booking.js';
 import { addFavorite, listCustomerShops, removeFavorite } from '../services/favorites.js';
 import { listConsents, recordConsents, withdrawConsent } from '../services/consents.js';
+import { listMyNotifications } from '../services/inbox.js';
 import { registerShop } from '../services/registration.js';
 import type { AuthFn } from './app.js';
 import { id, timestamp } from './schemas.js';
@@ -16,6 +17,12 @@ export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     const user = await auth(req);
     const { to } = z.object({ to: z.enum(['customer', 'business']) }).parse(req.body);
     return switchMode(deps, user, to);
+  });
+
+  app.get('/me/notifications', async (req) => {
+    const user = await auth(req);
+    const q = z.object({ after: timestamp.optional(), limit: z.coerce.number().int().min(1).max(100).optional() }).parse(req.query);
+    return listMyNotifications(deps, user, q);
   });
 
   app.patch('/me', async (req) => {

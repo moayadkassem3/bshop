@@ -210,3 +210,29 @@ describe('customer gender (v1.7)', () => {
     expect((await patch({ gender: 'other' })).status).toBe(400);
   });
 });
+
+describe('cancellations reach the salon (v1.7)', () => {
+  it('notifies the staff member and the owners, and shows in the inbox and the history', async () => {
+    const shop = await setupShop(t);
+    const c = await t.login(PHONES.customer, { names: { firstName: 'Ali', lastName: 'Can' } });
+    const booked = await book(t, shop, c, { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('16:00') });
+    const id = booked.body.appointments[0].id;
+    expect((await t.call('POST', `/me/appointments/${id}/cancel`, { token: c })).status).toBe(200);
+    await t.tick();
+
+    const cancelled = t.push.messages.filter((m) => m.title === 'Randevu iptal edildi');
+    expect(cancelled).toHaveLength(2); // Cumali (staff) and Salih (owner)
+
+    const owner = await t.login(PHONES.owner, { portal: 'business' });
+    const inbox = (await t.call('GET', '/me/notifications', { token: owner })).body;
+    expect(inbox[0]).toMatchObject({ template: 'customer_cancelled', title: 'Randevu iptal edildi', appointment_id: id });
+    const later = new Date(Date.parse(inbox[0].created_at) + 1000).toISOString();
+    expect((await t.call('GET', `/me/notifications?after=${later}`, { token: owner })).body).toEqual([]);
+
+    const from = at('00:00');
+    const to = at('23:59');
+    const history = (await t.call('GET', `/staff/shops/${shop.shopId}/appointments?from=${from}&to=${to}`, { token: owner })).body;
+    expect(history[0]).toMatchObject({ status: 'cancelled', cancel_reason: 'customer' });
+    expect(history[0].cancelled_at).toBeTruthy();
+  });
+});

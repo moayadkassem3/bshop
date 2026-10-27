@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import { getToken } from '@/lib/session';
+import { getToken, rememberPortal } from '@/lib/session';
 import type { Me } from '@/lib/types';
 import { BusinessAppointments } from './BusinessAppointments';
 import { MyAppointments } from './MyAppointments';
@@ -14,7 +14,10 @@ export function AppointmentsTab() {
   useEffect(() => {
     if (!getToken()) return setMode('customer');
     api<Me>('/me')
-      .then((me) => setMode(me.portal && me.portal !== 'customer' ? 'business' : 'customer'))
+      .then((me) => {
+        rememberPortal(me.portal);
+        setMode(me.portal && me.portal !== 'customer' ? 'business' : 'customer');
+      })
       .catch(() => setMode('customer'));
   }, []);
 

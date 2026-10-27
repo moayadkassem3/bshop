@@ -6,7 +6,7 @@ import { BrandName, LogoMark } from '@/components/Logo';
 import { GenderChoice, PhoneSignIn } from '@/components/PhoneSignIn';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { formatPhone } from '@/lib/shop';
-import { getToken, setToken } from '@/lib/session';
+import { getToken, rememberPortal, setToken } from '@/lib/session';
 import type { Me } from '@/lib/types';
 import styles from './profile.module.css';
 
@@ -20,7 +20,10 @@ export function Profile() {
   useEffect(() => {
     if (!getToken()) return setMe(null);
     api<Me>('/me')
-      .then(setMe)
+      .then((m) => {
+        rememberPortal(m.portal);
+        setMe(m);
+      })
       .catch(() => {
         setToken(null);
         setMe(null);
@@ -132,7 +135,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
     setMessage(null);
     try {
       const r = await api<{ token: string; user: Me }>('/me/switch', { method: 'POST', body: { to } });
-      setToken(r.token);
+      setToken(r.token, r.user.portal);
       onChange(r.user);
     } catch (err) {
       setMessage(

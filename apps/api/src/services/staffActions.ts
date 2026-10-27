@@ -123,7 +123,7 @@ export async function listShopAppointments(
   const { rows } = await deps.db.query(
     `SELECT a.id, a.staff_id, m.display_name AS staff_name, a.status, a.source, a.starts_at, a.ends_at,
        a.customer_id, a.customer_name, a.customer_phone, a.guest_name, a.requested_staff, a.confirmed_via,
-       a.deadline_at, a.reminder_at, a.cancel_reason, a.total_price_kurus, a.price_is_starting_from,
+       a.deadline_at, a.reminder_at, a.cancel_reason, a.cancelled_at, a.total_price_kurus, a.price_is_starting_from,
        sc.no_show_count, sc.late_cancel_count,
        (SELECT json_agg(json_build_object('name', x.name, 'durationMinutes', x.duration_minutes, 'priceKurus', x.price_kurus)
           ORDER BY x.position) FROM appointment_services x WHERE x.appointment_id = a.id) AS services

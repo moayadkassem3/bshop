@@ -242,7 +242,7 @@ export function RegisterWizard() {
           me={me}
           onRegistered={(r) => {
             saveDraft(null);
-            setToken(r.token);
+            setToken(r.token, 'owner');
             setResult(r);
             window.scrollTo({ top: 0 });
           }}

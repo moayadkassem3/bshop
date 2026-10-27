@@ -442,10 +442,15 @@ export async function cancelByCustomer(deps: Deps, user: User, appointmentId: st
       ]);
     }
     const c = await messageContext(tx, a.id);
+    // The staff member and the shop's owners and co-owners all hear about it (v1.7).
+    const owners = await tx.query<{ user_id: string }>(
+      "SELECT user_id FROM shop_members WHERE shop_id = $1 AND role = 'owner' AND active",
+      [a.shop_id],
+    );
     await queuePush(tx, now, {
       shopId: a.shop_id,
       appointmentId: a.id,
-      userIds: [c.staff_user_id],
+      userIds: [...new Set([c.staff_user_id, ...owners.rows.map((r) => r.user_id)])],
       template: 'customer_cancelled',
       ...push.customerCancelled({ ...c.appt, late }),
       data: { appointmentId: a.id, kind: 'cancelled' },

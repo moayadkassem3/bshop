@@ -3,33 +3,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, errorMessage } from '@/lib/api';
 import { formatLongDate, formatPrice, formatTime, turkeyDate } from '@/lib/format';
+import { useBusinessShops, type ShopAppointment } from '@/lib/business';
 import { formatPhone } from '@/lib/shop';
 import styles from './appointments.module.css';
 import biz from './business.module.css';
 
-type Shop = { id: string; name: string; role: 'owner' | 'staff'; reviewed_at: string | null };
 type Member = { id: string; display_name: string; bookable: boolean; active: boolean };
-type Appointment = {
-  id: string;
-  staff_id: string;
-  staff_name: string;
-  status: 'pending' | 'confirmed' | 'declined' | 'cancelled' | 'completed' | 'no_show';
-  source: string;
-  starts_at: string;
-  ends_at: string;
-  customer_name: string;
-  customer_phone: string | null;
-  guest_name: string | null;
-  requested_staff: boolean;
-  deadline_at: string | null;
-  total_price_kurus: number;
-  price_is_starting_from: boolean;
-  no_show_count: number | null;
-  late_cancel_count: number | null;
-  services: { name: string; durationMinutes: number }[] | null;
-};
+type Appointment = ShopAppointment;
 
-const SHOP_KEY = 'salon-randevu-isletme';
 const DAY = 86_400_000;
 // Requests can be made up to the booking horizon; a year covers every shop setting.
 const REQUEST_WINDOW_DAYS = 365;
@@ -46,26 +27,10 @@ function addDays(date: string, days: number) {
  * day's schedule. Owners see the whole shop; staff see their own appointments.
  */
 export function BusinessAppointments() {
-  const [shops, setShops] = useState<Shop[] | null>(null);
-  const [shopId, setShopId] = useState<string | null>(null);
+  const { shops, shop, shopId, selectShop, error: shopsError } = useBusinessShops();
   const [tab, setTab] = useState<'requests' | 'calendar'>('requests');
   const [requests, setRequests] = useState<Appointment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api<Shop[]>('/staff/shops')
-      .then((list) => {
-        setShops(list);
-        let saved: string | null = null;
-        try {
-          saved = window.localStorage.getItem(SHOP_KEY);
-        } catch {
-          // Without storage the first shop is shown.
-        }
-        setShopId(list.find((s) => s.id === saved)?.id ?? list[0]?.id ?? null);
-      })
-      .catch((err) => setError(errorMessage(err)));
-  }, []);
 
   const loadRequests = useCallback(async () => {
     if (!shopId) return;
@@ -87,7 +52,6 @@ export function BusinessAppointments() {
     return () => clearInterval(timer);
   }, [loadRequests]);
 
-  const shop = shops?.find((s) => s.id === shopId);
 
   return (
     <>
@@ -100,13 +64,8 @@ export function BusinessAppointments() {
               value={shopId ?? ''}
               aria-label="İşletme"
               onChange={(e) => {
-                setShopId(e.target.value);
+                selectShop(e.target.value);
                 setRequests(null);
-                try {
-                  window.localStorage.setItem(SHOP_KEY, e.target.value);
-                } catch {
-                  // The choice lasts for this page only.
-                }
               }}
             >
               {shops.map((s) => (
@@ -131,7 +90,7 @@ export function BusinessAppointments() {
       </header>
 
       <div className={`container narrow ${styles.body}`}>
-        {error && <p className="alert alert-danger">{error}</p>}
+        {(error ?? shopsError) && <p className="alert alert-danger">{error ?? shopsError}</p>}
         {shops && shops.length === 0 && <p className="muted">Bu hesap henüz bir işletmeye bağlı değil.</p>}
         {shop && !shop.reviewed_at && (
           <p className="alert alert-info">İşletmeniz inceleniyor. Onaylandıktan sonra müşteriler randevu alabilir.</p>
@@ -277,6 +236,13 @@ function Calendar(props: { shopId: string; isOwner: boolean; onChanged: () => vo
   );
 }
 
+const CANCELLED_BY: Record<string, string> = {
+  customer: 'Müşteri iptal etti',
+  customer_late: 'Müşteri geç iptal etti',
+  shop: 'Salon iptal etti',
+  staff_absence: 'Personel izni nedeniyle iptal',
+};
+
 const STATUS: Record<Appointment['status'], { label: string; tone: string }> = {
   pending: { label: 'Onay bekliyor', tone: 'badge-warning' },
   confirmed: { label: 'Onaylandı', tone: 'badge-success' },
@@ -286,7 +252,15 @@ const STATUS: Record<Appointment['status'], { label: string; tone: string }> = {
   no_show: { label: 'Gelmedi', tone: 'badge-danger' },
 };
 
-function AppointmentCard(props: { shopId: string; appointment: Appointment; showDate?: boolean; showStaff?: boolean; onChanged: () => void }) {
+export function AppointmentCard(props: {
+  shopId: string;
+  appointment: Appointment;
+  showDate?: boolean;
+  showStaff?: boolean;
+  /** Marks a cancellation the salon has not seen yet (Geçmiş). */
+  isNew?: boolean;
+  onChanged: () => void;
+}) {
   const a = props.appointment;
   const [busy, setBusy] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -336,7 +310,10 @@ function AppointmentCard(props: { shopId: string; appointment: Appointment; show
       </div>
 
       <div className={biz.meta}>
-        <span className={`badge ${status.tone}`}>{status.label}</span>
+        {props.isNew && <span className="badge badge-danger">Yeni</span>}
+        <span className={`badge ${a.status === 'cancelled' && a.cancel_reason ? 'badge-danger' : status.tone}`}>
+          {a.status === 'cancelled' && a.cancel_reason ? CANCELLED_BY[a.cancel_reason] : status.label}
+        </span>
         {!!a.no_show_count && <span className="badge badge-danger">{a.no_show_count} kez gelmedi</span>}
         {!!a.late_cancel_count && <span className="badge badge-warning">{a.late_cancel_count} geç iptal</span>}
         {a.customer_phone && (
@@ -345,6 +322,11 @@ function AppointmentCard(props: { shopId: string; appointment: Appointment; show
           </a>
         )}
       </div>
+      {a.status === 'cancelled' && a.cancelled_at && (
+        <p className={biz.deadline}>
+          İptal zamanı: {formatLongDate(a.cancelled_at)} {formatTime(a.cancelled_at)}
+        </p>
+      )}
       {a.status === 'pending' && a.deadline_at && (
         <p className={biz.deadline}>Yanıt vermezseniz otomatik onaylanır. Otomatik onay saati: {formatTime(a.deadline_at)}</p>
       )}

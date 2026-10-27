@@ -93,7 +93,7 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
             : {}),
         },
       });
-      setToken(res.token);
+      setToken(res.token, res.user.portal);
       await moveLocalFavoritesToAccount();
       onSignedIn(res.user);
     } catch (err) {
