@@ -63,6 +63,8 @@ export type Me = {
   gender?: 'male' | 'female' | null;
   /** Owner or co-owner of at least one salon (v1.7). */
   owns_shop?: boolean;
+  /** Works at a salon in any role; only they can switch to business mode (v1.7). */
+  has_business?: boolean;
   portal?: 'customer' | 'staff' | 'owner';
 };
 

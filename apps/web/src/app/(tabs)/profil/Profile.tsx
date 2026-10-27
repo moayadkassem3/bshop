@@ -201,23 +201,22 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
               </div>
             )}
           </li>
-          <li>
-            {mode === 'customer' ? (
-              <button type="button" className={`${styles.menuItem} ${styles.highlight}`} onClick={() => switchMode('business')} disabled={busy}>
-                İşletme hesabına geç <span aria-hidden>›</span>
-              </button>
-            ) : (
-              <button type="button" className={styles.menuItem} onClick={() => switchMode('customer')} disabled={busy}>
-                Müşteri moduna geç <span aria-hidden>›</span>
-              </button>
-            )}
-          </li>
           {/* Salon owners edit their salon from its card in İşletmelerim instead (v1.7). */}
           {!me.owns_shop && <MenuLink href="/isletme-kaydi" label="İşletmenizi kaydedin" />}
           <MenuLink href="/isletmeler" label="Paketler ve fiyatlar" />
           <MenuLink href="/sozlesmeler" label="Yasal metinler" />
         </ul>
         {message && <p className="alert alert-info">{message}</p>}
+
+        {/* Switching mode is its own action, kept apart from the settings list; sign-out stays last. */}
+        {(mode !== 'customer' || me.has_business) && (
+          <button type="button" className={styles.switchMode} onClick={() => switchMode(mode === 'customer' ? 'business' : 'customer')} disabled={busy}>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" />
+            </svg>
+            {mode === 'customer' ? 'İşletme moduna geç' : 'Müşteri moduna geç'}
+          </button>
+        )}
 
         <button
           type="button"

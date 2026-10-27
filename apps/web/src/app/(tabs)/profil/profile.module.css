@@ -241,11 +241,6 @@
   cursor: pointer;
 }
 
-.highlight {
-  color: var(--primary);
-  background: var(--primary-soft);
-}
-
 .nameForm {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -256,6 +251,31 @@
 .nameForm > button,
 .nameForm > :nth-child(3) {
   grid-column: 1 / -1;
+}
+
+.switchMode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 24px;
+  min-height: 52px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.switchMode:disabled {
+  opacity: 0.6;
+}
+
+.switchMode + .signOut {
+  margin-top: 12px;
 }
 
 .signOut {

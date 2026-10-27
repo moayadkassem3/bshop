@@ -14,9 +14,10 @@ import { id, timestamp } from './schemas.js';
 export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.get('/me', async (req) => {
     const user = await auth(req);
-    // Owners and co-owners do not need "İşletmenizi kaydedin" in Profil (v1.7).
-    const owns = await deps.db.query("SELECT 1 FROM shop_members WHERE user_id = $1 AND role = 'owner' AND active LIMIT 1", [user.id]);
-    return { ...user, owns_shop: !!owns.rowCount };
+    // Profil (v1.7): owners and co-owners do not need "İşletmenizi kaydedin"; only people
+    // who work at a salon see the switch to business mode.
+    const { rows } = await deps.db.query<{ role: string }>('SELECT role FROM shop_members WHERE user_id = $1 AND active', [user.id]);
+    return { ...user, owns_shop: rows.some((r) => r.role === 'owner'), has_business: rows.length > 0 };
   });
 
   app.post('/me/switch', async (req) => {
