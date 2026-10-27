@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { AppointmentStatus } from '@/components/AppointmentStatus';
-import { PhoneSignIn } from '@/components/PhoneSignIn';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { formatLongDate, formatPrice, formatTime } from '@/lib/format';
 import { getToken, setToken } from '@/lib/session';
@@ -46,32 +45,23 @@ export function MyAppointments() {
       <>
         <Header />
         <div className={`container narrow ${styles.body}`}>
-          <div className={`card ${styles.signIn}`}>
-            <p className="muted">Randevularınızı görmek için telefon numaranızı doğrulayın.</p>
-            <PhoneSignIn
-              onSignedIn={() => {
-                setSignedIn(true);
-                load();
-              }}
-            />
+          {/* Signing in happens in Profil; this is a shortcut there and back (v1.7). */}
+          <div className={`card ${styles.empty}`}>
+            <span className={styles.emptyIcon} aria-hidden>
+              <CalendarIcon />
+            </span>
+            <h2>Randevularını görmek için giriş yap</h2>
+            <p>Telefon numaranla giriş yaptıktan sonra randevuların ve taleplerin burada görünür.</p>
+            <Link href="/profil?devam=/randevularim" className="btn btn-primary">
+              Giriş yap
+            </Link>
           </div>
         </div>
       </>
     );
   }
 
-  return (
-    <List
-      items={items}
-      error={error}
-      onChanged={load}
-      onSignOut={() => {
-        setToken(null);
-        setItems(null);
-        setSignedIn(false);
-      }}
-    />
-  );
+  return <List items={items} error={error} onChanged={load} />;
 }
 
 type Tab = 'appointments' | 'requests';
@@ -104,7 +94,7 @@ function Header({ children }: { children?: React.ReactNode }) {
   );
 }
 
-function List(props: { items: CustomerAppointment[] | null; error: string | null; onChanged: () => void; onSignOut: () => void }) {
+function List(props: { items: CustomerAppointment[] | null; error: string | null; onChanged: () => void }) {
   const now = Date.now();
   const all = props.items ?? [];
   const waiting = all.filter((a) => a.status === 'pending' && isUpcoming(a, now)).length;
@@ -154,9 +144,6 @@ function List(props: { items: CustomerAppointment[] | null; error: string | null
           {shown.map((a) => (
             <AppointmentCard key={a.id} appointment={a} onChanged={props.onChanged} />
           ))}
-          <button type="button" className={styles.signOut} onClick={props.onSignOut}>
-            Çıkış yap
-          </button>
         </div>
       </div>
     </>

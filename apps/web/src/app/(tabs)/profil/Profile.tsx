@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { BrandName, LogoMark } from '@/components/Logo';
 import { GenderChoice, PhoneSignIn } from '@/components/PhoneSignIn';
@@ -17,6 +18,7 @@ const MODE_LABEL = { customer: 'Müşteri', owner: 'İşletme sahibi', staff: 'P
 export function Profile() {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const [choice, setChoice] = useState<'customer' | 'business' | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (!getToken()) return setMe(null);
@@ -31,8 +33,15 @@ export function Profile() {
       });
   }, []);
 
+  // Shortcuts such as Randevular's "Giriş yap" send people here with ?devam=/page and get them back after.
+  function signedIn(m: Me) {
+    const next = new URLSearchParams(window.location.search).get('devam');
+    if (next?.startsWith('/') && !next.startsWith('//')) return router.push(next);
+    setMe(m);
+  }
+
   if (me === undefined) return null;
-  return me ? <Account me={me} onChange={setMe} /> : <SignIn choice={choice} onChoice={setChoice} onSignedIn={setMe} />;
+  return me ? <Account me={me} onChange={setMe} /> : <SignIn choice={choice} onChoice={setChoice} onSignedIn={signedIn} />;
 }
 
 function SignIn(props: {
