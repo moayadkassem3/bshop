@@ -271,3 +271,11 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+.editShop {
+  min-height: 48px;
+  border-top: 1px solid var(--line);
+  color: var(--primary);
+  font-size: 15px;
+  font-weight: 700;
+}

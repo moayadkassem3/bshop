@@ -36,6 +36,15 @@ export type ShopAppointment = {
 
 const SHOP_KEY = 'salon-randevu-isletme';
 
+/** Opens business pages on this shop (e.g. from its card in Profil). */
+export function rememberShop(id: string) {
+  try {
+    window.localStorage.setItem(SHOP_KEY, id);
+  } catch {
+    // The choice lasts for this page only.
+  }
+}
+
 /** The shops this person works in, and the one they are looking at (remembered per browser). */
 export function useBusinessShops() {
   const [shops, setShops] = useState<BusinessShop[] | null>(null);
@@ -59,11 +68,7 @@ export function useBusinessShops() {
 
   function selectShop(id: string) {
     setShopId(id);
-    try {
-      window.localStorage.setItem(SHOP_KEY, id);
-    } catch {
-      // The choice lasts for this page only.
-    }
+    rememberShop(id);
   }
 
   return { shops, shop: shops?.find((s) => s.id === shopId) ?? null, shopId, selectShop, error };

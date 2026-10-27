@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { BrandName, LogoMark } from '@/components/Logo';
 import { GenderChoice, PhoneSignIn } from '@/components/PhoneSignIn';
 import { api, ApiError, errorMessage } from '@/lib/api';
+import { rememberShop } from '@/lib/business';
 import { formatPhone } from '@/lib/shop';
 import { getToken, rememberPortal, setToken } from '@/lib/session';
 import type { Me } from '@/lib/types';
@@ -202,12 +203,8 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
               </button>
             )}
           </li>
-          {/* A salon owner edits their salon instead of registering another (v1.7). */}
-          {me.owns_shop ? (
-            mode === 'owner' && <MenuLink href="/isletme-ayarlari" label="Salon bilgilerini düzenle" />
-          ) : (
-            <MenuLink href="/isletme-kaydi" label="İşletmenizi kaydedin" />
-          )}
+          {/* Salon owners edit their salon from its card in İşletmelerim instead (v1.7). */}
+          {!me.owns_shop && <MenuLink href="/isletme-kaydi" label="İşletmenizi kaydedin" />}
           <MenuLink href="/isletmeler" label="Paketler ve fiyatlar" />
           <MenuLink href="/sozlesmeler" label="Yasal metinler" />
         </ul>
@@ -267,12 +264,19 @@ function MyBusinesses() {
           const status = businessStatus(b);
           const label = b.role === 'staff' ? 'Personel' : b.owner_label === 'co_owner' ? 'Ortak' : 'Sahibi';
           return (
-            <li key={b.id} className={styles.business}>
-              <span>
-                <strong>{b.name}</strong>
-                <span className="muted">{label}</span>
-              </span>
-              <span className={`badge ${status.tone}`}>{status.label}</span>
+            <li key={b.id}>
+              <div className={styles.business}>
+                <span>
+                  <strong>{b.name}</strong>
+                  <span className="muted">{label}</span>
+                </span>
+                <span className={`badge ${status.tone}`}>{status.label}</span>
+              </div>
+              {b.role === 'owner' && (
+                <Link href="/isletme-ayarlari" className={`${styles.menuItem} ${styles.editShop}`} onClick={() => rememberShop(b.id)}>
+                  Salon bilgilerini düzenle <span aria-hidden>›</span>
+                </Link>
+              )}
             </li>
           );
         })}
