@@ -31,6 +31,7 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
   const [phone, setPhone] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [gender, setGender] = useState<'male' | 'female' | null>(null);
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [resendIn, setResendIn] = useState(0);
@@ -48,7 +49,8 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
     return () => clearTimeout(timer);
   }, [resendIn]);
 
-  const namesOk = (!askNames || (firstName.trim() && lastName.trim())) && (!customer || acceptTerms);
+  // New customers also choose Erkek or Kadın, which sets Keşfet's default salon type (v1.7).
+  const namesOk = (!askNames || (firstName.trim() && lastName.trim() && (!customer || gender))) && (!customer || acceptTerms);
 
   async function sendCode() {
     setBusy(true);
@@ -79,7 +81,7 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
           phone,
           code,
           portal: as,
-          ...(askNames ? { firstName: firstName.trim(), lastName: lastName.trim() } : {}),
+          ...(askNames ? { firstName: firstName.trim(), lastName: lastName.trim(), ...(gender ? { gender } : {}) } : {}),
           // Acceptance is recorded with the version shown (v1.6).
           ...(customer
             ? {
@@ -127,6 +129,7 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
           </div>
         </div>
       )}
+      {askNames && customer && <GenderChoice value={gender} onChange={setGender} />}
       <div className="field">
         <label htmlFor="phone">Cep telefonu</label>
         <input
@@ -209,6 +212,24 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
           {error}
         </p>
       )}
+    </div>
+  );
+}
+
+/** Erkek / Kadın: Keşfet opens on the matching salon type. */
+export function GenderChoice(props: { value: 'male' | 'female' | null; onChange: (value: 'male' | 'female') => void }) {
+  return (
+    <div className="field">
+      <span className={styles.label} id="gender-label">
+        Cinsiyet
+      </span>
+      <div className={styles.gender} role="radiogroup" aria-labelledby="gender-label">
+        {(['male', 'female'] as const).map((g) => (
+          <button key={g} type="button" role="radio" aria-checked={props.value === g} className={props.value === g ? styles.genderOn : ''} onClick={() => props.onChange(g)}>
+            {g === 'male' ? 'Erkek' : 'Kadın'}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { BrandName, LogoMark } from '@/components/Logo';
-import { PhoneSignIn } from '@/components/PhoneSignIn';
+import { GenderChoice, PhoneSignIn } from '@/components/PhoneSignIn';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { formatPhone } from '@/lib/shop';
 import { getToken, setToken } from '@/lib/session';
@@ -108,6 +108,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
   const [editing, setEditing] = useState(!me.first_name);
   const [firstName, setFirstName] = useState(me.first_name ?? '');
   const [lastName, setLastName] = useState(me.last_name ?? '');
+  const [gender, setGender] = useState(me.gender ?? null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const mode = me.portal ?? 'customer';
@@ -116,7 +117,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
   async function saveName() {
     setBusy(true);
     try {
-      const updated = await api<Me>('/me', { method: 'PATCH', body: { firstName, lastName } });
+      const updated = await api<Me>('/me', { method: 'PATCH', body: { firstName, lastName, gender } });
       onChange(updated);
       setEditing(false);
     } catch (err) {
@@ -180,6 +181,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
                   <label htmlFor="p-last">Soyad</label>
                   <input id="p-last" className="input" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                 </div>
+                <GenderChoice value={gender} onChange={setGender} />
                 <button type="button" className="btn btn-primary" disabled={busy || !firstName.trim() || !lastName.trim()} onClick={saveName}>
                   Kaydet
                 </button>

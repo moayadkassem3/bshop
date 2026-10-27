@@ -32,8 +32,12 @@ export type User = {
   first_name: string | null;
   last_name: string | null;
   is_platform_admin: boolean;
+  /** Chosen at sign-up (v1.7); Keşfet starts on the matching salon type. */
+  gender: Gender | null;
   portal: Portal;
 };
+
+export type Gender = 'male' | 'female';
 
 const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 
@@ -96,6 +100,7 @@ export async function verifyOtp(
     code: string;
     firstName?: string;
     lastName?: string;
+    gender?: Gender;
     portal?: SignInAs;
     /** Agreements ticked on the sign-in screen (v1.6). */
     consents?: ConsentInput[];
@@ -125,12 +130,13 @@ export async function verifyOtp(
 
     const row = (
       await tx.query<Omit<User, 'portal'>>(
-        `INSERT INTO users (phone, first_name, last_name) VALUES ($1, $2, $3)
+        `INSERT INTO users (phone, first_name, last_name, gender) VALUES ($1, $2, $3, $4)
          ON CONFLICT (phone) DO UPDATE SET
            first_name = COALESCE(EXCLUDED.first_name, users.first_name),
-           last_name = COALESCE(EXCLUDED.last_name, users.last_name)
-         RETURNING id, phone, first_name, last_name, is_platform_admin`,
-        [phone, input.firstName?.trim() || null, input.lastName?.trim() || null],
+           last_name = COALESCE(EXCLUDED.last_name, users.last_name),
+           gender = COALESCE(EXCLUDED.gender, users.gender)
+         RETURNING id, phone, first_name, last_name, is_platform_admin, gender`,
+        [phone, input.firstName?.trim() || null, input.lastName?.trim() || null, input.gender ?? null],
       )
     ).rows[0]!;
     const user: User = { ...row, portal };
@@ -162,7 +168,7 @@ export async function switchMode(deps: Deps, user: User, to: 'customer' | 'busin
 
 export async function userForToken(deps: Deps, token: string): Promise<User | null> {
   const { rows } = await deps.db.query<User>(
-    `SELECT u.id, u.phone, u.first_name, u.last_name, u.is_platform_admin, s.portal
+    `SELECT u.id, u.phone, u.first_name, u.last_name, u.is_platform_admin, u.gender, s.portal
      FROM sessions s JOIN users u ON u.id = s.user_id
      WHERE s.token_hash = $1 AND s.expires_at > $2`,
     [sha256(token), deps.clock.now()],
@@ -170,11 +176,11 @@ export async function userForToken(deps: Deps, token: string): Promise<User | nu
   return rows[0] ?? null;
 }
 
-export async function updateProfile(deps: Deps, user: User, input: { firstName: string; lastName: string }) {
+export async function updateProfile(deps: Deps, user: User, input: { firstName: string; lastName: string; gender?: Gender | null }) {
   const { rows } = await deps.db.query<Omit<User, 'portal'>>(
-    `UPDATE users SET first_name = $2, last_name = $3 WHERE id = $1
-     RETURNING id, phone, first_name, last_name, is_platform_admin`,
-    [user.id, input.firstName.trim(), input.lastName.trim()],
+    `UPDATE users SET first_name = $2, last_name = $3, gender = CASE WHEN $5 THEN $4 ELSE gender END WHERE id = $1
+     RETURNING id, phone, first_name, last_name, is_platform_admin, gender`,
+    [user.id, input.firstName.trim(), input.lastName.trim(), input.gender ?? null, input.gender !== undefined],
   );
   return { ...rows[0]!, portal: user.portal };
 }

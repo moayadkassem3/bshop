@@ -5,8 +5,10 @@ import type { Map as MapLibreMap, Marker } from 'maplibre-gl';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
+import { lastLocation, locationPermissionGranted, rememberLocation, type LatLng } from '@/lib/location';
+import { getToken } from '@/lib/session';
 import { AUDIENCE, distanceMeters, formatDistance, photoUrl, placeLabel } from '@/lib/shop';
-import type { NearbyShop } from '@/lib/types';
+import type { Me, NearbyShop } from '@/lib/types';
 import styles from './ExploreMap.module.css';
 
 /** Before the customer shares their location, the map opens on Kadıköy, İstanbul. */
@@ -15,7 +17,16 @@ const KADIKOY = { lat: 40.9905, lng: 29.029 };
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 
 type Audience = 'all' | 'men' | 'women';
-type LatLng = { lat: number; lng: number };
+
+// The salon type the customer picked stays for this visit; otherwise Keşfet follows their gender (v1.7).
+const AUDIENCE_KEY = 'salon-randevu-tur';
+const readAudience = (): Audience | null => {
+  try {
+    return (window.sessionStorage.getItem(AUDIENCE_KEY) as Audience | null) ?? null;
+  } catch {
+    return null;
+  }
+};
 
 export function ExploreMap() {
   const container = useRef<HTMLDivElement>(null);
@@ -32,6 +43,26 @@ export function ExploreMap() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  useEffect(() => {
+    const picked = readAudience();
+    if (picked) return setAudience(picked);
+    if (!getToken()) return;
+    api<Me>('/me')
+      .then((me) => {
+        if (me.gender && !readAudience()) setAudience(me.gender === 'male' ? 'men' : 'women');
+      })
+      .catch(() => undefined);
+  }, []);
+
+  function pickAudience(value: Audience) {
+    setAudience(value);
+    try {
+      window.sessionStorage.setItem(AUDIENCE_KEY, value);
+    } catch {
+      // The choice lasts until the page is left.
+    }
+  }
+
   // Create the map once.
   useEffect(() => {
     let cancelled = false;
@@ -39,11 +70,14 @@ export function ExploreMap() {
       const maplibre = await import('maplibre-gl');
       if (cancelled || !container.current) return;
       maplibre.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+      // Someone who shared their location before starts where they were last time.
+      const last = lastLocation();
+      const start = last ?? KADIKOY;
       const map = new maplibre.Map({
         container: container.current,
         style: MAP_STYLE,
-        center: [KADIKOY.lng, KADIKOY.lat],
-        zoom: 14,
+        center: [start.lng, start.lat],
+        zoom: last ? 15 : 14,
         attributionControl: { compact: true },
       });
       mapRef.current = map;
@@ -53,6 +87,12 @@ export function ExploreMap() {
         const c = map.getCenter();
         setCenter({ lat: c.lat, lng: c.lng });
       });
+      if (last) {
+        setCenter(last);
+        showUser(last, false);
+        // Refresh it quietly when the browser already allows it; never prompt on page load.
+        if (await locationPermissionGranted()) locate({ quiet: true });
+      }
     })();
     return () => {
       cancelled = true;
@@ -124,33 +164,41 @@ export function ExploreMap() {
     })();
   }, [sorted, selected, select]);
 
-  async function locate() {
+  async function showUser(here: LatLng, fly: boolean) {
+    setUser(here);
+    const map = mapRef.current;
+    if (!map) return;
+    const maplibre = await import('maplibre-gl');
+    if (!userMarker.current) {
+      const dot = document.createElement('span');
+      dot.className = styles.userDot;
+      userMarker.current = new maplibre.Marker({ element: dot }).setLngLat([here.lng, here.lat]).addTo(map);
+    } else userMarker.current.setLngLat([here.lng, here.lat]);
+    if (fly) map.flyTo({ center: [here.lng, here.lat], zoom: 15 });
+  }
+
+  function locate({ quiet = false } = {}) {
     if (!navigator.geolocation) {
-      setLocationError('Tarayıcınız konum paylaşmayı desteklemiyor.');
+      if (!quiet) setLocationError('Tarayıcınız konum paylaşmayı desteklemiyor.');
       return;
     }
-    setLocating(true);
+    if (!quiet) setLocating(true);
     setLocationError(null);
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+      (pos) => {
         const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setUser(here);
+        const before = lastLocation();
         setLocating(false);
-        const map = mapRef.current;
-        if (!map) return;
-        const maplibre = await import('maplibre-gl');
-        if (!userMarker.current) {
-          const dot = document.createElement('span');
-          dot.className = styles.userDot;
-          userMarker.current = new maplibre.Marker({ element: dot }).setLngLat([here.lng, here.lat]).addTo(map);
-        } else userMarker.current.setLngLat([here.lng, here.lat]);
-        map.flyTo({ center: [here.lng, here.lat], zoom: 15 });
+        rememberLocation(here);
+        // A quiet refresh only moves the map when the customer is somewhere new.
+        showUser(here, !quiet || !before || distanceMeters(before, here) > 300);
       },
-      () => {
+      (err) => {
         setLocating(false);
-        setLocationError('Konumunuza erişilemedi. Tarayıcı ayarlarından konum iznini açabilirsiniz.');
+        if (err.code === err.PERMISSION_DENIED) rememberLocation(null);
+        if (!quiet) setLocationError('Konumunuza erişilemedi. Tarayıcı ayarlarından konum iznini açabilirsiniz.');
       },
-      { enableHighAccuracy: true, timeout: 10_000 },
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 },
     );
   }
 
@@ -187,13 +235,13 @@ export function ExploreMap() {
               role="radio"
               aria-checked={audience === value}
               className={`${styles.chip} ${audience === value ? styles.chipOn : ''}`}
-              onClick={() => setAudience(value)}
+              onClick={() => pickAudience(value)}
             >
               {label}
             </button>
           ))}
         </div>
-        <button type="button" className={styles.locationPill} onClick={locate} disabled={locating}>
+        <button type="button" className={styles.locationPill} onClick={() => locate()} disabled={locating}>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <path d="m3 11 18-8-8 18-2-8z" />
           </svg>
@@ -201,7 +249,7 @@ export function ExploreMap() {
         </button>
       </div>
 
-      <button type="button" className={styles.locateButton} onClick={locate} aria-label="Konumuma git" disabled={locating}>
+      <button type="button" className={styles.locateButton} onClick={() => locate()} aria-label="Konumuma git" disabled={locating}>
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
           <circle cx="12" cy="12" r="3.5" />
           <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
@@ -229,7 +277,7 @@ export function ExploreMap() {
         {!user && (
           <div className={styles.locationHint}>
             <span>Size en yakın kuaförleri görmek için konumunuzu paylaşın.</span>
-            <button type="button" className="btn btn-primary" onClick={locate} disabled={locating}>
+            <button type="button" className="btn btn-primary" onClick={() => locate()} disabled={locating}>
               Konumumu kullan
             </button>
           </div>

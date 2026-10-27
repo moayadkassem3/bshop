@@ -28,6 +28,7 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
         code: z.string().regex(/^\d{6}$/),
         firstName: z.string().trim().min(1).max(60).optional(),
         lastName: z.string().trim().min(1).max(60).optional(),
+        gender: z.enum(['male', 'female']).optional(),
         portal,
         consents: z.array(z.object({ key: z.string().max(60), version: z.string().max(20) })).max(10).optional(),
       })

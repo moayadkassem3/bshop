@@ -21,7 +21,11 @@ export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.patch('/me', async (req) => {
     const user = await auth(req);
     const body = z
-      .object({ firstName: z.string().trim().min(1).max(60), lastName: z.string().trim().min(1).max(60) })
+      .object({
+        firstName: z.string().trim().min(1).max(60),
+        lastName: z.string().trim().min(1).max(60),
+        gender: z.enum(['male', 'female']).nullish(),
+      })
       .parse(req.body);
     return updateProfile(deps, user, body);
   });

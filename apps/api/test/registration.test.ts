@@ -197,3 +197,16 @@ describe('test deployments (DEMO_MODE)', () => {
     expect(await store.get('shop/a.webp')).toBeNull();
   });
 });
+
+describe('customer gender (v1.7)', () => {
+  it('is chosen at sign-up, kept on later sign-ins, and editable in the profile', async () => {
+    const token = await t.login(PHONES.customer, { names: { firstName: 'Elif', lastName: 'Kaya', gender: 'female' } });
+    expect((await t.call('GET', '/me', { token })).body.gender).toBe('female');
+
+    const patch = (body: object) => t.call('PATCH', '/me', { token, body: { firstName: 'Elif', lastName: 'Kaya', ...body } });
+    expect((await patch({})).body.gender).toBe('female');
+    expect((await patch({ gender: 'male' })).body.gender).toBe('male');
+    expect((await patch({ gender: null })).body.gender).toBeNull();
+    expect((await patch({ gender: 'other' })).status).toBe(400);
+  });
+});

@@ -93,7 +93,7 @@ export function useTestApp() {
     async login(
       phone: string,
       opts: {
-        names?: { firstName: string; lastName: string };
+        names?: { firstName: string; lastName: string; gender?: 'male' | 'female' };
         portal?: 'customer' | 'business' | 'staff' | 'owner';
         /** Customers accept the user agreement at sign-in unless told otherwise. */
         acceptTerms?: boolean;

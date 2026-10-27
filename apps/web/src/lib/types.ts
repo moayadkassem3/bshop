@@ -59,6 +59,7 @@ export type Me = {
   phone: string;
   first_name: string | null;
   last_name: string | null;
+  gender?: 'male' | 'female' | null;
   portal?: 'customer' | 'staff' | 'owner';
 };
 

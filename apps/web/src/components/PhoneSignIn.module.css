@@ -71,3 +71,30 @@
   font-size: 14px;
   line-height: 1.45;
 }
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.gender {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.gender button {
+  min-height: 48px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gender .genderOn {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
