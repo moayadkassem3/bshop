@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
+import { currentVersion } from '../src/domain/legal.js';
 import { at, book, PHONES, setupShop, useTestApp } from './helpers.js';
 
 const t = useTestApp();
@@ -143,5 +144,26 @@ describe('managing services and staff (v1.7)', () => {
     const cumali = await t.login(PHONES.cumali, { portal: 'owner' });
     const res = await t.call('PATCH', `${shop.base}/members/${shop.staff.salih}`, { token: cumali, body: { active: false } });
     expect(res.status).toBe(403);
+  });
+});
+
+describe('sign-in with the phone only (v1.7)', () => {
+  it('a new customer completes their account once; a returning one goes straight in', async () => {
+    const verify = async () => {
+      t.clock.advance(2);
+      await t.call('POST', '/auth/otp/request', { body: { phone: PHONES.customer } });
+      await t.tick();
+      const code = t.sms.to(PHONES.customer).at(-1)!.match(/(\d{6})/)![1];
+      return (await t.call('POST', '/auth/otp/verify', { body: { phone: PHONES.customer, code } })).body;
+    };
+    const first = await verify();
+    expect(first).toMatchObject({ needsProfile: true, needsTerms: true });
+
+    // The "Hesabını oluştur" step.
+    await t.call('PATCH', '/me', { token: first.token, body: { firstName: 'Elif', lastName: 'Kaya', gender: 'female' } });
+    await t.call('POST', '/me/consents', { token: first.token, body: [{ key: 'kullanici-sozlesmesi', version: currentVersion('kullanici-sozlesmesi') }] });
+
+    const again = await verify();
+    expect(again).toMatchObject({ needsProfile: false, needsTerms: false, user: { first_name: 'Elif', gender: 'female' } });
   });
 });

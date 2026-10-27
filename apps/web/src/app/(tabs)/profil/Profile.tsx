@@ -85,7 +85,7 @@ function SignIn(props: {
               ← Geri
             </button>
             <h2 className={styles.sheetTitle}>Müşteri girişi</h2>
-            <PhoneSignIn askNames as="customer" onSignedIn={props.onSignedIn} />
+            <PhoneSignIn as="customer" onSignedIn={props.onSignedIn} />
           </>
         )}
 
@@ -96,7 +96,7 @@ function SignIn(props: {
             </button>
             <h2 className={styles.sheetTitle}>İşletme girişi</h2>
             <p className={styles.hint}>İşletme sahibi veya personel olarak kayıtlı telefon numaranızla girin.</p>
-            <PhoneSignIn askNames={false} as="business" onSignedIn={props.onSignedIn} />
+            <PhoneSignIn as="business" onSignedIn={props.onSignedIn} />
             <div className={styles.register}>
               <span>İşletmeniz henüz kayıtlı değil mi?</span>
               <Link href="/isletme-kaydi">İşletmenizi kaydedin →</Link>

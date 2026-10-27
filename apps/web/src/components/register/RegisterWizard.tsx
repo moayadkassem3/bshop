@@ -216,7 +216,7 @@ export function RegisterWizard() {
         <h1 className={styles.title}>Telefon numaranızı doğrulayın</h1>
         <p className={styles.lead}>Bu numara işletme sahibi hesabınız olur. Kayda kaldığınız yerden devam edebilirsiniz.</p>
         <div className={`card ${styles.signIn}`}>
-          <PhoneSignIn askNames as="customer" onSignedIn={setMe} />
+          <PhoneSignIn as="customer" onSignedIn={setMe} />
         </div>
       </Shell>
     );

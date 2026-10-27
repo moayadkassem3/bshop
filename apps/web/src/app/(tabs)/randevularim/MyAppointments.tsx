@@ -49,7 +49,6 @@ export function MyAppointments() {
           <div className={`card ${styles.signIn}`}>
             <p className="muted">Randevularınızı görmek için telefon numaranızı doğrulayın.</p>
             <PhoneSignIn
-              askNames={false}
               onSignedIn={() => {
                 setSignedIn(true);
                 load();

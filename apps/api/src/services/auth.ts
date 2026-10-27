@@ -5,7 +5,7 @@ import { AppError, badRequest } from '../errors.js';
 import { sms } from '../messages.js';
 import { queueSms } from '../notifications.js';
 import { normalizePhone } from '../phone.js';
-import { recordConsents, type ConsentInput } from './consents.js';
+import { hasAccepted, recordConsents, type ConsentInput } from './consents.js';
 import { MINUTE } from '../domain/time.js';
 
 const OTP_TTL_MINUTES = 5;
@@ -105,7 +105,7 @@ export async function verifyOtp(
     /** Agreements ticked on the sign-in screen (v1.6). */
     consents?: ConsentInput[];
   },
-): Promise<{ token: string; user: User }> {
+): Promise<{ token: string; user: User; needsProfile: boolean; needsTerms: boolean }> {
   const phone = normalizePhone(input.phone);
   const now = deps.clock.now();
   const result = await withTx(deps.db, async (tx) => {
@@ -141,7 +141,11 @@ export async function verifyOtp(
     ).rows[0]!;
     const user: User = { ...row, portal };
     if (input.consents?.length) await recordConsents(tx, user.id, input.consents, now);
-    return { token: await createSession(tx, deps, user.id, portal, now), user };
+    // Sign-in asks only for the phone; a customer without a name, gender or the user
+    // agreement completes their account once, right after the code (v1.7).
+    const needsTerms = portal === 'customer' && !(await hasAccepted(tx, user.id, 'kullanici-sozlesmesi'));
+    const needsProfile = portal === 'customer' && (!user.first_name || !user.last_name || !user.gender || needsTerms);
+    return { token: await createSession(tx, deps, user.id, portal, now), user, needsProfile, needsTerms };
   });
   if (!result) throw badRequest('OTP_INVALID', 'Code is invalid or expired');
   return result;

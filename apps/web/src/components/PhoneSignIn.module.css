@@ -98,3 +98,8 @@
   background: var(--primary-soft);
   color: var(--primary);
 }
+
+.title {
+  margin: 0;
+  font-size: 20px;
+}

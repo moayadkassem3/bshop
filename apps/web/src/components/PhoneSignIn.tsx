@@ -8,12 +8,12 @@ import type { Me } from '@/lib/types';
 import styles from './PhoneSignIn.module.css';
 
 type Props = {
-  /** Ask for first name and surname too (new customers booking for the first time). */
-  askNames: boolean;
   /** Customer or business sign-in (v1.5); business only accepts phones registered with a shop. */
   as?: 'customer' | 'business';
   onSignedIn: (me: Me) => void;
 };
+
+type VerifyResult = { token: string; user: Me; needsProfile?: boolean; needsTerms?: boolean };
 
 /** Current agreement versions, so acceptance is recorded against the text that was shown. */
 export function useLegalVersions(): Record<string, string> {
@@ -26,31 +26,26 @@ export function useLegalVersions(): Record<string, string> {
   return versions;
 }
 
-/** Customer sign-in on the website: phone number, then the 6-digit SMS code. */
-export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
+/**
+ * Sign-in with the phone only: number, then the 6-digit SMS code (v1.7). A new
+ * customer then creates their account once (name, gender, user agreement);
+ * returning customers go straight in.
+ */
+export function PhoneSignIn({ as = 'customer', onSignedIn }: Props) {
   const [phone, setPhone] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [gender, setGender] = useState<'male' | 'female' | null>(null);
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [resendIn, setResendIn] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [acceptMarketing, setAcceptMarketing] = useState(false);
   const [demoCode, setDemoCode] = useState<string | null>(null);
-  const versions = useLegalVersions();
-  const customer = as === 'customer';
+  const [account, setAccount] = useState<VerifyResult | null>(null);
 
   useEffect(() => {
     if (resendIn <= 0) return;
     const timer = setTimeout(() => setResendIn((s) => s - 1), 1000);
     return () => clearTimeout(timer);
   }, [resendIn]);
-
-  // New customers also choose Erkek or Kadın, which sets Keşfet's default salon type (v1.7).
-  const namesOk = (!askNames || (firstName.trim() && lastName.trim() && (!customer || gender))) && (!customer || acceptTerms);
 
   async function sendCode() {
     setBusy(true);
@@ -75,27 +70,11 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
     setBusy(true);
     setError(null);
     try {
-      const res = await api<{ token: string; user: Me }>('/auth/otp/verify', {
-        method: 'POST',
-        body: {
-          phone,
-          code,
-          portal: as,
-          ...(askNames ? { firstName: firstName.trim(), lastName: lastName.trim(), ...(gender ? { gender } : {}) } : {}),
-          // Acceptance is recorded with the version shown (v1.6).
-          ...(customer
-            ? {
-                consents: [
-                  { key: 'kullanici-sozlesmesi', version: versions['kullanici-sozlesmesi'] },
-                  ...(acceptMarketing ? [{ key: 'ticari-ileti-izni', version: versions['ticari-ileti-izni'] }] : []),
-                ],
-              }
-            : {}),
-        },
-      });
+      const res = await api<VerifyResult>('/auth/otp/verify', { method: 'POST', body: { phone, code, portal: as } });
       setToken(res.token, res.user.portal);
       await moveLocalFavoritesToAccount();
-      onSignedIn(res.user);
+      if (res.needsProfile) setAccount(res);
+      else onSignedIn(res.user);
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -103,33 +82,10 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
     }
   }
 
+  if (account) return <CreateAccount result={account} onDone={onSignedIn} />;
+
   return (
     <div className={styles.wrap}>
-      {askNames && (
-        <div className={styles.row}>
-          <div className="field">
-            <label htmlFor="first-name">Ad</label>
-            <input
-              id="first-name"
-              className="input"
-              autoComplete="given-name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="last-name">Soyad</label>
-            <input
-              id="last-name"
-              className="input"
-              autoComplete="family-name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-            />
-          </div>
-        </div>
-      )}
-      {askNames && customer && <GenderChoice value={gender} onChange={setGender} />}
       <div className="field">
         <label htmlFor="phone">Cep telefonu</label>
         <input
@@ -146,40 +102,19 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
           }}
         />
       </div>
-      {customer && (
-        <div className={styles.consents}>
-          <label className={styles.check}>
-            <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} />
-            <span>
-              <a href="/sozlesmeler/kullanici-sozlesmesi" target="_blank" rel="noreferrer">
-                Kullanıcı Sözleşmesi
-              </a>
-              ’ni okudum ve kabul ediyorum.
-            </span>
-          </label>
-          <label className={styles.check}>
-            <input type="checkbox" checked={acceptMarketing} onChange={(e) => setAcceptMarketing(e.target.checked)} />
-            <span>
-              Kampanya ve yeniliklerden SMS/e-posta ile haberdar olmak istiyorum (
-              <a href="/sozlesmeler/ticari-ileti-izni" target="_blank" rel="noreferrer">
-                isteğe bağlı
-              </a>
-              ).
-            </span>
-          </label>
+      {!codeSent ? (
+        <>
+          <button type="button" className="btn btn-primary btn-block" disabled={busy || phone.replace(/\D/g, '').length < 10} onClick={sendCode}>
+            Doğrulama kodu gönder
+          </button>
           <p className={styles.notice}>
-            Kişisel verileriniz{' '}
+            Hesabınız yoksa kodu girdikten sonra birkaç bilgiyle oluşturulur. Kişisel verileriniz{' '}
             <a href="/sozlesmeler/kvkk-aydinlatma" target="_blank" rel="noreferrer">
               KVKK Aydınlatma Metni
             </a>{' '}
             kapsamında işlenir.
           </p>
-        </div>
-      )}
-      {!codeSent ? (
-        <button type="button" className="btn btn-primary btn-block" disabled={busy || phone.length < 10 || !namesOk} onClick={sendCode}>
-          Doğrulama kodu gönder
-        </button>
+        </>
       ) : (
         <>
           {demoCode && (
@@ -199,7 +134,7 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
             />
           </div>
-          <button type="button" className="btn btn-primary btn-block" disabled={busy || code.length !== 6 || !namesOk} onClick={verify}>
+          <button type="button" className="btn btn-primary btn-block" disabled={busy || code.length !== 6} onClick={verify}>
             Doğrula
           </button>
           <button type="button" className={styles.resend} disabled={busy || resendIn > 0} onClick={sendCode}>
@@ -207,6 +142,90 @@ export function PhoneSignIn({ askNames, as = 'customer', onSignedIn }: Props) {
           </button>
         </>
       )}
+      {error && (
+        <p className="alert alert-danger" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** "Hesabını oluştur": shown once, to a new customer (or one with details missing) after the code. */
+function CreateAccount({ result, onDone }: { result: VerifyResult; onDone: (me: Me) => void }) {
+  const me = result.user;
+  const isNew = !me.first_name && !me.last_name;
+  const [firstName, setFirstName] = useState(me.first_name ?? '');
+  const [lastName, setLastName] = useState(me.last_name ?? '');
+  const [gender, setGender] = useState<'male' | 'female' | null>(me.gender ?? null);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptMarketing, setAcceptMarketing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const versions = useLegalVersions();
+  const ok = firstName.trim() && lastName.trim() && gender && (!result.needsTerms || acceptTerms) && versions['kullanici-sozlesmesi'];
+
+  async function save() {
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = await api<Me>('/me', { method: 'PATCH', body: { firstName: firstName.trim(), lastName: lastName.trim(), gender } });
+      const consents = [
+        ...(result.needsTerms ? [{ key: 'kullanici-sozlesmesi', version: versions['kullanici-sozlesmesi'] }] : []),
+        ...(acceptMarketing ? [{ key: 'ticari-ileti-izni', version: versions['ticari-ileti-izni'] }] : []),
+      ];
+      if (consents.length) await api('/me/consents', { method: 'POST', body: consents });
+      onDone({ ...me, ...updated });
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className={styles.wrap}>
+      <div>
+        <h3 className={styles.title}>{isNew ? 'Hesabını oluştur' : 'Bilgilerini tamamla'}</h3>
+        <p className={styles.notice}>{isNew ? 'Bu numarayla ilk kez giriş yapıyorsun. Bir kereye mahsus birkaç bilgi:' : 'Devam etmeden önce eksik bilgilerini tamamla.'}</p>
+      </div>
+      <div className={styles.row}>
+        <div className="field">
+          <label htmlFor="first-name">Ad</label>
+          <input id="first-name" className="input" autoComplete="given-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="last-name">Soyad</label>
+          <input id="last-name" className="input" autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+        </div>
+      </div>
+      <GenderChoice value={gender} onChange={setGender} />
+      <div className={styles.consents}>
+        {result.needsTerms && (
+          <label className={styles.check}>
+            <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} />
+            <span>
+              <a href="/sozlesmeler/kullanici-sozlesmesi" target="_blank" rel="noreferrer">
+                Kullanıcı Sözleşmesi
+              </a>
+              ’ni okudum ve kabul ediyorum.
+            </span>
+          </label>
+        )}
+        <label className={styles.check}>
+          <input type="checkbox" checked={acceptMarketing} onChange={(e) => setAcceptMarketing(e.target.checked)} />
+          <span>
+            Kampanya ve yeniliklerden SMS/e-posta ile haberdar olmak istiyorum (
+            <a href="/sozlesmeler/ticari-ileti-izni" target="_blank" rel="noreferrer">
+              isteğe bağlı
+            </a>
+            ).
+          </span>
+        </label>
+      </div>
+      <button type="button" className="btn btn-primary btn-block" disabled={busy || !ok} onClick={save}>
+        {isNew ? 'Hesabı oluştur' : 'Devam'}
+      </button>
       {error && (
         <p className="alert alert-danger" role="alert">
           {error}

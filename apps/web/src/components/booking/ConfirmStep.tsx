@@ -182,7 +182,7 @@ export function ConfirmStep(props: {
         <div className={`card ${styles.signIn}`}>
           <h3>Telefonunuzu doğrulayın</h3>
           <p className="muted">Randevu sonucunu bu numaraya SMS ile göndereceğiz.</p>
-          <PhoneSignIn askNames onSignedIn={setMe} />
+          <PhoneSignIn onSignedIn={setMe} />
         </div>
       )}
 
