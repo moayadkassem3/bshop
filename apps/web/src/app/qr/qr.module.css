@@ -1,0 +1,96 @@
+.page {
+  min-height: 100dvh;
+  padding-bottom: 40px;
+}
+
+.top {
+  background: var(--ink);
+  color: #fff;
+  padding: calc(16px + env(safe-area-inset-top)) 0 24px;
+  margin-bottom: 20px;
+}
+
+.top h1 {
+  margin: 10px 0 0;
+  font-size: 34px;
+  letter-spacing: -0.04em;
+}
+
+.top p {
+  margin: 6px 0 0;
+  color: var(--dark-muted);
+  line-height: 1.45;
+}
+
+.back {
+  color: var(--primary-light);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.select {
+  margin-top: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--dark-2);
+  border-radius: 10px;
+  background: var(--dark-2);
+  color: #fff;
+  font-weight: 650;
+}
+
+.poster {
+  margin: 0 auto;
+  max-width: 420px;
+  padding: 28px 28px 26px;
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.code svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.caption {
+  margin-top: 14px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.link {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+@media print {
+  .top,
+  .link,
+  .actions,
+  :global(nav) {
+    display: none !important;
+  }
+
+  .page {
+    padding: 0;
+  }
+
+  .poster {
+    max-width: 14cm;
+    margin-top: 2cm;
+    box-shadow: none;
+  }
+}
