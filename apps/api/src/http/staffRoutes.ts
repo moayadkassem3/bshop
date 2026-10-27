@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Deps } from '../deps.js';
 import { applyAbsence, getAbsence, markAbsence } from '../services/absence.js';
-import { setAutoConfirmHours, updateShopSettings } from '../services/shops.js';
+import { getShopSettings, setAutoConfirmHours, updateShopSettings } from '../services/shops.js';
 import {
   addStaffAppointment,
   blockTime,
@@ -254,6 +254,10 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   });
 
   // Shop settings and customers (owner)
+  app.get('/staff/shops/:shopId/settings', async (req) => {
+    const { shopId } = shopParams.parse(req.params);
+    return getShopSettings(deps, await auth(req), shopId);
+  });
   app.patch('/staff/shops/:shopId/settings', async (req) => {
     const user = await auth(req);
     const { shopId } = shopParams.parse(req.params);

@@ -12,6 +12,7 @@ import { AUDIENCE, formatPhone, photoUrl, WEEKDAYS } from '@/lib/shop';
 import type { Me } from '@/lib/types';
 import { shrinkImage } from '@/lib/image';
 import { PROVINCES } from './provinces';
+import { SALON_TYPES } from './salonTypes';
 import styles from './register.module.css';
 
 // MapLibre only runs in the browser.
@@ -311,18 +312,16 @@ function Heading(props: { kicker: string; title: string; lead: string }) {
   );
 }
 
-const TYPE_OPTIONS: { value: Audience; icon: string; hint: string }[] = [
-  { value: 'men', icon: '💈', hint: 'Saç, sakal ve erkek bakımı' },
-  { value: 'women', icon: '💇‍♀️', hint: 'Saç, renk ve kadın bakımı' },
-  { value: 'unisex', icon: '✂️', hint: 'Kadın ve erkek müşterilere hizmet' },
-];
-
 function TypeStep({ draft, update }: StepProps) {
   return (
     <>
-      <Heading kicker="Hoş geldiniz" title="Ne tür bir salonsunuz?" lead="Müşteriler haritada salonları bu türe göre filtreler." />
-      <div className={styles.types} role="radiogroup" aria-label="Salon türü">
-        {TYPE_OPTIONS.map((o) => (
+      <Heading
+        kicker="Hoş geldiniz"
+        title="Müşterileriniz kimler?"
+        lead="Salonunuz Keşfet'te ve Popüler kesimlerde bu seçime göre listelenir. Kadın ve erkek salonları iki listede de görünür."
+      />
+      <div className={styles.types} role="radiogroup" aria-label="Müşterileriniz">
+        {SALON_TYPES.map((o) => (
           <button
             key={o.value}
             type="button"
@@ -335,7 +334,7 @@ function TypeStep({ draft, update }: StepProps) {
               {o.icon}
             </span>
             <span>
-              <strong>{AUDIENCE[o.value]}</strong>
+              <strong>{o.label}</strong>
               <span>{o.hint}</span>
             </span>
           </button>

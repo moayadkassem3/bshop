@@ -61,6 +61,8 @@ export type Me = {
   first_name: string | null;
   last_name: string | null;
   gender?: 'male' | 'female' | null;
+  /** Owner or co-owner of at least one salon (v1.7). */
+  owns_shop?: boolean;
   portal?: 'customer' | 'staff' | 'owner';
 };
 

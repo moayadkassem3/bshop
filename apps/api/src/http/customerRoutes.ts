@@ -12,7 +12,12 @@ import type { AuthFn } from './app.js';
 import { id, timestamp } from './schemas.js';
 
 export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
-  app.get('/me', async (req) => auth(req));
+  app.get('/me', async (req) => {
+    const user = await auth(req);
+    // Owners and co-owners do not need "İşletmenizi kaydedin" in Profil (v1.7).
+    const owns = await deps.db.query("SELECT 1 FROM shop_members WHERE user_id = $1 AND role = 'owner' AND active LIMIT 1", [user.id]);
+    return { ...user, owns_shop: !!owns.rowCount };
+  });
 
   app.post('/me/switch', async (req) => {
     const user = await auth(req);

@@ -121,7 +121,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
     setBusy(true);
     try {
       const updated = await api<Me>('/me', { method: 'PATCH', body: { firstName, lastName, gender } });
-      onChange(updated);
+      onChange({ ...me, ...updated });
       setEditing(false);
     } catch (err) {
       setMessage(errorMessage(err));
@@ -136,7 +136,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
     try {
       const r = await api<{ token: string; user: Me }>('/me/switch', { method: 'POST', body: { to } });
       setToken(r.token, r.user.portal);
-      onChange(r.user);
+      onChange({ ...me, ...r.user });
     } catch (err) {
       setMessage(
         err instanceof ApiError && err.code === 'NOT_BUSINESS'
@@ -202,7 +202,12 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
               </button>
             )}
           </li>
-          <MenuLink href="/isletme-kaydi" label="İşletmenizi kaydedin" />
+          {/* A salon owner edits their salon instead of registering another (v1.7). */}
+          {me.owns_shop ? (
+            mode === 'owner' && <MenuLink href="/isletme-ayarlari" label="Salon bilgilerini düzenle" />
+          ) : (
+            <MenuLink href="/isletme-kaydi" label="İşletmenizi kaydedin" />
+          )}
           <MenuLink href="/isletmeler" label="Paketler ve fiyatlar" />
           <MenuLink href="/sozlesmeler" label="Yasal metinler" />
         </ul>

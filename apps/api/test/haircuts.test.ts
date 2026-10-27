@@ -78,3 +78,19 @@ describe('booking your own shop (v1.7)', () => {
     expect((await t.call('POST', `/shops/${shop.slug}/bookings`, { token: customer, body: { items: [item] } })).status).toBe(201);
   });
 });
+
+describe('editing the salon (v1.7)', () => {
+  it('owners read and change their salon; Profil knows who owns one', async () => {
+    const shop = await setupShop(t);
+    const owner = shop.tokens.owner;
+    const settings = (await t.call('GET', `${shop.base}/settings`, { token: owner })).body;
+    expect(settings).toMatchObject({ slug: shop.slug, audience: 'men' });
+    const patched = await t.call('PATCH', `${shop.base}/settings`, { token: owner, body: { name: 'Yeni Ad', audience: 'unisex', phone: '0216 555 44 33' } });
+    expect(patched.body).toMatchObject({ name: 'Yeni Ad', audience: 'unisex', phone: '+902165554433', slug: shop.slug });
+
+    const staff = await t.login(PHONES.cumali, { portal: 'staff' });
+    expect((await t.call('GET', `${shop.base}/settings`, { token: staff })).status).toBe(403);
+    expect((await t.call('GET', '/me', { token: owner })).body.owns_shop).toBe(true);
+    expect((await t.call('GET', '/me', { token: staff })).body.owns_shop).toBe(false);
+  });
+});

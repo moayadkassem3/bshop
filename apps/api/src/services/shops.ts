@@ -283,6 +283,12 @@ const SETTING_COLUMNS: Record<keyof ShopSettingsInput, string> = {
   maxFutureBookings: 'max_future_bookings',
 };
 
+/** The shop's details for its owners' edit screen (v1.7), including while it is under review. */
+export async function getShopSettings(deps: Deps, user: User, shopId: string) {
+  await requireOwner(deps.db, user, shopId);
+  return getShopById(deps.db, shopId);
+}
+
 export async function updateShopSettings(deps: Deps, user: User, shopId: string, input: ShopSettingsInput) {
   await requireOwner(deps.db, user, shopId);
   const entries = Object.entries(input).filter(([, v]) => v !== undefined) as [keyof ShopSettingsInput, unknown][];
