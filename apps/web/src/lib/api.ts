@@ -49,6 +49,7 @@ const MESSAGES: Record<string, string> = {
   INVALID_INSTAGRAM: 'Instagram kullanıcı adı geçerli değil.',
   INVALID_IMAGE: 'Fotoğraf JPEG, PNG veya WebP olmalı.',
   PHOTO_LIMIT: 'En fazla 12 fotoğraf ekleyebilirsiniz.',
+  POST_LIMIT: 'Paylaşım sınırına ulaşıldı. Eski paylaşımlardan birini kaldırın.',
   NOT_PENDING: 'Bu talep az önce yanıtlandı veya otomatik onaylandı.',
   NOT_CONFIRMED: 'Bu randevunun durumu değişti.',
   NOT_STARTED: 'Randevu saati henüz gelmedi.',

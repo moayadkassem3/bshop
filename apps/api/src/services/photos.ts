@@ -16,11 +16,10 @@ export type Photo = { id: string; width: number; height: number };
  * upright, scaled to at most 1600 px, and saved as WebP without its metadata,
  * so a phone photo's hidden GPS location never reaches the public page.
  */
-export async function addPhoto(deps: Deps, user: User, shopId: string, data: Buffer): Promise<Photo> {
-  await requireOwner(deps.db, user, shopId);
-  let processed: { data: Buffer; info: { width: number; height: number } };
+/** Upright, at most 1600 px, WebP, metadata (including GPS) removed. */
+export async function processImage(data: Buffer): Promise<{ data: Buffer; info: { width: number; height: number } }> {
   try {
-    processed = await sharp(data, { limitInputPixels: 50_000_000 })
+    return await sharp(data, { limitInputPixels: 50_000_000 })
       .rotate()
       .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 82 })
@@ -28,6 +27,11 @@ export async function addPhoto(deps: Deps, user: User, shopId: string, data: Buf
   } catch {
     throw badRequest('INVALID_IMAGE', 'Upload a JPEG, PNG, or WebP photo');
   }
+}
+
+export async function addPhoto(deps: Deps, user: User, shopId: string, data: Buffer): Promise<Photo> {
+  await requireOwner(deps.db, user, shopId);
+  const processed = await processImage(data);
   const key = `${shopId}/${randomUUID()}.webp`;
   return withTx(deps.db, async (tx) => {
     await tx.query('SELECT id FROM shops WHERE id = $1 FOR UPDATE', [shopId]);

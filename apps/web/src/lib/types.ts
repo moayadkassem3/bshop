@@ -28,6 +28,7 @@ export type ShopProfile = {
   cancellationCutoffMinutes: number;
   paymentAtShop: boolean;
   photos: Photo[];
+  posts: HaircutPost[];
   openingHours: OpeningHours[];
   services: Service[];
   staff: StaffMember[];
@@ -84,3 +85,19 @@ export type CustomerAppointment = {
 
 /** A shop on the Keşfet map. */
 export type NearbyShop = Omit<ShopSummary, 'address'> & { latitude: number; longitude: number; distance_m: number };
+
+/** A salon's photo of its work, tagged with a style ("Popüler kesimler", v1.7). */
+export type HaircutPost = {
+  id: string;
+  style: string;
+  style_name: string;
+  caption: string | null;
+  width: number;
+  height: number;
+  created_at: string;
+  like_count: number;
+};
+
+export type PopularPost = HaircutPost & { shop_name: string; shop_slug: string; district: string | null; city: string | null };
+
+export type HaircutStyle = { key: string; name: string; audience: 'men' | 'women' };

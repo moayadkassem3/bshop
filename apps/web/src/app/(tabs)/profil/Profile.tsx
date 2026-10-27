@@ -275,6 +275,9 @@ function MyBusinesses() {
       <Link href="/randevularim" className={`btn btn-primary btn-block ${styles.panelLink}`}>
         Randevu talepleri ve takvim
       </Link>
+      <Link href="/calismalar" className={`btn btn-block ${styles.panelLink}`}>
+        Kesim fotoğrafı paylaş
+      </Link>
       {shops.some((b) => b.role === 'owner') && (
         <Link href="/qr" className={`btn btn-block ${styles.panelLink}`}>
           Salon QR kodu

@@ -3,6 +3,7 @@ import { badRequest } from '../errors.js';
 import { candidateStarts } from '../domain/availability.js';
 import { inAutoConfirmHours, type WeeklyWindow } from '../domain/confirmation.js';
 import { localDay, localDayOf } from '../domain/time.js';
+import { listShopPosts } from './haircuts.js';
 import { listPhotos } from './photos.js';
 import { getPublicShopBySlug } from './shops.js';
 import { earliestStart, eligibleStaff, loadDaySchedules, loadServices } from './schedule.js';
@@ -133,6 +134,7 @@ export async function getShopProfile(deps: Deps, slug: string) {
     cancellationCutoffMinutes: shop.cancellation_cutoff_minutes,
     paymentAtShop: true,
     photos: await listPhotos(deps, shop.id),
+    posts: await listShopPosts(deps, shop.id, 9),
     openingHours,
     services: services.rows,
     staff: staff.rows,

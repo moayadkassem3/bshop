@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { ShopWork } from '@/components/haircuts/ShopWork';
 import { PhotoGallery, PhotoGrid } from '@/components/PhotoGallery';
 import { formatDuration, formatPrice } from '@/lib/format';
 import { loadProfile } from '@/lib/server';
@@ -121,6 +122,15 @@ export default async function ShopProfilePage({ params }: Props) {
               Fotoğraflar <span className={styles.count}>{profile.photos.length}</span>
             </h2>
             <PhotoGrid photos={profile.photos} />
+          </section>
+        )}
+
+        {profile.posts.length > 0 && (
+          <section className={`card ${styles.section}`} aria-labelledby="work-title">
+            <h2 id="work-title" className={styles.sectionTitle}>
+              Çalışmalarımız
+            </h2>
+            <ShopWork posts={profile.posts} bookUrl={bookUrl} />
           </section>
         )}
 

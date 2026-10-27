@@ -8,6 +8,8 @@ import { shopSummaries } from '../services/favorites.js';
 import { LEGAL_DOCUMENTS } from '../domain/legal.js';
 import { PLAN_FEATURES, PLAN_TERMS, PLANS } from '../domain/plans.js';
 import { nearbyShops, searchPublicShops } from '../services/shops.js';
+import { HAIRCUT_STYLES, STYLE_KEYS } from '../domain/styles.js';
+import { popularPosts, readPostPhoto } from '../services/haircuts.js';
 import type { AuthFn } from './app.js';
 import { csvIds, id } from './schemas.js';
 
@@ -76,6 +78,24 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
   app.get('/public/photos/:id', async (req, reply) => {
     const { id: photoId } = z.object({ id }).parse(req.params);
     const data = await readPhoto(deps, photoId);
+    return reply.type('image/webp').header('cache-control', 'public, max-age=31536000, immutable').send(data);
+  });
+
+  // Popüler kesimler (v1.7)
+  app.get('/public/haircut-styles', async () => HAIRCUT_STYLES);
+  app.get('/public/haircuts', async (req) => {
+    const q = z
+      .object({
+        audience: z.enum(['men', 'women']).optional(),
+        style: z.enum(STYLE_KEYS).optional(),
+        limit: z.coerce.number().int().min(1).max(60).optional(),
+      })
+      .parse(req.query);
+    return popularPosts(deps, q);
+  });
+  app.get('/public/haircut-photos/:id', async (req, reply) => {
+    const { id: postId } = z.object({ id }).parse(req.params);
+    const data = await readPostPhoto(deps, postId);
     return reply.type('image/webp').header('cache-control', 'public, max-age=31536000, immutable').send(data);
   });
 

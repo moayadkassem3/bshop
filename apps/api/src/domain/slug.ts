@@ -2,7 +2,7 @@
 export const RESERVED_SLUGS = new Set([
   'api', 'admin', 'harita', 'kesfet', 'randevularim', 'favoriler', 'profil', 'isletmeler', 'isletme-kaydi',
   'sozlesmeler', 'giris', 'hesap', 'yardim', 'gizlilik', 'kvkk', 'sozlesme', 'iletisim', 'hakkimizda', 'arama',
-  'salon', 'salonlar', 'uygulama', 'static', 'favicon-ico', 'maplibre', 'qr', 'gecmis', 'kesimler', 'akis',
+  'salon', 'salonlar', 'uygulama', 'static', 'favicon-ico', 'maplibre', 'qr', 'gecmis', 'kesimler', 'akis', 'calismalar',
 ]);
 
 const TURKISH: Record<string, string> = { ç: 'c', ğ: 'g', ı: 'i', i: 'i', ö: 'o', ş: 's', ü: 'u' };

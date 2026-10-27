@@ -29,6 +29,8 @@ import {
 } from '../services/team.js';
 import { AppError } from '../errors.js';
 import { addPhoto, deletePhoto, listPhotosForStaff, MAX_UPLOAD_BYTES, reorderPhotos } from '../services/photos.js';
+import { addPost, deletePost, listShopPostsForStaff } from '../services/haircuts.js';
+import { STYLE_KEYS } from '../domain/styles.js';
 import type { AuthFn } from './app.js';
 import { id, shopParams, timestamp, weeklyWindows } from './schemas.js';
 
@@ -230,6 +232,24 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.put('/staff/shops/:shopId/photos/order', async (req, reply) => {
     const { shopId } = shopParams.parse(req.params);
     await reorderPhotos(deps, await auth(req), shopId, z.array(id).parse(req.body));
+    return reply.status(204).send();
+  });
+
+  // Haircut posts for "Popüler kesimler" (v1.7). The body is the image; style and caption are query parameters.
+  app.get('/staff/shops/:shopId/posts', async (req) => {
+    const { shopId } = shopParams.parse(req.params);
+    return listShopPostsForStaff(deps, await auth(req), shopId);
+  });
+  app.post('/staff/shops/:shopId/posts', async (req, reply) => {
+    const user = await auth(req);
+    const { shopId } = shopParams.parse(req.params);
+    const q = z.object({ style: z.enum(STYLE_KEYS), caption: z.string().max(200).optional() }).parse(req.query);
+    if (!Buffer.isBuffer(req.body)) throw new AppError(415, 'UNSUPPORTED_MEDIA', 'Send a JPEG, PNG, or WebP image');
+    return reply.status(201).send(await addPost(deps, user, shopId, req.body, q));
+  });
+  app.delete('/staff/shops/:shopId/posts/:id', async (req, reply) => {
+    const p = action.parse(req.params);
+    await deletePost(deps, await auth(req), p.shopId, p.id);
     return reply.status(204).send();
   });
 

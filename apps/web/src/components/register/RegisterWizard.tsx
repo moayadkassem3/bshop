@@ -10,6 +10,7 @@ import { formatDuration, formatPrice } from '@/lib/format';
 import { getToken, setToken } from '@/lib/session';
 import { AUDIENCE, formatPhone, photoUrl, WEEKDAYS } from '@/lib/shop';
 import type { Me } from '@/lib/types';
+import { shrinkImage } from '@/lib/image';
 import { PROVINCES } from './provinces';
 import styles from './register.module.css';
 
@@ -861,22 +862,6 @@ function PlanStep({ draft, me, onRegistered }: { draft: Draft; me: Me; onRegiste
 
 type Photo = { id: string };
 
-/** Downscales large phone photos before upload; the server re-encodes them anyway. */
-async function shrink(file: File): Promise<Blob> {
-  try {
-    const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
-    if (scale === 1 && file.size < 4 * 1024 * 1024) return file;
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bitmap.height * scale);
-    canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    return await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b ?? file), 'image/jpeg', 0.85));
-  } catch {
-    return file;
-  }
-}
-
 function PhotosStep({ shopId, onDone }: { shopId: string; onDone: () => void }) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [busy, setBusy] = useState(false);
@@ -889,7 +874,7 @@ function PhotosStep({ shopId, onDone }: { shopId: string; onDone: () => void }) 
     setError(null);
     for (const file of Array.from(files).slice(0, 12 - photos.length)) {
       try {
-        const body = await shrink(file);
+        const body = await shrinkImage(file);
         const res = await fetch(`/api/staff/shops/${shopId}/photos`, {
           method: 'POST',
           headers: { 'content-type': body.type || file.type, authorization: `Bearer ${getToken()}` },

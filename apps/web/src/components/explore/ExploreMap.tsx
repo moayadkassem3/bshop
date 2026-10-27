@@ -6,27 +6,16 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { lastLocation, locationPermissionGranted, rememberLocation, type LatLng } from '@/lib/location';
-import { getToken, rememberPortal } from '@/lib/session';
+import { PopularStrip } from '@/components/haircuts/PopularStrip';
+import { useAudience } from '@/lib/audience';
 import { AUDIENCE, distanceMeters, formatDistance, photoUrl, placeLabel } from '@/lib/shop';
-import type { Me, NearbyShop } from '@/lib/types';
+import type { NearbyShop } from '@/lib/types';
 import styles from './ExploreMap.module.css';
 
 /** Before the customer shares their location, the map opens on Kadıköy, İstanbul. */
 const KADIKOY = { lat: 40.9905, lng: 29.029 };
 /** Free vector map tiles, no key needed; a paid provider can replace this at launch. */
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
-
-type Audience = 'all' | 'men' | 'women';
-
-// The salon type the customer picked stays for this visit; otherwise Keşfet follows their gender (v1.7).
-const AUDIENCE_KEY = 'salon-randevu-tur';
-const readAudience = (): Audience | null => {
-  try {
-    return (window.sessionStorage.getItem(AUDIENCE_KEY) as Audience | null) ?? null;
-  } catch {
-    return null;
-  }
-};
 
 export function ExploreMap() {
   const container = useRef<HTMLDivElement>(null);
@@ -36,33 +25,12 @@ export function ExploreMap() {
   const [center, setCenter] = useState<LatLng>(KADIKOY);
   const [user, setUser] = useState<LatLng | null>(null);
   const [query, setQuery] = useState('');
-  const [audience, setAudience] = useState<Audience>('all');
+  const [audience, pickAudience] = useAudience();
   const [shops, setShops] = useState<NearbyShop[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-
-  useEffect(() => {
-    const picked = readAudience();
-    if (picked) return setAudience(picked);
-    if (!getToken()) return;
-    api<Me>('/me')
-      .then((me) => {
-        rememberPortal(me.portal);
-        if (me.gender && !readAudience()) setAudience(me.gender === 'male' ? 'men' : 'women');
-      })
-      .catch(() => undefined);
-  }, []);
-
-  function pickAudience(value: Audience) {
-    setAudience(value);
-    try {
-      window.sessionStorage.setItem(AUDIENCE_KEY, value);
-    } catch {
-      // The choice lasts until the page is left.
-    }
-  }
 
   // Create the map once.
   useEffect(() => {
@@ -284,6 +252,7 @@ export function ExploreMap() {
           </div>
         )}
         {locationError && <p className="alert alert-danger">{locationError}</p>}
+        <PopularStrip audience={audience} />
         <ul className={styles.list} role="list">
           {(sorted ?? []).map((shop) => (
             <li key={shop.slug} id={`shop-${shop.slug}`}>

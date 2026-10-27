@@ -5,6 +5,7 @@ import { switchMode, updateProfile } from '../services/auth.js';
 import { cancelByCustomer, createBooking, listCustomerAppointments } from '../services/booking.js';
 import { addFavorite, listCustomerShops, removeFavorite } from '../services/favorites.js';
 import { listConsents, recordConsents, withdrawConsent } from '../services/consents.js';
+import { likedPostIds, likePost, unlikePost } from '../services/haircuts.js';
 import { listMyNotifications } from '../services/inbox.js';
 import { registerShop } from '../services/registration.js';
 import type { AuthFn } from './app.js';
@@ -23,6 +24,18 @@ export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     const user = await auth(req);
     const q = z.object({ after: timestamp.optional(), limit: z.coerce.number().int().min(1).max(100).optional() }).parse(req.query);
     return listMyNotifications(deps, user, q);
+  });
+
+  app.get('/me/likes', async (req) => likedPostIds(deps, await auth(req)));
+  app.put('/me/likes/:id', async (req, reply) => {
+    const user = await auth(req);
+    await likePost(deps, user, z.object({ id }).parse(req.params).id);
+    return reply.status(204).send();
+  });
+  app.delete('/me/likes/:id', async (req, reply) => {
+    const user = await auth(req);
+    await unlikePost(deps, user, z.object({ id }).parse(req.params).id);
+    return reply.status(204).send();
   });
 
   app.patch('/me', async (req) => {

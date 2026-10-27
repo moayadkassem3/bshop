@@ -8,6 +8,7 @@ import { consolePush, consoleSms } from '../notifications.js';
 import { photoStorageFor } from '../storage.js';
 import type { User } from '../services/auth.js';
 import { createStaffAppointment } from '../services/booking.js';
+import { addPost } from '../services/haircuts.js';
 import { addPhoto } from '../services/photos.js';
 import { createShop, markReviewed, setAutoConfirmHours, setSubscription, updateShopSettings } from '../services/shops.js';
 import { addMember, importCatalog, setMemberServices, setWorkingHours } from '../services/team.js';
@@ -23,7 +24,7 @@ await migrate(db);
 
 const userByPhone = async (phone: string, portal: User['portal']): Promise<User> => {
   const { rows } = await db.query<Omit<User, 'portal'>>(
-    'SELECT id, phone, first_name, last_name, is_platform_admin FROM users WHERE phone = $1',
+    'SELECT id, phone, first_name, last_name, is_platform_admin, gender FROM users WHERE phone = $1',
     [phone],
   );
   return { ...rows[0]!, portal };
@@ -218,5 +219,33 @@ for (const demo of shops) {
     }
   }
   console.log(`${demo.slug}: created (owner ${demo.owner.phone})`);
+}
+
+// Sample posts for Popüler kesimler (v1.7), added once per demo shop, also to shops seeded before posts existed.
+const DEMO_POSTS: Record<string, [string, string, string][]> = {
+  'demo-berber': [
+    ['skin-fade', '#0e1013', '#1f48c9'],
+    ['klasik', '#1c2027', '#3a3f48'],
+    ['sakal', '#111a33', '#2b3550'],
+    ['crop', '#0e1013', '#16307f'],
+  ],
+  'demo-kuafor-moda': [
+    ['balyaj', '#111a33', '#8daeff'],
+    ['bob', '#0e1013', '#1f48c9'],
+    ['dalga', '#1c2027', '#2b3550'],
+  ],
+};
+for (const demo of shops) {
+  const { rows } = await db.query<{ id: string; posts: number }>(
+    'SELECT s.id, (SELECT count(*)::int FROM haircut_posts p WHERE p.shop_id = s.id) AS posts FROM shops s WHERE s.slug = $1',
+    [demo.slug],
+  );
+  const shop = rows[0];
+  if (!shop || shop.posts > 0) continue;
+  const owner = await userByPhone(demo.owner.phone, 'owner');
+  for (const [i, [style, from, to]] of (DEMO_POSTS[demo.slug] ?? []).entries()) {
+    await addPost(deps, owner, shop.id, await samplePhoto([from, to], i + 1), { style });
+  }
+  console.log(`${demo.slug}: sample haircut posts added`);
 }
 await db.end();
