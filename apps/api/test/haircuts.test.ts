@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { PHONES, setupShop, useTestApp } from './helpers.js';
+import { at, PHONES, setupShop, useTestApp } from './helpers.js';
 
 const t = useTestApp();
 const jpeg = () => sharp({ create: { width: 300, height: 400, channels: 3, background: '#334' } }).jpeg().toBuffer();
@@ -61,5 +61,20 @@ describe('Popüler kesimler (v1.7)', () => {
     expect((await t.call('GET', '/public/haircuts')).body).toEqual([]);
     const c = await t.login(PHONES.customer);
     expect((await t.call('PUT', `/me/likes/${p.body.id}`, { token: c })).status).toBe(404);
+  });
+});
+
+describe('booking your own shop (v1.7)', () => {
+  it('is refused for the owner and staff, also from customer mode', async () => {
+    const shop = await setupShop(t);
+    const profile = (await t.call('GET', `/public/shops/${shop.slug}`)).body;
+    const item = { serviceIds: [profile.services[0].id], staffId: null, startsAt: at('16:00') };
+    for (const phone of [PHONES.owner, PHONES.cumali]) {
+      const token = await t.login(phone, { names: { firstName: 'A', lastName: 'B' } });
+      const res = await t.call('POST', `/shops/${shop.slug}/bookings`, { token, body: { items: [item] } });
+      expect(res.body.error).toBe('OWN_SHOP');
+    }
+    const customer = await t.login(PHONES.customer, { names: { firstName: 'C', lastName: 'D' } });
+    expect((await t.call('POST', `/shops/${shop.slug}/bookings`, { token: customer, body: { items: [item] } })).status).toBe(201);
   });
 });

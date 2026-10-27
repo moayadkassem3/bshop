@@ -198,6 +198,11 @@ export async function createBooking(
   return withTx(deps.db, async (tx) => {
     const shop = await getPublicShopBySlug(tx, now, slug);
 
+    // People who work at the shop do not book it as customers (v1.7): their own
+    // request would ring their own phone and count in the shop's figures.
+    const member = await tx.query('SELECT 1 FROM shop_members WHERE shop_id = $1 AND user_id = $2 AND active', [shop.id, user.id]);
+    if (member.rowCount) throw new AppError(403, 'OWN_SHOP', 'Members of a shop cannot book it as customers');
+
     const names = await tx.query<{ first_name: string | null; last_name: string | null }>(
       `UPDATE users SET first_name = COALESCE($2, first_name), last_name = COALESCE($3, last_name)
        WHERE id = $1 RETURNING first_name, last_name`,
