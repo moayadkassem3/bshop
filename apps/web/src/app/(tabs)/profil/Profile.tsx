@@ -77,7 +77,7 @@ function SignIn(props: {
             </button>
             <button type="button" className={styles.choice} onClick={() => props.onChoice('business')}>
               <span className={`${styles.choiceIcon} ${styles.choiceIconDark}`} aria-hidden>
-                <ScissorsIcon />
+                <LogoMark size={26} />
               </span>
               <span className={styles.choiceText}>
                 <strong>İşletmeyim</strong>
@@ -319,16 +319,6 @@ function PersonIcon() {
     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="8" r="4" />
       <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
-    </svg>
-  );
-}
-
-function ScissorsIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <circle cx="6" cy="6" r="3" />
-      <circle cx="6" cy="18" r="3" />
-      <path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12" />
     </svg>
   );
 }
