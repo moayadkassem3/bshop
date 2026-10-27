@@ -3,17 +3,22 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import type { Audience } from '@/lib/audience';
+import { useAudience } from '@/lib/audience';
 import { haircutPhotoUrl } from '@/lib/shop';
 import type { PopularPost } from '@/lib/types';
 import styles from './haircuts.module.css';
 
-/** Keşfet's "Popüler kesimler" row; each photo opens the salon that made it. Hidden until there are posts. */
-export function PopularStrip({ audience }: { audience: Audience }) {
+/**
+ * "Popüler kesimler" as a horizontal slider at the bottom of Favoriler (v1.7);
+ * each photo opens the salon that made it. Follows the customer's Erkek/Kadın
+ * choice. Hidden until there are posts.
+ */
+export function PopularStrip() {
+  const [audience] = useAudience();
   const [posts, setPosts] = useState<PopularPost[]>([]);
 
   useEffect(() => {
-    const params = new URLSearchParams({ limit: '10' });
+    const params = new URLSearchParams({ limit: '12' });
     if (audience !== 'all') params.set('audience', audience);
     api<PopularPost[]>(`/public/haircuts?${params}`)
       .then(setPosts)
@@ -22,7 +27,7 @@ export function PopularStrip({ audience }: { audience: Audience }) {
 
   if (!posts.length) return null;
   return (
-    <section aria-labelledby="popular-title">
+    <section aria-labelledby="popular-title" className={styles.stripSection}>
       <div className={styles.stripHead}>
         <h2 id="popular-title">Popüler kesimler</h2>
         <Link href="/kesimler">Tümü ›</Link>

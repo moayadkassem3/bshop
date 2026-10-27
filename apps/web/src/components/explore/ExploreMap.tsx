@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { lastLocation, locationPermissionGranted, rememberLocation, type LatLng } from '@/lib/location';
-import { PopularStrip } from '@/components/haircuts/PopularStrip';
 import { useAudience } from '@/lib/audience';
 import { AUDIENCE, distanceMeters, formatDistance, photoUrl, placeLabel } from '@/lib/shop';
 import type { NearbyShop } from '@/lib/types';
@@ -255,7 +254,6 @@ export function ExploreMap() {
           </div>
         )}
         {locationError && <p className="alert alert-danger">{locationError}</p>}
-        <PopularStrip audience={audience} />
         <ul className={styles.list} role="list">
           {(sorted ?? []).map((shop) => (
             <li key={shop.slug} id={`shop-${shop.slug}`}>
