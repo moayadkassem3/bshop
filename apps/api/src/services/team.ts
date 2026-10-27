@@ -1,6 +1,7 @@
+import type pg from 'pg';
 import type { Deps } from '../deps.js';
-import { withTx } from '../db.js';
-import { badRequest, conflict, forbidden, notFound } from '../errors.js';
+import { withTx, type Queryable } from '../db.js';
+import { AppError, badRequest, conflict, forbidden, notFound } from '../errors.js';
 import { normalizePhone } from '../phone.js';
 import { requireMember, requireOwner, requireSelfOrOwner } from './access.js';
 import { upsertUserByPhone, type User } from './auth.js';
@@ -45,15 +46,68 @@ export async function addMember(
   const label = input.role === 'staff' ? null : input.role;
   return withTx(deps.db, async (tx) => {
     const userId = await upsertUserByPhone(tx, normalizePhone(input.phone));
-    const existing = await tx.query('SELECT 1 FROM shop_members WHERE shop_id = $1 AND user_id = $2', [shopId, userId]);
-    if (existing.rowCount) throw conflict('ALREADY_MEMBER', 'This phone number is already on the team');
-    const { rows } = await tx.query<{ id: string }>(
-      `INSERT INTO shop_members (shop_id, user_id, role, owner_label, display_name, bookable)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [shopId, userId, role, label, input.displayName, input.bookable],
+    const existing = await tx.query<{ id: string; active: boolean }>(
+      'SELECT id, active FROM shop_members WHERE shop_id = $1 AND user_id = $2',
+      [shopId, userId],
     );
-    return { memberId: rows[0]!.id };
+    let memberId: string;
+    if (existing.rows[0]?.active) throw conflict('ALREADY_MEMBER', 'This phone number is already on the team');
+    if (existing.rows[0]) {
+      // Someone removed earlier comes back with their history (v1.7).
+      memberId = existing.rows[0].id;
+      await tx.query(
+        'UPDATE shop_members SET active = true, role = $2, owner_label = $3, display_name = $4, bookable = $5 WHERE id = $1',
+        [memberId, role, label, input.displayName, input.bookable],
+      );
+    } else {
+      const { rows } = await tx.query<{ id: string }>(
+        `INSERT INTO shop_members (shop_id, user_id, role, owner_label, display_name, bookable)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [shopId, userId, role, label, input.displayName, input.bookable],
+      );
+      memberId = rows[0]!.id;
+    }
+    if (input.bookable) await giveShopDefaults(tx, shopId, memberId);
+    return { memberId };
   });
+}
+
+/**
+ * A new person who takes appointments starts with the salon's hours (copied from
+ * the longest-serving bookable member) and every active service, so customers can
+ * book them at once; they adjust both later. Existing settings are kept.
+ */
+async function giveShopDefaults(tx: pg.PoolClient, shopId: string, memberId: string) {
+  const hasHours = await tx.query('SELECT 1 FROM working_hours WHERE member_id = $1 LIMIT 1', [memberId]);
+  if (!hasHours.rowCount) {
+    await tx.query(
+      `INSERT INTO working_hours (shop_id, member_id, weekday, start_minute, end_minute)
+       SELECT $1, $2, h.weekday, h.start_minute, h.end_minute FROM working_hours h
+       WHERE h.member_id = (
+         SELECT m.id FROM shop_members m
+         WHERE m.shop_id = $1 AND m.id <> $2 AND m.active AND m.bookable
+           AND EXISTS (SELECT 1 FROM working_hours x WHERE x.member_id = m.id)
+         ORDER BY m.created_at LIMIT 1)`,
+      [shopId, memberId],
+    );
+  }
+  await tx.query(
+    `INSERT INTO member_services (shop_id, member_id, service_id)
+     SELECT $1, $2, s.id FROM services s WHERE s.shop_id = $1 AND s.active
+     ON CONFLICT DO NOTHING`,
+    [shopId, memberId],
+  );
+}
+
+/** A newly added service is offered by everyone who takes appointments; each can remove it later. */
+async function offerToBookableMembers(q: Queryable, shopId: string, serviceIds: string[]) {
+  await q.query(
+    `INSERT INTO member_services (shop_id, member_id, service_id)
+     SELECT $1, m.id, s FROM shop_members m CROSS JOIN unnest($2::uuid[]) AS s
+     WHERE m.shop_id = $1 AND m.active AND m.bookable
+     ON CONFLICT DO NOTHING`,
+    [shopId, serviceIds],
+  );
 }
 
 /**
@@ -65,20 +119,47 @@ export async function updateMember(
   user: User,
   shopId: string,
   memberId: string,
-  input: Partial<{ displayName: string; role: 'owner' | 'staff'; bookable: boolean; active: boolean }>,
+  input: Partial<{ displayName: string; role: 'owner' | 'co_owner' | 'staff'; bookable: boolean; active: boolean }>,
 ) {
   const me = await requireOwner(deps.db, user, shopId);
   if (memberId === me.id && (input.active === false || input.role === 'staff')) {
     throw badRequest('CANNOT_DEMOTE_SELF', 'Owners cannot remove or demote themselves');
   }
-  const { rowCount } = await deps.db.query(
-    `UPDATE shop_members SET
-       display_name = COALESCE($3, display_name), role = COALESCE($4, role),
-       bookable = COALESCE($5, bookable), active = COALESCE($6, active)
-     WHERE shop_id = $1 AND id = $2`,
-    [shopId, memberId, input.displayName ?? null, input.role ?? null, input.bookable ?? null, input.active ?? null],
-  );
-  if (!rowCount) throw notFound('Member');
+  return withTx(deps.db, async (tx) => {
+    const { rows } = await tx.query<{ owner_label: string | null; bookable: boolean; active: boolean }>(
+      'SELECT owner_label, bookable, active FROM shop_members WHERE shop_id = $1 AND id = $2 FOR UPDATE',
+      [shopId, memberId],
+    );
+    const member = rows[0];
+    if (!member) throw notFound('Member');
+    // The salon's founding owner keeps their place; co-owners cannot remove or demote them (v1.7).
+    if (member.owner_label === 'owner' && memberId !== me.id && (input.active === false || (input.role && input.role !== 'owner'))) {
+      throw forbidden('The salon owner cannot be removed or demoted');
+    }
+    if (input.active === false || input.bookable === false) {
+      const upcoming = await tx.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM appointments
+         WHERE staff_id = $1 AND status IN ('pending', 'confirmed') AND starts_at > $2`,
+        [memberId, deps.clock.now()],
+      );
+      if (upcoming.rows[0]!.n > 0) {
+        throw new AppError(409, 'MEMBER_HAS_APPOINTMENTS', `${upcoming.rows[0]!.n} upcoming appointments; cancel or move them first`);
+      }
+    }
+    // "Ortak" is an owner with the co-owner label; the founding owner keeps the "owner" label.
+    const role = input.role === undefined ? null : input.role === 'staff' ? 'staff' : 'owner';
+    const label =
+      input.role === undefined ? undefined : input.role === 'staff' ? null : member.owner_label === 'owner' ? 'owner' : 'co_owner';
+    await tx.query(
+      `UPDATE shop_members SET
+         display_name = COALESCE($3, display_name), role = COALESCE($4, role),
+         owner_label = CASE WHEN $7 THEN $8 ELSE owner_label END,
+         bookable = COALESCE($5, bookable), active = COALESCE($6, active)
+       WHERE shop_id = $1 AND id = $2`,
+      [shopId, memberId, input.displayName ?? null, role, input.bookable ?? null, input.active ?? null, label !== undefined, label ?? null],
+    );
+    if (input.bookable === true && !member.bookable) await giveShopDefaults(tx, shopId, memberId);
+  });
 }
 
 export async function setWorkingHours(
@@ -133,6 +214,7 @@ export async function importCatalog(
       if (!rows[0]) throw notFound(`Catalog service ${item.catalogId}`);
       ids.push(rows[0].id);
     }
+    await offerToBookableMembers(tx, shopId, ids);
     return ids;
   });
 }
@@ -146,12 +228,15 @@ export type ServiceInput = {
 
 export async function createService(deps: Deps, user: User, shopId: string, input: ServiceInput) {
   await requireOwner(deps.db, user, shopId);
-  const { rows } = await deps.db.query<{ id: string }>(
-    `INSERT INTO services (shop_id, name, duration_minutes, price_kurus, price_is_starting_from, sort_order)
-     VALUES ($1, $2, $3, $4, $5, 1000) RETURNING id`,
-    [shopId, input.name, input.durationMinutes, input.priceKurus, input.priceIsStartingFrom ?? false],
-  );
-  return rows[0]!.id;
+  return withTx(deps.db, async (tx) => {
+    const { rows } = await tx.query<{ id: string }>(
+      `INSERT INTO services (shop_id, name, duration_minutes, price_kurus, price_is_starting_from, sort_order)
+       VALUES ($1, $2, $3, $4, $5, 1000) RETURNING id`,
+      [shopId, input.name, input.durationMinutes, input.priceKurus, input.priceIsStartingFrom ?? false],
+    );
+    await offerToBookableMembers(tx, shopId, [rows[0]!.id]);
+    return rows[0]!.id;
+  });
 }
 
 /** Rename, re-price, change the default duration, or hide a service. Past appointments keep their snapshot. */

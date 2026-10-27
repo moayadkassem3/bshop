@@ -69,3 +69,12 @@ export function relativeDayTime(iso: string, now = new Date()): string {
   if (date === days[1]!.date) return `Yarın ${time}`;
   return `${new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, day: 'numeric', month: 'long' }).format(new Date(iso))} ${time}`;
 }
+
+/** "450" or "450,50" (Turkish decimal comma) to kuruş; null when it is not a price. */
+export function parseLira(value: string): number | null {
+  const n = Number(value.replace(/\s/g, '').replace(',', '.'));
+  return value.trim() && Number.isFinite(n) && n >= 0 && n <= 1_000_000 ? Math.round(n * 100) : null;
+}
+
+/** Kuruş to an editable lira amount: 45000 → "450", 12550 → "125,50". */
+export const liraInput = (kurus: number) => (kurus % 100 === 0 ? String(kurus / 100) : (kurus / 100).toFixed(2).replace('.', ','));

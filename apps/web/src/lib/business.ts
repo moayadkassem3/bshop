@@ -3,7 +3,14 @@
 import { useEffect, useState } from 'react';
 import { api, errorMessage } from './api';
 
-export type BusinessShop = { id: string; name: string; slug: string; role: 'owner' | 'staff'; reviewed_at: string | null };
+export type BusinessShop = {
+  id: string;
+  name: string;
+  slug: string;
+  member_id: string;
+  role: 'owner' | 'staff';
+  reviewed_at: string | null;
+};
 
 export type ShopAppointment = {
   id: string;

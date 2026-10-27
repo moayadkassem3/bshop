@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { at, PHONES, setupShop, useTestApp } from './helpers.js';
+import { at, book, PHONES, setupShop, useTestApp } from './helpers.js';
 
 const t = useTestApp();
 const jpeg = () => sharp({ create: { width: 300, height: 400, channels: 3, background: '#334' } }).jpeg().toBuffer();
@@ -92,5 +92,56 @@ describe('editing the salon (v1.7)', () => {
     expect((await t.call('GET', `${shop.base}/settings`, { token: staff })).status).toBe(403);
     expect((await t.call('GET', '/me', { token: owner })).body.owns_shop).toBe(true);
     expect((await t.call('GET', '/me', { token: staff })).body.owns_shop).toBe(false);
+  });
+});
+
+describe('managing services and staff (v1.7)', () => {
+  it('a new service is offered by everyone who takes appointments', async () => {
+    const shop = await setupShop(t);
+    const owner = shop.tokens.owner;
+    const created = await t.call('POST', `${shop.base}/services`, { token: owner, body: { name: 'Ense Tıraşı', durationMinutes: 10, priceKurus: 10000 } });
+    expect(created.status).toBe(201);
+    const profile = (await t.call('GET', `/public/shops/${shop.slug}`)).body;
+    for (const m of profile.staff) expect(m.service_ids).toContain(created.body.id);
+    // Removing a service hides it from customers.
+    await t.call('PATCH', `${shop.base}/services/${created.body.id}`, { token: owner, body: { active: false } });
+    const after = (await t.call('GET', `/public/shops/${shop.slug}`)).body;
+    expect(after.services.map((s: { id: string }) => s.id)).not.toContain(created.body.id);
+  });
+
+  it('a new staff member starts with the salon hours and services; removal is guarded', async () => {
+    const shop = await setupShop(t);
+    const owner = shop.tokens.owner;
+    const added = await t.call('POST', `${shop.base}/members`, { token: owner, body: { phone: '0532 444 44 44', displayName: 'Emre', role: 'staff' } });
+    expect(added.status).toBe(201);
+    const profile = (await t.call('GET', `/public/shops/${shop.slug}`)).body;
+    const emre = profile.staff.find((m: { display_name: string }) => m.display_name === 'Emre');
+    expect(emre.service_ids.length).toBe(profile.services.length);
+    const slots = (await t.call('GET', `/public/shops/${shop.slug}/availability?date=2026-10-26&serviceIds=${shop.services.haircut}&staffId=${emre.id}`)).body;
+    expect(slots.slots[0].startsAt).toBe(at('10:00'));
+
+    // Someone with an upcoming booking cannot be removed until it is handled.
+    const c = await t.login(PHONES.customer, { names: { firstName: 'A', lastName: 'B' } });
+    await book(t, shop, c, { serviceIds: [shop.services.haircut], staffId: emre.id, startsAt: at('16:00') });
+    const remove = () => t.call('PATCH', `${shop.base}/members/${added.body.memberId}`, { token: owner, body: { active: false } });
+    expect((await remove()).body.error).toBe('MEMBER_HAS_APPOINTMENTS');
+    const appts = (await t.call('GET', `${shop.base}/appointments?from=${at('00:00')}&to=${at('23:59')}&staffId=${emre.id}`, { token: owner })).body;
+    await t.call('POST', `${shop.base}/appointments/${appts[0].id}/cancel`, { token: owner });
+    expect((await remove()).status).toBe(204);
+
+    // Coming back restores the same person instead of failing.
+    const again = await t.call('POST', `${shop.base}/members`, { token: owner, body: { phone: '0532 444 44 44', displayName: 'Emre', role: 'staff' } });
+    expect(again.body.memberId).toBe(added.body.memberId);
+  });
+
+  it('staff can become co-owners; the founding owner cannot be removed by a co-owner', async () => {
+    const shop = await setupShop(t);
+    const owner = shop.tokens.owner;
+    expect((await t.call('PATCH', `${shop.base}/members/${shop.staff.cumali}`, { token: owner, body: { role: 'co_owner' } })).status).toBe(204);
+    const members = (await t.call('GET', `${shop.base}/members`, { token: owner })).body;
+    expect(members.find((m: { id: string }) => m.id === shop.staff.cumali)).toMatchObject({ role: 'owner', owner_label: 'co_owner' });
+    const cumali = await t.login(PHONES.cumali, { portal: 'owner' });
+    const res = await t.call('PATCH', `${shop.base}/members/${shop.staff.salih}`, { token: cumali, body: { active: false } });
+    expect(res.status).toBe(403);
   });
 });

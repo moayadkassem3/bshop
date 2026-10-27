@@ -152,7 +152,7 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     const body = z
       .object({
         displayName: z.string().trim().min(1).max(60).optional(),
-        role: z.enum(['owner', 'staff']).optional(),
+        role: z.enum(['owner', 'co_owner', 'staff']).optional(),
         bookable: z.boolean().optional(),
         active: z.boolean().optional(),
       })
