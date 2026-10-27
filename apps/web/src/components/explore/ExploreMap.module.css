@@ -104,8 +104,9 @@
 }
 
 /* Map pins */
+/* No position here: MapLibre places each marker with position: absolute and a transform.
+   Overriding it stacks the pins in page flow, so every pin after the first drifts down. */
 .pin {
-  position: relative;
   display: grid;
   place-items: center;
   width: 42px;
