@@ -33,11 +33,17 @@ export function Pricing({ plans, intro, apply }: { plans: Plans | null; intro: R
 
   return (
     <>
-      {registered ? <h1 className={styles.pageTitle}>Paketler ve fiyatlar</h1> : intro}
+      {!registered && intro}
 
       {plans && (
         <section className={`${styles.pricing} ${registered ? styles.pricingFirst : ''}`} aria-labelledby="pricing-title">
-          <h2 id="pricing-title">Aylık abonelik</h2>
+          {registered ? (
+            <h1 id="pricing-title" className={styles.pageTitle}>
+              Paketler ve fiyatlar
+            </h1>
+          ) : (
+            <h2 id="pricing-title">Aylık abonelik</h2>
+          )}
           <p className="muted">
             Ücret, randevu alan personel sayınıza göre belirlenir.{plans.terms.vatIncluded && ' Fiyatlara KDV dahildir.'}
           </p>

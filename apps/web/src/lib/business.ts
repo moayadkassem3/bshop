@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api, errorMessage } from './api';
+import { turkeyDate } from './format';
 
 export type BusinessShop = {
   id: string;
@@ -23,9 +24,14 @@ export type BusinessShop = {
   plan_id: string | null;
 };
 
-/** Whole days left until the end of the trial or period, counting today; 0 once it has passed. */
+/**
+ * Calendar days (in Türkiye) until the trial or period ends, so "4 gün" matches
+ * the end date shown beside it; at least 1 until it ends, then 0.
+ */
 export function daysLeft(end: string | null): number {
-  return end ? Math.max(0, Math.ceil((new Date(end).getTime() - Date.now()) / 86_400_000)) : 0;
+  if (!end || new Date(end).getTime() <= Date.now()) return 0;
+  const days = (Date.parse(turkeyDate(new Date(end))) - Date.parse(turkeyDate(new Date()))) / 86_400_000;
+  return Math.max(1, Math.round(days));
 }
 
 export type ShopAppointment = {

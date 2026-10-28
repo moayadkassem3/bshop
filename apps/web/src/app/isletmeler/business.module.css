@@ -175,8 +175,8 @@
   color: var(--danger);
 }
 
-.pageTitle {
-  margin: 12px 0 0;
+.pricing .pageTitle {
+  margin: 0;
   font-size: 28px;
   letter-spacing: -0.02em;
 }
