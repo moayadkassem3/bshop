@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useBusinessShops } from '@/lib/business';
 import { BRAND } from '@/lib/config';
 import { qrPosterPng, qrSvg, saveFile } from '@/lib/qr';
+import { qrLink } from '@/lib/views';
 import styles from './qr.module.css';
 
 /**
@@ -18,12 +19,12 @@ export function QrPoster() {
 
   useEffect(() => setOrigin(window.location.origin), []);
   const link = shop && origin ? `${origin}/${shop.slug}` : null;
-  const svg = useMemo(() => (link ? qrSvg(link) : null), [link]);
+  const svg = useMemo(() => (link ? qrSvg(qrLink(link)) : null), [link]);
   const caption = shop ? `${shop.name} | ${BRAND}` : '';
 
   async function download() {
     if (!link || !shop) return;
-    saveFile(await qrPosterPng(link, caption), `${shop.slug}-qr.png`);
+    saveFile(await qrPosterPng(qrLink(link), caption), `${shop.slug}-qr.png`);
   }
 
   async function copy() {

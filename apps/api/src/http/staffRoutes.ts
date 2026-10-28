@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Deps } from '../deps.js';
 import { applyAbsence, getAbsence, markAbsence } from '../services/absence.js';
+import { shopStats } from '../services/stats.js';
 import { getShopSettings, setAutoConfirmHours, updateShopSettings } from '../services/shops.js';
 import {
   addStaffAppointment,
@@ -127,6 +128,13 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
       })
       .parse(req.body);
     return applyAbsence(deps, await auth(req), p.shopId, p.id, body.decisions);
+  });
+
+  // İstatistikler (v1.7): a month of page visits and appointments, for owners.
+  app.get('/staff/shops/:shopId/stats', async (req) => {
+    const { shopId } = shopParams.parse(req.params);
+    const { month } = z.object({ month: z.string().regex(/^\d{4}-\d{2}$/).optional() }).parse(req.query);
+    return shopStats(deps, await auth(req), shopId, month);
   });
 
   // Team and hours

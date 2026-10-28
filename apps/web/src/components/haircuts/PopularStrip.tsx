@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { useAudience } from '@/lib/audience';
 import { haircutPhotoUrl } from '@/lib/shop';
 import type { PopularPost } from '@/lib/types';
+import { shopHref } from '@/lib/views';
 import styles from './haircuts.module.css';
 
 /**
@@ -34,7 +35,7 @@ export function PopularStrip() {
       </div>
       <div className={styles.strip}>
         {posts.map((p) => (
-          <Link key={p.id} href={`/${p.shop_slug}`} className={styles.stripItem} aria-label={`${p.style_name}, ${p.shop_name}`}>
+          <Link key={p.id} href={shopHref(p.shop_slug, 'kesimler')} className={styles.stripItem} aria-label={`${p.style_name}, ${p.shop_name}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={haircutPhotoUrl(p.id)} alt="" loading="lazy" />
             <span>

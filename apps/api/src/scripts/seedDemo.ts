@@ -248,4 +248,32 @@ for (const demo of shops) {
   }
   console.log(`${demo.slug}: sample haircut posts added`);
 }
+// Sample visits for the last 45 days, so İstatistikler has something to show on the test site.
+const SOURCE_SHARE = { kesfet: 0.45, kesimler: 0.25, qr: 0.15, diger: 0.15 };
+for (const demo of shops) {
+  const { rows } = await db.query<{ id: string; seeded: boolean }>(
+    'SELECT s.id, EXISTS (SELECT 1 FROM shop_view_counts v WHERE v.shop_id = s.id) AS seeded FROM shops s WHERE s.slug = $1',
+    [demo.slug],
+  );
+  const shop = rows[0];
+  if (!shop || shop.seeded) continue;
+  const today = DateTime.now().setZone('Europe/Istanbul').startOf('day');
+  for (let i = 0; i < 45; i++) {
+    const day = today.minus({ days: i });
+    // Busier at weekends, with a gentle wave so no two weeks look the same.
+    const base = (day.weekday >= 5 ? 14 : 8) * (1 + 0.35 * Math.sin(i / 3));
+    for (const [source, share] of Object.entries(SOURCE_SHARE)) {
+      const views = Math.round(base * share + ((i * 7 + source.length) % 3));
+      if (views > 0) {
+        await db.query('INSERT INTO shop_view_counts (shop_id, day, source, views) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING', [
+          shop.id,
+          day.toISODate(),
+          source,
+          views,
+        ]);
+      }
+    }
+  }
+  console.log(`${demo.slug}: sample visits added`);
+}
 await db.end();

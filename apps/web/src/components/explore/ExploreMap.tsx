@@ -12,6 +12,7 @@ import { useBusinessShops, type BusinessShop } from '@/lib/business';
 import { BRAND } from '@/lib/config';
 import { qrPosterPng, saveFile } from '@/lib/qr';
 import { useBusinessMode } from '@/lib/session';
+import { qrLink, shopHref } from '@/lib/views';
 import { AUDIENCE, distanceMeters, formatDistance, photoUrl, placeLabel } from '@/lib/shop';
 import type { NearbyShop } from '@/lib/types';
 import styles from './ExploreMap.module.css';
@@ -309,7 +310,7 @@ export function ExploreMap() {
           {(listed ?? []).map((shop) => (
             <li key={shop.slug} id={`shop-${shop.slug}`}>
               <Link
-                href={`/${shop.slug}`}
+                href={shopHref(shop.slug, 'kesfet')}
                 className={`${styles.item} ${shop.slug === selected ? styles.itemSelected : ''}`}
                 onMouseEnter={() => setSelected(shop.slug)}
               >
@@ -398,7 +399,7 @@ function ShareShop({ shop, onDone }: { shop: BusinessShop; onDone: (note: string
   // Built ahead of the tap: browsers only open the share menu right after a user gesture.
   useEffect(() => {
     let cancelled = false;
-    qrPosterPng(link, `${shop.name} | ${BRAND}`)
+    qrPosterPng(qrLink(link), `${shop.name} | ${BRAND}`)
       .then((png) => !cancelled && setFile(new File([png], `${shop.slug}-qr.png`, { type: 'image/png' })))
       .catch(() => undefined);
     return () => {

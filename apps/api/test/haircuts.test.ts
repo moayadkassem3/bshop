@@ -176,3 +176,44 @@ describe('sign-in with the phone only (v1.7)', () => {
     expect(again).toMatchObject({ needsProfile: false, needsTerms: false, user: { first_name: 'Elif', gender: 'female' } });
   });
 });
+
+describe('İstatistikler (v1.7)', () => {
+  it('counts page visits by source and the month’s appointments, for owners only', async () => {
+    const shop = await setupShop(t);
+    t.clock.set(at('09:00', '2026-10-27'));
+    const view = (source?: string) => t.call('POST', `/public/shops/${shop.slug}/views`, { body: source ? { source } : {} });
+    for (const source of ['kesimler', 'kesimler', 'qr', 'kesfet', 'bilinmeyen', undefined]) expect((await view(source)).status).toBe(204);
+    expect((await t.call('POST', '/public/shops/yok-boyle-salon/views', { body: {} })).status).toBe(404);
+
+    const c = await t.login(PHONES.customer, { names: { firstName: 'Ahmet', lastName: 'Yılmaz' } });
+    // One request at a time per salon: each is answered before the next.
+    const request = async (startsAt: string) => {
+      const res = await book(t, shop, c, { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt });
+      expect(res.status).toBe(201);
+      return res.body.appointments[0].id as string;
+    };
+    const owner = shop.tokens.owner;
+    await t.call('POST', `${shop.base}/appointments/${await request(at('16:00', '2026-10-28'))}/confirm`, { token: owner });
+    await t.call('POST', `${shop.base}/appointments/${await request(at('17:00', '2026-10-29'))}/cancel`, { token: owner });
+    await request(at('12:00', '2026-11-02'));
+
+    const stats = (await t.call('GET', `${shop.base}/stats`, { token: shop.tokens.owner })).body;
+    expect(stats).toMatchObject({
+      month: '2026-10',
+      today: '2026-10-27',
+      views: { total: 6, bySource: { kesimler: 2, qr: 1, kesfet: 1, diger: 2 } },
+      appointments: { total: 1, upcoming: 1, completed: 0, cancelled: 1, noShow: 0 },
+    });
+    expect(stats.views.daily).toHaveLength(27);
+    expect(stats.views.daily.at(-1)).toEqual({ date: '2026-10-27', views: 6 });
+
+    // November's booking is November's; a future month and staff are refused.
+    t.clock.set(at('09:00', '2026-11-01'));
+    const nov = (await t.call('GET', `${shop.base}/stats`, { token: shop.tokens.owner })).body;
+    expect(nov).toMatchObject({ month: '2026-11', views: { total: 0 }, appointments: { total: 1 } });
+    expect((await t.call('GET', `${shop.base}/stats?month=2026-10`, { token: shop.tokens.owner })).body.views.total).toBe(6);
+    expect((await t.call('GET', `${shop.base}/stats?month=2026-12`, { token: shop.tokens.owner })).status).toBe(400);
+    const staff = await t.login(PHONES.cumali, { portal: 'staff' });
+    expect((await t.call('GET', `${shop.base}/stats`, { token: staff })).status).toBe(403);
+  });
+});

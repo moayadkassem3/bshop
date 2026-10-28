@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { ViewTracker } from '@/components/ViewTracker';
 import { ShopWork } from '@/components/haircuts/ShopWork';
 import { PhotoGallery, PhotoGrid } from '@/components/PhotoGallery';
 import { formatDuration, formatPrice } from '@/lib/format';
@@ -38,6 +39,7 @@ export default async function ShopProfilePage({ params }: Props) {
       <Link href="/" className={styles.floatingBack} aria-label="Keşfet'e dön">
         ←
       </Link>
+      <ViewTracker slug={profile.slug} />
       <PhotoGallery photos={profile.photos} name={profile.name} />
 
       <div className="container narrow">

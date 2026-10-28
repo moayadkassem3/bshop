@@ -309,9 +309,14 @@ function MyBusinesses() {
         Kesim fotoğrafı paylaş
       </Link>
       {shops.some((b) => b.role === 'owner') && (
-        <Link href="/qr" className={`btn btn-block ${styles.panelLink}`}>
-          Salon QR kodu
-        </Link>
+        <>
+          <Link href="/istatistikler" className={`btn btn-block ${styles.panelLink}`}>
+            İstatistikler
+          </Link>
+          <Link href="/qr" className={`btn btn-block ${styles.panelLink}`}>
+            Salon QR kodu
+          </Link>
+        </>
       )}
     </>
   );

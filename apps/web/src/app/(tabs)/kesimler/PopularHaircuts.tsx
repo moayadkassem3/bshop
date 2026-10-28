@@ -9,6 +9,7 @@ import { useAudience } from '@/lib/audience';
 import { useLikes } from '@/lib/likes';
 import type { HaircutStyle, PopularPost } from '@/lib/types';
 import styles from '../randevularim/appointments.module.css';
+import { shopHref } from '@/lib/views';
 import own from './kesimler.module.css';
 
 /**
@@ -91,7 +92,7 @@ export function PopularHaircuts() {
         )}
         <div className={grid.grid}>
           {posts?.map((p) => (
-            <HaircutCard key={p.id} post={p} href={`/${p.shop_slug}`} liked={liked.has(p.id)} onToggleLike={toggle} />
+            <HaircutCard key={p.id} post={p} href={shopHref(p.shop_slug, 'kesimler')} liked={liked.has(p.id)} onToggleLike={toggle} />
           ))}
         </div>
       </div>

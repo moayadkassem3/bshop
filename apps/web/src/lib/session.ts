@@ -44,7 +44,7 @@ export function rememberPortal(portal: Portal | undefined) {
   window.dispatchEvent(new Event(CHANGE));
 }
 
-function storedPortal(): Portal | null {
+export function storedPortal(): Portal | null {
   try {
     return getToken() ? ((window.localStorage.getItem(PORTAL_KEY) as Portal | null) ?? null) : null;
   } catch {

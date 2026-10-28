@@ -10,6 +10,7 @@ import { PLAN_FEATURES, PLAN_TERMS, PLANS } from '../domain/plans.js';
 import { nearbyShops, searchPublicShops } from '../services/shops.js';
 import { HAIRCUT_STYLES, STYLE_KEYS } from '../domain/styles.js';
 import { popularPosts, readPostPhoto } from '../services/haircuts.js';
+import { recordShopView, VIEW_SOURCES } from '../services/stats.js';
 import type { AuthFn } from './app.js';
 import { csvIds, id } from './schemas.js';
 
@@ -72,6 +73,14 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
   app.get('/public/shops/:slug', async (req) => {
     const { slug } = z.object({ slug: z.string() }).parse(req.params);
     return getShopProfile(deps, slug);
+  });
+
+  // A visit to a salon's page, for its statistics; the page sends it once per browser session.
+  app.post('/public/shops/:slug/views', async (req, reply) => {
+    const { slug } = z.object({ slug: z.string().max(60) }).parse(req.params);
+    const { source } = z.object({ source: z.enum(VIEW_SOURCES).catch('diger') }).parse(req.body ?? {});
+    await recordShopView(deps, slug, source);
+    return reply.status(204).send();
   });
 
   // Re-encoded WebP files; a photo's id never points at different content, so it caches forever.
