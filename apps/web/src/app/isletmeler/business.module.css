@@ -124,3 +124,59 @@
   margin: 0 0 14px;
   line-height: 1.55;
 }
+
+/* A salon already with us (v1.7): prices come first, its own plan on top. */
+.pricingFirst {
+  margin-top: 8px;
+}
+
+.shopSelect {
+  margin: 0 0 12px;
+}
+
+.planWide {
+  grid-column: 1 / -1;
+}
+
+.planCurrent {
+  border: 2px solid var(--primary);
+  background: var(--surface-2);
+}
+
+.planBadge {
+  justify-self: start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.planSeats {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.trialDays {
+  font-size: 1.15em;
+}
+
+.trialEnd {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 550;
+  opacity: 0.85;
+}
+
+.trialOver {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.pageTitle {
+  margin: 12px 0 0;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}

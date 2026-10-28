@@ -95,6 +95,10 @@ describe('editing the salon (v1.7)', () => {
     const mine = (await t.call('GET', '/staff/shops', { token: owner })).body[0];
     expect(mine).toMatchObject({ slug: shop.slug, audience: 'unisex' });
     expect(typeof mine.latitude).toBe('number');
+    // The plan follows the bookable staff count (billing seats).
+    const members = (await t.call('GET', `${shop.base}/members`, { token: owner })).body as { bookable: boolean; active: boolean }[];
+    const seats = members.filter((m) => m.active && m.bookable).length;
+    expect(mine).toMatchObject({ seats, plan_id: seats <= 1 ? 'staff-1' : seats <= 2 ? 'staff-2' : seats <= 5 ? 'staff-5' : 'staff-10' });
     expect((await t.call('GET', '/me', { token: staff })).body).toMatchObject({ owns_shop: false, has_business: true });
     const customer = await t.login(PHONES.customer);
     expect((await t.call('GET', '/me', { token: customer })).body).toMatchObject({ owns_shop: false, has_business: false });

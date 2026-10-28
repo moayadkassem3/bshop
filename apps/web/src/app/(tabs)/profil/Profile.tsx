@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { BrandName, LogoMark } from '@/components/Logo';
 import { GenderChoice, PhoneSignIn } from '@/components/PhoneSignIn';
 import { api, ApiError, errorMessage } from '@/lib/api';
-import { rememberShop } from '@/lib/business';
+import { daysLeft, rememberShop } from '@/lib/business';
 import { formatPhone } from '@/lib/shop';
 import { getToken, rememberPortal, setToken } from '@/lib/session';
 import type { Me } from '@/lib/types';
@@ -252,7 +252,7 @@ type MyBusiness = {
 function businessStatus(b: MyBusiness): { label: string; tone: string } {
   if (!b.reviewed_at) return { label: 'İncelemede', tone: 'badge-warning' };
   if (b.subscription_status === 'trial' && b.current_period_end) {
-    const days = Math.max(0, Math.ceil((new Date(b.current_period_end).getTime() - Date.now()) / 86_400_000));
+    const days = daysLeft(b.current_period_end);
     return days ? { label: `Deneme · ${days} gün kaldı`, tone: 'badge-info' } : { label: 'Deneme bitti', tone: 'badge-danger' };
   }
   if (b.subscription_status === 'active') return { label: 'Aktif', tone: 'badge-success' };

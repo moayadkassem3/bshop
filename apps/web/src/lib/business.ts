@@ -16,7 +16,17 @@ export type BusinessShop = {
   city: string | null;
   audience: 'men' | 'women' | 'unisex';
   cover_photo_id: string | null;
+  subscription_status: 'none' | 'trial' | 'active' | 'past_due' | 'canceled';
+  current_period_end: string | null;
+  /** Bookable staff, which sets the plan; plan_id is null above 10 (priced individually). */
+  seats: number;
+  plan_id: string | null;
 };
+
+/** Whole days left until the end of the trial or period, counting today; 0 once it has passed. */
+export function daysLeft(end: string | null): number {
+  return end ? Math.max(0, Math.ceil((new Date(end).getTime() - Date.now()) / 86_400_000)) : 0;
+}
 
 export type ShopAppointment = {
   id: string;

@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import type { Deps } from '../deps.js';
 import { withTx, type Queryable } from '../db.js';
+import { planForStaff } from '../domain/plans.js';
 import { AppError, badRequest, conflict, forbidden, notFound } from '../errors.js';
 import { normalizePhone } from '../phone.js';
 import { requireMember, requireOwner, requireSelfOrOwner } from './access.js';
@@ -10,17 +11,22 @@ import type { WeeklyWindowInput } from './shops.js';
 /** Shops the caller works at, with the role this session may act as. */
 export async function listMyShops(deps: Deps, user: User) {
   if (user.portal === 'customer') throw forbidden('Sign in through staff or owner sign-in');
-  const { rows } = await deps.db.query<{ id: string; name: string; slug: string; member_id: string; role: string; display_name: string }>(
+  const { rows } = await deps.db.query<{ id: string; name: string; slug: string; member_id: string; role: string; display_name: string; seats: number }>(
     `SELECT s.id, s.name, s.slug, m.id AS member_id, m.role, m.owner_label, m.display_name,
        s.reviewed_at, sub.status AS subscription_status, sub.current_period_end,
        -- For Keşfet in business mode (v1.7): the map starts at the salon and shows its card.
        s.latitude, s.longitude, s.district, s.city, s.audience,
-       (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id
+       (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id,
+       -- Billing seats, for "Paketler ve fiyatlar" (v1.7): the plan follows the bookable staff count.
+       (SELECT count(*)::int FROM shop_members b WHERE b.shop_id = s.id AND b.active AND b.bookable) AS seats
      FROM shop_members m JOIN shops s ON s.id = m.shop_id JOIN subscriptions sub ON sub.shop_id = s.id
      WHERE m.user_id = $1 AND m.active ORDER BY s.name COLLATE "tr-x-icu"`,
     [user.id],
   );
-  return rows.map((r) => (user.portal === 'owner' ? r : { ...r, role: 'staff' }));
+  return rows.map((r) => {
+    const shop = { ...r, plan_id: planForStaff(r.seats)?.id ?? null };
+    return user.portal === 'owner' ? shop : { ...shop, role: 'staff' };
+  });
 }
 
 export async function listMembers(deps: Deps, user: User, shopId: string) {
