@@ -172,11 +172,16 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
       <div className="container narrow">
         {mode !== 'customer' && <MyBusinesses />}
 
-        <h2 className={styles.groupTitle}>İşlemlerim</h2>
-        <ul className={`card ${styles.menu}`} role="list">
-          {mode === 'customer' && <MenuLink href="/randevularim" label="Randevu ve taleplerim" />}
-          <MenuLink href="/favoriler" label="Favorilerim" />
-        </ul>
+        {/* Favorites are a customer thing; in business mode the salon's tools above take their place. */}
+        {mode === 'customer' && (
+          <>
+            <h2 className={styles.groupTitle}>İşlemlerim</h2>
+            <ul className={`card ${styles.menu}`} role="list">
+              <MenuLink href="/randevularim" label="Randevu ve taleplerim" />
+              <MenuLink href="/favoriler" label="Favorilerim" />
+            </ul>
+          </>
+        )}
 
         <h2 className={styles.groupTitle}>Hesap</h2>
         <ul className={`card ${styles.menu}`} role="list">
