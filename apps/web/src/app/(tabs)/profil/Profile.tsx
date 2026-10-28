@@ -285,6 +285,14 @@ function MyBusinesses() {
                   Salon bilgilerini düzenle <span aria-hidden>›</span>
                 </Link>
               )}
+              {/* The salon's public page, as customers see it (v1.7); it exists once our team approves the salon. */}
+              {b.reviewed_at ? (
+                <Link href={`/${b.slug}`} className={`${styles.menuItem} ${styles.editShop}`}>
+                  Salonu müşteri gözüyle gör <span aria-hidden>›</span>
+                </Link>
+              ) : (
+                <span className={`${styles.menuItem} ${styles.editShop} ${styles.pendingView}`}>Salon sayfası onaydan sonra açılır</span>
+              )}
             </li>
           );
         })}

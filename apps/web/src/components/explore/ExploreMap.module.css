@@ -311,3 +311,56 @@
   color: var(--muted);
   font-size: 14px;
 }
+
+/* Business mode: the salon's own card at the top of the sheet (v1.7). */
+.myShop {
+  display: grid;
+  gap: 10px;
+  margin: 2px 0 18px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1.5px solid var(--primary);
+}
+
+.myShopLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.myShopRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.myShopActions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.myShopActions .btn {
+  min-height: 44px;
+}
+
+.myShopPending {
+  align-self: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.sheetSubtitle {
+  margin: 0 0 2px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.pillLogo {
+  display: inline-flex;
+}

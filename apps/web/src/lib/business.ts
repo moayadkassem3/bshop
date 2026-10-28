@@ -10,6 +10,12 @@ export type BusinessShop = {
   member_id: string;
   role: 'owner' | 'staff';
   reviewed_at: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  district: string | null;
+  city: string | null;
+  audience: 'men' | 'women' | 'unisex';
+  cover_photo_id: string | null;
 };
 
 export type ShopAppointment = {
@@ -46,12 +52,13 @@ export function rememberShop(id: string) {
 }
 
 /** The shops this person works in, and the one they are looking at (remembered per browser). */
-export function useBusinessShops() {
+export function useBusinessShops(enabled = true) {
   const [shops, setShops] = useState<BusinessShop[] | null>(null);
   const [shopId, setShopId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     api<BusinessShop[]>('/staff/shops')
       .then((list) => {
         setShops(list);
@@ -64,7 +71,7 @@ export function useBusinessShops() {
         setShopId(list.find((s) => s.id === saved)?.id ?? list[0]?.id ?? null);
       })
       .catch((err) => setError(errorMessage(err)));
-  }, []);
+  }, [enabled]);
 
   function selectShop(id: string) {
     setShopId(id);

@@ -299,3 +299,9 @@
   font-size: 15px;
   font-weight: 700;
 }
+
+.pendingView {
+  color: var(--muted);
+  font-weight: 600;
+  cursor: default;
+}

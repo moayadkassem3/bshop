@@ -8,6 +8,8 @@ import { api } from '@/lib/api';
 import { lastLocation, locationPermissionGranted, rememberLocation, type LatLng } from '@/lib/location';
 import { logoGlyphSvg } from '@/lib/logo';
 import { useAudience } from '@/lib/audience';
+import { useBusinessShops, type BusinessShop } from '@/lib/business';
+import { useBusinessMode } from '@/lib/session';
 import { AUDIENCE, distanceMeters, formatDistance, photoUrl, placeLabel } from '@/lib/shop';
 import type { NearbyShop } from '@/lib/types';
 import styles from './ExploreMap.module.css';
@@ -32,6 +34,27 @@ export function ExploreMap() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  // Business mode (v1.7): the map stays on the salon instead of the phone's location, and
+  // the sheet opens with the salon's own card; nearby salons are measured from the salon.
+  const business = useBusinessMode();
+  const { shop: myShop } = useBusinessShops(business);
+  const home = business && myShop?.latitude != null && myShop.longitude != null ? { lat: myShop.latitude, lng: myShop.longitude } : null;
+  const businessRef = useRef(business);
+  businessRef.current = business;
+  const homeRef = useRef(home);
+  homeRef.current = home;
+
+  useEffect(() => {
+    if (!home) return;
+    userMarker.current?.remove();
+    userMarker.current = null;
+    setUser(home);
+    setCenter(home);
+    mapRef.current?.jumpTo({ center: [home.lng, home.lat], zoom: 15 });
+    // Coordinates, not the object: it is rebuilt on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [home?.lat, home?.lng]);
+
   // Create the map once.
   useEffect(() => {
     let cancelled = false;
@@ -41,12 +64,12 @@ export function ExploreMap() {
       maplibre.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
       // Someone who shared their location before starts where they were last time.
       const last = lastLocation();
-      const start = last ?? KADIKOY;
+      const start = homeRef.current ?? last ?? KADIKOY;
       const map = new maplibre.Map({
         container: container.current,
         style: MAP_STYLE,
         center: [start.lng, start.lat],
-        zoom: last ? 15 : 14,
+        zoom: homeRef.current || last ? 15 : 14,
         attributionControl: { compact: true },
       });
       mapRef.current = map;
@@ -56,7 +79,7 @@ export function ExploreMap() {
         const c = map.getCenter();
         setCenter({ lat: c.lat, lng: c.lng });
       });
-      if (last) {
+      if (last && !businessRef.current) {
         setCenter(last);
         showUser(last, false);
         // Refresh it quietly when the browser already allows it; never prompt on page load.
@@ -134,6 +157,8 @@ export function ExploreMap() {
   }, [sorted, selected, select]);
 
   async function showUser(here: LatLng, fly: boolean) {
+    // In business mode the salon is the reference point, not the phone.
+    if (businessRef.current) return;
     setUser(here);
     const map = mapRef.current;
     if (!map) return;
@@ -169,6 +194,13 @@ export function ExploreMap() {
       },
       { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 },
     );
+  }
+
+  // In business mode the salon's own card is shown above, so the list holds the others.
+  const listed = home && myShop ? sorted?.filter((s) => s.slug !== myShop.slug) ?? null : sorted;
+
+  function goHome() {
+    if (home) mapRef.current?.flyTo({ center: [home.lng, home.lat], zoom: 15 });
   }
 
   return (
@@ -210,15 +242,28 @@ export function ExploreMap() {
             </button>
           ))}
         </div>
-        <button type="button" className={styles.locationPill} onClick={() => locate()} disabled={locating}>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <path d="m3 11 18-8-8 18-2-8z" />
-          </svg>
-          {user ? 'Mevcut konumum' : locating ? 'Konum alınıyor…' : 'Konumumu kullan'}
-        </button>
+        {home ? (
+          <button type="button" className={styles.locationPill} onClick={goHome}>
+            <span className={styles.pillLogo} dangerouslySetInnerHTML={{ __html: logoGlyphSvg(15) }} />
+            Salonum
+          </button>
+        ) : (
+          <button type="button" className={styles.locationPill} onClick={() => locate()} disabled={locating}>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="m3 11 18-8-8 18-2-8z" />
+            </svg>
+            {user ? 'Mevcut konumum' : locating ? 'Konum alınıyor…' : 'Konumumu kullan'}
+          </button>
+        )}
       </div>
 
-      <button type="button" className={styles.locateButton} onClick={() => locate()} aria-label="Konumuma git" disabled={locating}>
+      <button
+        type="button"
+        className={styles.locateButton}
+        onClick={() => (home ? goHome() : locate())}
+        aria-label={home ? 'Salonuma git' : 'Konumuma git'}
+        disabled={locating}
+      >
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
           <circle cx="12" cy="12" r="3.5" />
           <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
@@ -234,19 +279,20 @@ export function ExploreMap() {
           </svg>
           <span className="sr-only">{sheetOpen ? 'Listeyi küçült' : 'Listeyi büyüt'}</span>
         </button>
-        <h1 id="nearby-title" className={styles.sheetTitle}>
-          Yakındaki kuaförler
+        {home && myShop && <MyShopCard shop={myShop} />}
+        <h1 id="nearby-title" className={home ? styles.sheetSubtitle : styles.sheetTitle}>
+          {home ? 'Çevredeki salonlar' : 'Yakındaki kuaförler'}
         </h1>
         <p className={styles.sheetMeta}>
-          {sorted ? (
+          {listed ? (
             <>
-              {user ? 'Yakınınızda' : 'Bu bölgede'} <strong>{sorted.length} kuaför</strong> · en yakından uzağa
+              {home ? 'Salonunuzun çevresinde' : user ? 'Yakınınızda' : 'Bu bölgede'} <strong>{listed.length} kuaför</strong> · en yakından uzağa
             </>
           ) : (
             'Kuaförler yükleniyor…'
           )}
         </p>
-        {!user && (
+        {!user && !business && (
           <div className={styles.locationHint}>
             <span>Size en yakın kuaförleri görmek için konumunuzu paylaşın.</span>
             <button type="button" className="btn btn-primary" onClick={() => locate()} disabled={locating}>
@@ -256,7 +302,7 @@ export function ExploreMap() {
         )}
         {locationError && <p className="alert alert-danger">{locationError}</p>}
         <ul className={styles.list} role="list">
-          {(sorted ?? []).map((shop) => (
+          {(listed ?? []).map((shop) => (
             <li key={shop.slug} id={`shop-${shop.slug}`}>
               <Link
                 href={`/${shop.slug}`}
@@ -282,7 +328,7 @@ export function ExploreMap() {
               </Link>
             </li>
           ))}
-          {sorted && sorted.length === 0 && (
+          {listed && listed.length === 0 && (
             <li className={styles.empty}>Bu bölgede aramanızla eşleşen kuaför bulunamadı. Haritayı kaydırmayı deneyin.</li>
           )}
         </ul>
@@ -293,3 +339,43 @@ export function ExploreMap() {
 
 // The app logo's scissors, so every salon on the map carries the brand mark.
 const PIN_ICON = logoGlyphSvg(22);
+
+/** "Salonum" at the top of the sheet in business mode: the salon as customers see it, one tap away. */
+function MyShopCard({ shop }: { shop: BusinessShop }) {
+  return (
+    <div className={styles.myShop}>
+      <p className={styles.myShopLabel}>Salonum</p>
+      <div className={styles.myShopRow}>
+        {shop.cover_photo_id ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photoUrl(shop.cover_photo_id)} alt="" className={styles.thumb} width={56} height={56} />
+        ) : (
+          <span className={`${styles.thumb} ${styles.initial}`} aria-hidden>
+            {shop.name[0]}
+          </span>
+        )}
+        <span className={styles.itemText}>
+          <span className={styles.itemName}>{shop.name}</span>
+          <span className={styles.itemMeta}>
+            {AUDIENCE[shop.audience]}
+            {placeLabel(shop) ? ` · ${placeLabel(shop)}` : ''}
+          </span>
+        </span>
+      </div>
+      <div className={styles.myShopActions}>
+        {shop.reviewed_at ? (
+          <Link href={`/${shop.slug}`} className="btn btn-primary">
+            Müşteri gözüyle gör
+          </Link>
+        ) : (
+          <span className={styles.myShopPending}>Salon sayfanız onaydan sonra açılır.</span>
+        )}
+        {shop.role === 'owner' && (
+          <Link href="/isletme-ayarlari" className="btn">
+            Düzenle
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}

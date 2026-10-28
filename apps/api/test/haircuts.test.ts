@@ -92,6 +92,9 @@ describe('editing the salon (v1.7)', () => {
     const staff = await t.login(PHONES.cumali, { portal: 'staff' });
     expect((await t.call('GET', `${shop.base}/settings`, { token: staff })).status).toBe(403);
     expect((await t.call('GET', '/me', { token: owner })).body.owns_shop).toBe(true);
+    const mine = (await t.call('GET', '/staff/shops', { token: owner })).body[0];
+    expect(mine).toMatchObject({ slug: shop.slug, audience: 'unisex' });
+    expect(typeof mine.latitude).toBe('number');
     expect((await t.call('GET', '/me', { token: staff })).body).toMatchObject({ owns_shop: false, has_business: true });
     const customer = await t.login(PHONES.customer);
     expect((await t.call('GET', '/me', { token: customer })).body).toMatchObject({ owns_shop: false, has_business: false });
