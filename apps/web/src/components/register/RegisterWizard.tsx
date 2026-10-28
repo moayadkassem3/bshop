@@ -11,6 +11,8 @@ import { getToken, setToken } from '@/lib/session';
 import { AUDIENCE, formatPhone, photoUrl, WEEKDAYS } from '@/lib/shop';
 import type { Me } from '@/lib/types';
 import { shrinkImage } from '@/lib/image';
+import { PhoneInput } from '@/components/PhoneInput';
+import { phoneComplete } from '@/lib/phone';
 import { PROVINCES } from './provinces';
 import { SALON_TYPES } from './salonTypes';
 import styles from './register.module.css';
@@ -105,8 +107,7 @@ function toKurus(value: string): number | null {
   return value.trim() && Number.isFinite(n) && n >= 0 && n <= 1_000_000 ? Math.round(n * 100) : null;
 }
 
-const digits = (phone: string) => phone.replace(/\D/g, '');
-const phoneOk = (phone: string) => digits(phone).length >= 10;
+const phoneOk = (phone: string, kind: 'mobile' | 'any' = 'mobile') => phoneComplete(phone, kind);
 
 function staffCount(d: Draft) {
   return (d.ownerBookable ? 1 : 0) + d.members.filter((m) => m.role === 'staff' || m.bookable).length;
@@ -119,8 +120,8 @@ function blocker(step: number, d: Draft): string | null {
       return d.audience ? null : 'Salon türünü seçin.';
     case 2:
       if (d.name.trim().length < 2) return 'İşletme adını yazın.';
-      if (!phoneOk(d.phone)) return 'Salon telefonunu yazın.';
-      if (d.whatsapp && !phoneOk(d.whatsapp)) return 'WhatsApp numarası eksik görünüyor.';
+      if (!phoneOk(d.phone, 'any')) return 'Salon telefonunu 11 haneli yazın (0 ile başlayarak).';
+      if (d.whatsapp && !phoneOk(d.whatsapp)) return 'WhatsApp için 05 ile başlayan 11 haneli cep numarası yazın.';
       return null;
     case 3:
       if (!d.city) return 'İli seçin.';
@@ -141,7 +142,7 @@ function blocker(step: number, d: Draft): string | null {
     }
     case 6:
       if (!d.ownerName.trim()) return 'Adınızı yazın.';
-      if (d.members.some((m) => !m.displayName.trim() || !phoneOk(m.phone))) return 'Her kişinin adını ve telefonunu yazın.';
+      if (d.members.some((m) => !m.displayName.trim() || !phoneOk(m.phone))) return 'Her kişinin adını ve 11 haneli cep telefonunu yazın.';
       return staffCount(d) ? null : 'En az bir kişi randevu almalı.';
     default:
       return null;
@@ -355,12 +356,12 @@ function DetailsStep({ draft, update }: StepProps) {
         </div>
         <div className="field">
           <label htmlFor="r-phone">Salon telefonu</label>
-          <input id="r-phone" className="input" type="tel" inputMode="tel" value={draft.phone} placeholder="05xx xxx xx xx" onChange={(e) => update({ phone: e.target.value })} />
+          <PhoneInput id="r-phone" value={draft.phone} placeholder="0216 555 44 33 ya da 05xx…" onChange={(phone) => update({ phone })} />
           <p className={styles.help}>Müşteriler “Ara” düğmesiyle bu numarayı arar. Sabit hat da olabilir.</p>
         </div>
         <div className="field">
           <label htmlFor="r-wa">WhatsApp (isteğe bağlı)</label>
-          <input id="r-wa" className="input" type="tel" inputMode="tel" value={draft.whatsapp} placeholder="Salon telefonuyla aynıysa da yazın" onChange={(e) => update({ whatsapp: e.target.value })} />
+          <PhoneInput id="r-wa" value={draft.whatsapp} placeholder="05xx xxx xx xx" onChange={(whatsapp) => update({ whatsapp })} />
           {phoneOk(draft.phone) && !draft.whatsapp && (
             <button type="button" className={styles.linkButton} onClick={() => update({ whatsapp: draft.phone })}>
               Salon telefonunu kullan
@@ -676,7 +677,7 @@ function StaffStep({ draft, update, me }: StepProps & { me: Me }) {
               </div>
               <div className="field">
                 <label htmlFor={`m-phone-${i}`}>Cep telefonu</label>
-                <input id={`m-phone-${i}`} className="input" type="tel" inputMode="tel" placeholder="05xx…" value={m.phone} onChange={(e) => setMember(i, { phone: e.target.value })} />
+                <PhoneInput id={`m-phone-${i}`} value={m.phone} autoComplete="off" onChange={(phone) => setMember(i, { phone })} />
               </div>
             </div>
             {m.role === 'co_owner' && <p className={styles.help}>Ortak, sizinle aynı yetkilere sahiptir: fiyatlar, personel ve ayarlar.</p>}

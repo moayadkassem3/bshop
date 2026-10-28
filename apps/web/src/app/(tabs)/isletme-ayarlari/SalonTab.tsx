@@ -3,11 +3,13 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import reg from '@/components/register/register.module.css';
+import { PhoneInput } from '@/components/PhoneInput';
 import { PROVINCES } from '@/components/register/provinces';
 import { SALON_TYPES, type SalonType } from '@/components/register/salonTypes';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { uploadImage } from '@/lib/image';
 import { getToken } from '@/lib/session';
+import { phoneComplete } from '@/lib/phone';
 import { formatPhone, photoUrl } from '@/lib/shop';
 import own from './settings.module.css';
 
@@ -59,12 +61,12 @@ const toForm = (s: Settings): Form => ({
   point: s.latitude !== null && s.longitude !== null ? { lat: s.latitude, lng: s.longitude } : null,
 });
 
-const phoneOk = (phone: string) => phone.replace(/\D/g, '').length >= 10;
+
 
 function problem(f: Form): string | null {
   if (f.name.trim().length < 2) return 'İşletme adını yazın.';
-  if (!phoneOk(f.phone)) return 'Salon telefonunu yazın.';
-  if (f.whatsapp && !phoneOk(f.whatsapp)) return 'WhatsApp numarası eksik görünüyor.';
+  if (!phoneComplete(f.phone, 'any')) return 'Salon telefonunu 11 haneli yazın (0 ile başlayarak).';
+  if (f.whatsapp && !phoneComplete(f.whatsapp)) return 'WhatsApp için 05 ile başlayan 11 haneli cep numarası yazın.';
   if (!f.city) return 'İli seçin.';
   if (f.district.trim().length < 2) return 'İlçeyi yazın.';
   if (f.address.trim().length < 5) return 'Açık adresi yazın.';
@@ -209,11 +211,11 @@ export function SalonTab({ shopId, slug, visible }: { shopId: string; slug: stri
               </div>
               <div className="field">
                 <label htmlFor="s-phone">Salon telefonu</label>
-                <input id="s-phone" className="input" type="tel" inputMode="tel" value={form.phone} onChange={(e) => update({ phone: e.target.value })} />
+                <PhoneInput id="s-phone" value={form.phone} onChange={(phone) => update({ phone })} />
               </div>
               <div className="field">
                 <label htmlFor="s-wa">WhatsApp (isteğe bağlı)</label>
-                <input id="s-wa" className="input" type="tel" inputMode="tel" value={form.whatsapp} onChange={(e) => update({ whatsapp: e.target.value })} />
+                <PhoneInput id="s-wa" value={form.whatsapp} onChange={(whatsapp) => update({ whatsapp })} />
               </div>
               <div className="field">
                 <label htmlFor="s-ig">Instagram (isteğe bağlı)</label>

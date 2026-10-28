@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { api, errorMessage } from '@/lib/api';
 import { moveLocalFavoritesToAccount } from '@/lib/favorites';
+import { phoneComplete } from '@/lib/phone';
 import { setToken } from '@/lib/session';
 import type { Me } from '@/lib/types';
+import { PhoneInput } from './PhoneInput';
 import styles from './PhoneSignIn.module.css';
 
 type Props = {
@@ -88,23 +90,18 @@ export function PhoneSignIn({ as = 'customer', onSignedIn }: Props) {
     <div className={styles.wrap}>
       <div className="field">
         <label htmlFor="phone">Cep telefonu</label>
-        <input
+        <PhoneInput
           id="phone"
-          className="input"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder="05xx xxx xx xx"
           value={phone}
-          onChange={(e) => {
-            setPhone(e.target.value);
+          onChange={(v) => {
+            setPhone(v);
             setCodeSent(false);
           }}
         />
       </div>
       {!codeSent ? (
         <>
-          <button type="button" className="btn btn-primary btn-block" disabled={busy || phone.replace(/\D/g, '').length < 10} onClick={sendCode}>
+          <button type="button" className="btn btn-primary btn-block" disabled={busy || !phoneComplete(phone)} onClick={sendCode}>
             Doğrulama kodu gönder
           </button>
           <p className={styles.notice}>

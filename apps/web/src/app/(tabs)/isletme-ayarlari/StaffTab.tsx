@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api, errorMessage } from '@/lib/api';
+import { PhoneInput } from '@/components/PhoneInput';
 import { formatPrice } from '@/lib/format';
+import { phoneComplete } from '@/lib/phone';
 import { formatPhone } from '@/lib/shop';
 import own from './settings.module.css';
 
@@ -257,7 +259,7 @@ function NewMember(props: { busy: boolean; onCancel: () => void; onAdd: (body: {
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState<Role>('staff');
   const [bookable, setBookable] = useState(true);
-  const ok = name.trim().length > 0 && phone.replace(/\D/g, '').length >= 10;
+  const ok = name.trim().length > 0 && phoneComplete(phone);
   return (
     <div className={`card ${own.panel}`}>
       <h3>Yeni kişi</h3>
@@ -275,7 +277,7 @@ function NewMember(props: { busy: boolean; onCancel: () => void; onAdd: (body: {
         </div>
         <div className="field">
           <label htmlFor="n-phone">Cep telefonu</label>
-          <input id="n-phone" className="input" type="tel" inputMode="tel" placeholder="05xx…" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <PhoneInput id="n-phone" value={phone} autoComplete="off" onChange={setPhone} />
         </div>
       </div>
       {role === 'co_owner' && <p className={own.intro}>Ortak, sizinle aynı yetkilere sahiptir: hizmetler, fiyatlar, personel ve salon bilgileri.</p>}
