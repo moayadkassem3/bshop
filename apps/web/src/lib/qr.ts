@@ -42,3 +42,42 @@ export function qrSvg(text: string, size = 1000): string {
   <g fill="#fff" transform="translate(${(size - glyphW) / 2} ${(size - glyphH) / 2}) scale(${glyphH / 220})">${GLYPH}</g>
 </svg>`;
 }
+
+/**
+ * The printable poster as a PNG: the code with the caption ("Salon adı | Uygulama
+ * adı") below it. Used for "PNG indir" and for sharing the salon from Keşfet.
+ */
+export async function qrPosterPng(link: string, caption: string): Promise<Blob> {
+  const width = 1200;
+  const height = 1330;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, width, height);
+  const img = new Image();
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(qrSvg(link))}`;
+  await img.decode();
+  ctx.drawImage(img, 100, 100, 1000, 1000);
+  await document.fonts.load('800 52px "Inter Variable"').catch(() => undefined);
+  ctx.fillStyle = '#0e1013';
+  ctx.textAlign = 'center';
+  let size = 56;
+  do {
+    ctx.font = `800 ${size}px "Inter Variable", sans-serif`;
+    size -= 2;
+  } while (ctx.measureText(caption).width > width - 160 && size > 24);
+  ctx.fillText(caption, width / 2, 1215);
+  return new Promise((resolve, reject) => canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('PNG oluşturulamadı'))), 'image/png'));
+}
+
+/** Saves a file through the browser's download, where sharing is not available. */
+export function saveFile(blob: Blob, name: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

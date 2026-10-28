@@ -126,6 +126,20 @@
   z-index: 2;
 }
 
+/* Business mode: your own salon stands out in ink, above the others. */
+.pinMine {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+  z-index: 1;
+}
+
+.pinMine.pinSelected {
+  border-color: var(--ink);
+  background: var(--primary);
+  z-index: 2;
+}
+
 .pinSelected::after {
   content: attr(data-label);
   position: absolute;
@@ -346,6 +360,20 @@
 
 .myShopActions .btn {
   min-height: 44px;
+}
+
+.shareBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.myShopNote {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 .myShopPending {

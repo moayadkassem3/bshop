@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useBusinessShops } from '@/lib/business';
 import { BRAND } from '@/lib/config';
-import { qrSvg } from '@/lib/qr';
+import { qrPosterPng, qrSvg, saveFile } from '@/lib/qr';
 import styles from './qr.module.css';
 
 /**
@@ -22,32 +22,8 @@ export function QrPoster() {
   const caption = shop ? `${shop.name} | ${BRAND}` : '';
 
   async function download() {
-    if (!svg || !shop) return;
-    const width = 1200;
-    const height = 1330;
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d')!;
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, width, height);
-    const img = new Image();
-    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-    await img.decode();
-    ctx.drawImage(img, 100, 100, 1000, 1000);
-    await document.fonts.load('800 52px "Inter Variable"').catch(() => undefined);
-    ctx.fillStyle = '#0e1013';
-    ctx.textAlign = 'center';
-    let size = 56;
-    do {
-      ctx.font = `800 ${size}px "Inter Variable", sans-serif`;
-      size -= 2;
-    } while (ctx.measureText(caption).width > width - 160 && size > 24);
-    ctx.fillText(caption, width / 2, 1215);
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = `${shop.slug}-qr.png`;
-    a.click();
+    if (!link || !shop) return;
+    saveFile(await qrPosterPng(link, caption), `${shop.slug}-qr.png`);
   }
 
   async function copy() {

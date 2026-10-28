@@ -9,6 +9,8 @@ import { lastLocation, locationPermissionGranted, rememberLocation, type LatLng 
 import { logoGlyphSvg } from '@/lib/logo';
 import { useAudience } from '@/lib/audience';
 import { useBusinessShops, type BusinessShop } from '@/lib/business';
+import { BRAND } from '@/lib/config';
+import { qrPosterPng, saveFile } from '@/lib/qr';
 import { useBusinessMode } from '@/lib/session';
 import { AUDIENCE, distanceMeters, formatDistance, photoUrl, placeLabel } from '@/lib/shop';
 import type { NearbyShop } from '@/lib/types';
@@ -122,7 +124,8 @@ export function ExploreMap() {
     document.getElementById(`shop-${slug}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, []);
 
-  // Keep one pin per shop on the map.
+  // Keep one pin per shop on the map; in business mode your own salon's pin is dark.
+  const mineSlug = home ? myShop?.slug : undefined;
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !sorted) return;
@@ -151,10 +154,11 @@ export function ExploreMap() {
           markers.current.set(shop.slug, marker);
         }
         marker.getElement().classList.toggle(styles.pinSelected, shop.slug === selected);
+        marker.getElement().classList.toggle(styles.pinMine, shop.slug === mineSlug);
         marker.getElement().dataset.label = `${shop.name} · ${formatDistance(shop.distance_m)}`;
       }
     })();
-  }, [sorted, selected, select]);
+  }, [sorted, selected, select, mineSlug]);
 
   async function showUser(here: LatLng, fly: boolean) {
     // In business mode the salon is the reference point, not the phone.
@@ -342,6 +346,7 @@ const PIN_ICON = logoGlyphSvg(22);
 
 /** "Salonum" at the top of the sheet in business mode: the salon as customers see it, one tap away. */
 function MyShopCard({ shop }: { shop: BusinessShop }) {
+  const [note, setNote] = useState<string | null>(null);
   return (
     <div className={styles.myShop}>
       <p className={styles.myShopLabel}>Salonum</p>
@@ -370,12 +375,64 @@ function MyShopCard({ shop }: { shop: BusinessShop }) {
         ) : (
           <span className={styles.myShopPending}>Salon sayfanız onaydan sonra açılır.</span>
         )}
-        {shop.role === 'owner' && (
-          <Link href="/isletme-ayarlari" className="btn">
-            Düzenle
-          </Link>
-        )}
+        {shop.reviewed_at && <ShareShop shop={shop} onDone={setNote} />}
       </div>
+      {note && (
+        <p className={styles.myShopNote} role="status">
+          {note}
+        </p>
+      )}
     </div>
+  );
+}
+
+/**
+ * "Paylaş": the salon's QR poster and its link together, through the phone's
+ * share menu (WhatsApp, Instagram, ...). Where files cannot be shared, the PNG
+ * is downloaded and the link copied instead.
+ */
+function ShareShop({ shop, onDone }: { shop: BusinessShop; onDone: (note: string | null) => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const link = typeof window === 'undefined' ? '' : `${window.location.origin}/${shop.slug}`;
+
+  // Built ahead of the tap: browsers only open the share menu right after a user gesture.
+  useEffect(() => {
+    let cancelled = false;
+    qrPosterPng(link, `${shop.name} | ${BRAND}`)
+      .then((png) => !cancelled && setFile(new File([png], `${shop.slug}-qr.png`, { type: 'image/png' })))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [link, shop.name, shop.slug]);
+
+  async function share() {
+    if (!file) return;
+    onDone(null);
+    const text = `${shop.name}: randevu almak için ${link}`;
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: shop.name, text });
+        return;
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+      }
+    }
+    saveFile(file, file.name);
+    try {
+      await navigator.clipboard.writeText(link);
+      onDone('QR kod indirildi, bağlantı kopyalandı.');
+    } catch {
+      onDone(`QR kod indirildi. Bağlantı: ${link}`);
+    }
+  }
+
+  return (
+    <button type="button" className={`btn ${styles.shareBtn}`} disabled={!file} onClick={share}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+      </svg>
+      Paylaş
+    </button>
   );
 }
