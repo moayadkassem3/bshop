@@ -20,8 +20,15 @@ export function PhoneInput({ id, value, onChange, placeholder = '05xx xxx xx xx'
       inputMode="numeric"
       autoComplete={autoComplete}
       placeholder={placeholder}
+      // "0534 657 51 00" is 14 characters; the browser enforces this even before the page's code has loaded.
+      maxLength={14}
       value={value}
       onChange={(e) => onChange(formatPhoneInput(e.target.value))}
+      // A pasted "+90 534 657 51 00" is longer than maxLength; format all of it rather than let the browser cut it.
+      onPaste={(e) => {
+        e.preventDefault();
+        onChange(formatPhoneInput(e.clipboardData.getData('text')));
+      }}
     />
   );
 }
