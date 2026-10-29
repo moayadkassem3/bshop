@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import reg from '@/components/register/register.module.css';
 import { PhoneInput } from '@/components/PhoneInput';
+import { DistrictSelect, focusFor } from '@/components/register/places';
 import { PROVINCES } from '@/components/register/provinces';
 import { SALON_TYPES, type SalonType } from '@/components/register/salonTypes';
 import { api, ApiError, errorMessage } from '@/lib/api';
@@ -68,7 +69,7 @@ function problem(f: Form): string | null {
   if (!phoneComplete(f.phone, 'any')) return 'Salon telefonunu 11 haneli yazın (0 ile başlayarak).';
   if (f.whatsapp && !phoneComplete(f.whatsapp)) return 'WhatsApp için 05 ile başlayan 11 haneli cep numarası yazın.';
   if (!f.city) return 'İli seçin.';
-  if (f.district.trim().length < 2) return 'İlçeyi yazın.';
+  if (f.district.trim().length < 2) return 'İlçeyi seçin.';
   if (f.address.trim().length < 5) return 'Açık adresi yazın.';
   return f.point ? null : 'Haritada salonunuzun yerini işaretleyin.';
 }
@@ -232,7 +233,7 @@ export function SalonTab({ shopId, slug, visible }: { shopId: string; slug: stri
               <div className={reg.row}>
                 <div className="field">
                   <label htmlFor="s-city">İl</label>
-                  <select id="s-city" className={`input ${reg.select}`} value={form.city} onChange={(e) => update({ city: e.target.value })}>
+                  <select id="s-city" className={`input ${reg.select}`} value={form.city} onChange={(e) => update({ city: e.target.value, district: '' })}>
                     <option value="">Seçin</option>
                     {PROVINCES.map((p) => (
                       <option key={p}>{p}</option>
@@ -241,7 +242,7 @@ export function SalonTab({ shopId, slug, visible }: { shopId: string; slug: stri
                 </div>
                 <div className="field">
                   <label htmlFor="s-district">İlçe</label>
-                  <input id="s-district" className="input" maxLength={80} value={form.district} onChange={(e) => update({ district: e.target.value })} />
+                  <DistrictSelect id="s-district" city={form.city} value={form.district} onChange={(district) => update({ district })} />
                 </div>
               </div>
               <div className="field">
@@ -250,7 +251,7 @@ export function SalonTab({ shopId, slug, visible }: { shopId: string; slug: stri
               </div>
               <div className="field">
                 <span className={reg.fieldLabel}>Haritadaki yeri</span>
-                <LocationPicker key={shopId} value={form.point} onChange={(point) => update({ point })} />
+                <LocationPicker key={shopId} value={form.point} onChange={(point) => update({ point })} focus={focusFor(form.city, form.district)} />
               </div>
             </section>
 

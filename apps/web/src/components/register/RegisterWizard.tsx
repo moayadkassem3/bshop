@@ -13,6 +13,7 @@ import type { Me } from '@/lib/types';
 import { shrinkImage } from '@/lib/image';
 import { PhoneInput } from '@/components/PhoneInput';
 import { phoneComplete } from '@/lib/phone';
+import { DistrictSelect, focusFor } from './places';
 import { PROVINCES } from './provinces';
 import { SALON_TYPES } from './salonTypes';
 import styles from './register.module.css';
@@ -125,7 +126,7 @@ function blocker(step: number, d: Draft): string | null {
       return null;
     case 3:
       if (!d.city) return 'İli seçin.';
-      if (d.district.trim().length < 2) return 'İlçeyi yazın.';
+      if (d.district.trim().length < 2) return 'İlçeyi seçin.';
       if (d.address.trim().length < 5) return 'Açık adresi yazın.';
       return d.point ? null : 'Haritada salonunuzun yerini işaretleyin.';
     case 4: {
@@ -396,7 +397,7 @@ function AddressStep({ draft, update }: StepProps) {
         <div className={styles.row}>
           <div className="field">
             <label htmlFor="r-city">İl</label>
-            <select id="r-city" className={`input ${styles.select}`} value={draft.city} onChange={(e) => update({ city: e.target.value })}>
+            <select id="r-city" className={`input ${styles.select}`} value={draft.city} onChange={(e) => update({ city: e.target.value, district: '' })}>
               <option value="">Seçin</option>
               {PROVINCES.map((p) => (
                 <option key={p}>{p}</option>
@@ -405,7 +406,7 @@ function AddressStep({ draft, update }: StepProps) {
           </div>
           <div className="field">
             <label htmlFor="r-district">İlçe</label>
-            <input id="r-district" className="input" value={draft.district} maxLength={80} placeholder="Örn. Kadıköy" onChange={(e) => update({ district: e.target.value })} />
+            <DistrictSelect id="r-district" city={draft.city} value={draft.district} onChange={(district) => update({ district })} />
           </div>
         </div>
         <div className="field">
@@ -421,7 +422,7 @@ function AddressStep({ draft, update }: StepProps) {
         </div>
         <div className="field">
           <span className={styles.fieldLabel}>Haritadaki yeri</span>
-          <LocationPicker value={draft.point} onChange={(point) => update({ point })} />
+          <LocationPicker value={draft.point} onChange={(point) => update({ point })} focus={focusFor(draft.city, draft.district)} />
         </div>
       </div>
     </>
