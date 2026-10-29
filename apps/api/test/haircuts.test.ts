@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { currentVersion } from '../src/domain/legal.js';
+import { IMAGE_PRESETS, processImage } from '../src/services/photos.js';
 import { at, book, PHONES, setupShop, useTestApp } from './helpers.js';
 
 const t = useTestApp();
@@ -238,5 +239,35 @@ describe('Teklif al (v1.7)', () => {
 
     for (let i = 0; i < 2; i++) expect((await t.call('POST', '/public/quote-requests', { body })).status).toBe(201);
     expect((await t.call('POST', '/public/quote-requests', { body })).status).toBe(429);
+  });
+});
+
+describe('photo compression (v1.7)', () => {
+  const noisy = (w: number, h: number) =>
+    sharp({ create: { width: w, height: h, channels: 3, background: '#000', noise: { type: 'gaussian', mean: 128, sigma: 60 } } })
+      .withMetadata({ exif: { IFD0: { Make: 'Phone' } } })
+      .jpeg({ quality: 92 })
+      .toBuffer();
+
+  it('scales shop photos to 1600 px and posts to 1280 px, as WebP without metadata', async () => {
+    const src = await noisy(4000, 3000);
+    const photo = await processImage(src, 'photo');
+    const post = await processImage(src, 'post');
+    expect(photo.info).toEqual({ width: 1600, height: 1200 });
+    expect(post.info).toEqual({ width: 1280, height: 960 });
+    const meta = await sharp(photo.data).metadata();
+    expect(meta.format).toBe('webp');
+    expect(meta.exif).toBeUndefined();
+    expect(photo.data.length).toBeLessThan(src.length / 5);
+  });
+
+  it('encodes a very detailed photo once more at the lower quality, never below it', async () => {
+    const src = await noisy(1600, 1200);
+    const preset = IMAGE_PRESETS.photo;
+    const atDefault = await sharp(src).webp({ quality: preset.quality, effort: 5, smartSubsample: true }).toBuffer();
+    const atFloor = await sharp(src).webp({ quality: preset.minQuality, effort: 5, smartSubsample: true }).toBuffer();
+    expect(atDefault.length).toBeGreaterThan(preset.maxBytes);
+    const out = await processImage(src, 'photo');
+    expect(out.data.length).toBe(atFloor.length);
   });
 });

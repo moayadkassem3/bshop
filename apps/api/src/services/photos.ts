@@ -12,18 +12,39 @@ export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export type Photo = { id: string; width: number; height: number };
 
 /**
- * Owners add shop photos from the app. Every upload is re-encoded: turned
- * upright, scaled to at most 1600 px, and saved as WebP without its metadata,
- * so a phone photo's hidden GPS location never reaches the public page.
+ * How uploads are stored (v1.7). Shop photos open full screen in the gallery;
+ * haircut posts are only ever shown at phone width, so they are kept smaller.
+ * WebP at quality 78 looks the same as the original on a phone and is about a
+ * tenth of a phone camera's JPEG. A very detailed photo (hair, patterned walls)
+ * that still comes out above `maxBytes` is encoded once more at `minQuality`;
+ * quality never goes below that, so nothing turns blocky.
  */
-/** Upright, at most 1600 px, WebP, metadata (including GPS) removed. */
-export async function processImage(data: Buffer): Promise<{ data: Buffer; info: { width: number; height: number } }> {
+export const IMAGE_PRESETS = {
+  photo: { maxSide: 1600, quality: 78, minQuality: 70, maxBytes: 300 * 1024 },
+  post: { maxSide: 1280, quality: 78, minQuality: 70, maxBytes: 220 * 1024 },
+} as const;
+export type ImageKind = keyof typeof IMAGE_PRESETS;
+
+/**
+ * Every upload is re-encoded: turned upright, scaled down to the preset's size,
+ * and saved as WebP without its metadata, so a phone photo's hidden GPS
+ * location never reaches the public page.
+ */
+export async function processImage(data: Buffer, kind: ImageKind = 'photo'): Promise<{ data: Buffer; info: { width: number; height: number } }> {
+  const preset = IMAGE_PRESETS[kind];
   try {
-    return await sharp(data, { limitInputPixels: 50_000_000 })
+    const upright = await sharp(data, { limitInputPixels: 50_000_000 })
       .rotate()
-      .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 82 })
+      .resize({ width: preset.maxSide, height: preset.maxSide, fit: 'inside', withoutEnlargement: true })
+      .raw()
       .toBuffer({ resolveWithObject: true });
+    const encode = (quality: number) =>
+      sharp(upright.data, { raw: upright.info })
+        .webp({ quality, effort: 5, smartSubsample: true })
+        .toBuffer({ resolveWithObject: true });
+    let out = await encode(preset.quality);
+    if (out.data.length > preset.maxBytes) out = await encode(preset.minQuality);
+    return { data: out.data, info: { width: out.info.width, height: out.info.height } };
   } catch {
     throw badRequest('INVALID_IMAGE', 'Upload a JPEG, PNG, or WebP photo');
   }

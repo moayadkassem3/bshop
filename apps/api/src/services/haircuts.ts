@@ -30,7 +30,7 @@ const POST_COLUMNS = `p.id, p.style, p.caption, p.width, p.height, p.created_at,
 /** Owners and staff post their work; staff showcase their own cuts. */
 export async function addPost(deps: Deps, user: User, shopId: string, data: Buffer, input: { style: string; caption?: string | null }) {
   await requireMember(deps.db, user, shopId);
-  const processed = await processImage(data);
+  const processed = await processImage(data, 'post');
   const key = `${shopId}/posts/${randomUUID()}.webp`;
   return withTx(deps.db, async (tx) => {
     await tx.query('SELECT id FROM shops WHERE id = $1 FOR UPDATE', [shopId]);
