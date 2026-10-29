@@ -180,3 +180,10 @@
   font-size: 28px;
   letter-spacing: -0.02em;
 }
+
+.quoteLink {
+  justify-self: start;
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}

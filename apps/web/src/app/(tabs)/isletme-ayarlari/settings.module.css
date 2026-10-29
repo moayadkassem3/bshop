@@ -397,3 +397,10 @@
   font-weight: 600;
   opacity: 0.75;
 }
+
+.planBox a {
+  flex-shrink: 0;
+  color: var(--primary-light);
+  font-weight: 700;
+  text-decoration: none;
+}

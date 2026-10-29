@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PhoneSignIn, useLegalVersions } from '@/components/PhoneSignIn';
 import { api, ApiError, errorMessage } from '@/lib/api';
-import { SALES_EMAIL } from '@/lib/config';
 import { formatDuration, formatPrice } from '@/lib/format';
 import { getToken, setToken } from '@/lib/session';
 import { AUDIENCE, formatPhone, photoUrl, WEEKDAYS } from '@/lib/shop';
@@ -590,7 +589,11 @@ function ServicesStep({ draft, update }: StepProps) {
   );
 }
 
-function PlanBox({ count, plans }: { count: number; plans: Plans | null }) {
+/** "Teklif al" with what the form already knows, so the owner does not type it twice. */
+const quoteHref = (draft: Draft, count: number) =>
+  `/teklif-al?${new URLSearchParams({ kaynak: 'kayit', personel: String(count), il: draft.city, salon: draft.name })}`;
+
+function PlanBox({ count, plans, quote }: { count: number; plans: Plans | null; quote: string }) {
   if (!plans) return null;
   const plan = plans.plans.find((p) => count <= p.maxStaff);
   return (
@@ -604,10 +607,8 @@ function PlanBox({ count, plans }: { count: number; plans: Plans | null }) {
           {formatPrice(plan.monthlyPriceKurus)}
           <small>/ay</small>
         </span>
-      ) : SALES_EMAIL ? (
-        <a href={`mailto:${SALES_EMAIL}?subject=${encodeURIComponent('Fiyat teklifi')}`}>Teklif alın</a>
       ) : (
-        <span>Size özel teklif</span>
+        <Link href={quote}>Teklif alın ›</Link>
       )}
     </div>
   );
@@ -698,7 +699,7 @@ function StaffStep({ draft, update, me }: StepProps & { me: Me }) {
           + Personel veya ortak ekle
         </button>
         <p className={styles.help}>Eklediğiniz kişiler kendi telefon numaralarıyla “İşletmeyim” girişinden girer.</p>
-        <PlanBox count={staffCount(draft)} plans={plans} />
+        <PlanBox count={staffCount(draft)} plans={plans} quote={quoteHref(draft, staffCount(draft))} />
       </div>
     </>
   );
@@ -798,7 +799,7 @@ function PlanStep({ draft, me, onRegistered }: { draft: Draft; me: Me; onRegiste
           </div>
         </dl>
 
-        <PlanBox count={count} plans={plans} />
+        <PlanBox count={count} plans={plans} quote={quoteHref(draft, count)} />
         {plans && (
           <>
             <ul className={styles.perks}>

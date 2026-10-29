@@ -33,6 +33,8 @@ export const sms = {
     `${c.shop}: ${c.previousStaff} bu saatte müsait değil. ${c.when} randevunuz ${c.staff} ile devam edecek. Değiştirmek veya iptal etmek için: ${c.link}`,
   shopApproved: (c: { shop: string; trialDays: number; link: string }) =>
     `${c.shop} onaylandı ve artık randevu alıyor. ${c.trialDays} günlük ücretsiz deneme süreniz başladı. Salon sayfanız: ${c.link}`,
+  // To our team, not to customers.
+  quoteRequest: (c: { salon: string; staff: number; phone: string }) => `Yeni teklif talebi: ${c.salon}, ${c.staff} personel. Tel: ${c.phone}`,
 };
 
 type Appt = { customer: string; services: string; when: string };

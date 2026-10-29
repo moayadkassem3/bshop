@@ -1,10 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { daysLeft, useBusinessShops, type BusinessShop } from '@/lib/business';
-import { SALES_EMAIL } from '@/lib/config';
 import { formatPrice, TZ } from '@/lib/format';
 import { getToken, useBusinessMode } from '@/lib/session';
 import type { Me } from '@/lib/types';
@@ -61,6 +61,9 @@ export function Pricing({ plans, intro, apply }: { plans: Plans | null; intro: R
             <p className={`card ${styles.plan} ${styles.planCurrent} ${styles.planWide}`}>
               <span className={styles.planBadge}>Paketiniz</span>
               <span className={styles.planName}>{mine.seats} randevu alan personel: size özel fiyat</span>
+              <Link href={`/teklif-al?${new URLSearchParams({ personel: String(mine.seats), salon: mine.name })}`} className={styles.quoteLink}>
+                Teklif alın ›
+              </Link>
             </p>
           )}
           <ul className={styles.plans} role="list">
@@ -86,7 +89,7 @@ export function Pricing({ plans, intro, apply }: { plans: Plans | null; intro: R
           </ul>
           <p className={styles.note}>
             {plans.terms.customQuoteAboveStaff}’dan fazla personel için{' '}
-            {SALES_EMAIL ? <a href={`mailto:${SALES_EMAIL}?subject=${encodeURIComponent('Fiyat teklifi')}`}>e-postayla teklif alın</a> : 'size özel teklif hazırlıyoruz'}.
+            <Link href="/teklif-al">size özel teklif alın</Link>.
           </p>
         </section>
       )}

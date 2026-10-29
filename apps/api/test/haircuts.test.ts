@@ -217,3 +217,26 @@ describe('İstatistikler (v1.7)', () => {
     expect((await t.call('GET', `${shop.base}/stats`, { token: staff })).status).toBe(403);
   });
 });
+
+describe('Teklif al (v1.7)', () => {
+  it('saves a custom-price request, tells our team, and limits repeats', async () => {
+    const shop = await setupShop(t);
+    const body = { salonName: 'Büyük Salon', contactName: 'Ayşe Kaya', phone: '0532 111 22 33', staffCount: 14, branchCount: 2, city: 'İzmir', message: 'İki şube', source: 'fiyatlar' };
+    const res = await t.call('POST', '/public/quote-requests', { body });
+    expect(res.status).toBe(201);
+    await t.tick();
+    expect(t.sms.to(PHONES.admin).at(-1)).toBe('Yeni teklif talebi: Büyük Salon, 14 personel. Tel: +905321112233');
+
+    // A bot filling the hidden field is not saved; a bad phone is refused.
+    expect((await t.call('POST', '/public/quote-requests', { body: { ...body, website: 'http://spam' } })).status).toBe(202);
+    expect((await t.call('POST', '/public/quote-requests', { body: { ...body, phone: '123' } })).status).toBe(400);
+
+    const list = (await t.call('GET', '/admin/quote-requests', { token: shop.tokens.admin })).body;
+    expect(list).toHaveLength(1);
+    expect(list[0]).toMatchObject({ salon_name: 'Büyük Salon', phone: '+905321112233', staff_count: 14, branch_count: 2, status: 'new' });
+    expect((await t.call('GET', '/admin/quote-requests', { token: shop.tokens.owner })).status).toBe(403);
+
+    for (let i = 0; i < 2; i++) expect((await t.call('POST', '/public/quote-requests', { body })).status).toBe(201);
+    expect((await t.call('POST', '/public/quote-requests', { body })).status).toBe(429);
+  });
+});

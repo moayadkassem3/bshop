@@ -11,13 +11,14 @@ import { nearbyShops, searchPublicShops } from '../services/shops.js';
 import { HAIRCUT_STYLES, STYLE_KEYS } from '../domain/styles.js';
 import { popularPosts, readPostPhoto } from '../services/haircuts.js';
 import { recordShopView, VIEW_SOURCES } from '../services/stats.js';
+import { createQuoteRequest } from '../services/quotes.js';
 import type { AuthFn } from './app.js';
 import { csvIds, id } from './schemas.js';
 
 /** "Salon Sahibi Girişi" and "Çalışan Girişi" are separate entrances; the website signs customers in. */
 const portal = z.enum(['customer', 'business', 'staff', 'owner']).default('customer');
 
-export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
+export function publicRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.post('/auth/otp/request', async (req, reply) => {
     const body = z.object({ phone: z.string().min(7).max(20), portal }).parse(req.body);
     const { demoCode } = await requestOtp(deps, body.phone, body.portal);
@@ -73,6 +74,28 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, _auth: AuthFn) {
   app.get('/public/shops/:slug', async (req) => {
     const { slug } = z.object({ slug: z.string() }).parse(req.params);
     return getShopProfile(deps, slug);
+  });
+
+  // "Teklif al": a custom price for more than 10 staff. Signing in is not needed.
+  app.post('/public/quote-requests', async (req, reply) => {
+    const body = z
+      .object({
+        salonName: z.string().trim().min(2).max(120),
+        contactName: z.string().trim().min(2).max(80),
+        phone: z.string().min(7).max(20),
+        email: z.string().trim().email().max(120).nullish().or(z.literal('')),
+        staffCount: z.number().int().min(1).max(1000),
+        branchCount: z.number().int().min(1).max(200).default(1),
+        city: z.string().trim().max(40).nullish(),
+        message: z.string().trim().max(1000).nullish(),
+        source: z.enum(['fiyatlar', 'kayit', 'ayarlar']).catch('fiyatlar'),
+        // Left empty by people; bots that fill every field are thanked and ignored.
+        website: z.string().max(200).optional(),
+      })
+      .parse(req.body);
+    if (body.website) return reply.status(202).send({ id: null });
+    const user = await auth(req).catch(() => null);
+    return reply.status(201).send(await createQuoteRequest(deps, body, user));
   });
 
   // A visit to a salon's page, for its statistics; the page sends it once per browser session.

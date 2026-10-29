@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { api, errorMessage } from '@/lib/api';
 import { PhoneInput } from '@/components/PhoneInput';
@@ -85,7 +86,7 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
               <small>/ay</small>
             </span>
           ) : (
-            <span>Size özel teklif</span>
+            <Link href={`/teklif-al?kaynak=ayarlar&personel=${bookable}`}>Teklif alın ›</Link>
           )}
         </div>
       )}

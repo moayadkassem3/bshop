@@ -3,12 +3,16 @@ import { z } from 'zod';
 import type { Deps } from '../deps.js';
 import { createShop, listShopsForAdmin, markReviewed, setSubscription } from '../services/shops.js';
 import { RESERVED_SLUGS } from '../domain/slug.js';
+import { listQuoteRequests } from '../services/quotes.js';
 import type { AuthFn } from './app.js';
 import { shopParams, timestamp } from './schemas.js';
 
 /** Back office for our team: create shops on site, review, and manage subscriptions. */
 export function adminRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.get('/admin/shops', async (req) => listShopsForAdmin(deps, await auth(req)));
+
+  // Custom-price requests from salons with more than 10 staff.
+  app.get('/admin/quote-requests', async (req) => listQuoteRequests(deps, await auth(req)));
 
   app.post('/admin/shops', async (req, reply) => {
     const user = await auth(req);
