@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 // so every access is guarded.
 const KEY = 'salon-randevu-token';
 const PORTAL_KEY = 'salon-randevu-mod';
+const LAST_MODE_KEY = 'salon-randevu-son-mod';
 const CHANGE = 'salon-randevu-oturum';
 
 export type Portal = 'customer' | 'staff' | 'owner';
@@ -24,7 +25,10 @@ export function setToken(token: string | null, portal?: Portal) {
   try {
     if (token) window.localStorage.setItem(KEY, token);
     else window.localStorage.removeItem(KEY);
-    if (token && portal) window.localStorage.setItem(PORTAL_KEY, portal);
+    if (token && portal) {
+      window.localStorage.setItem(PORTAL_KEY, portal);
+      window.localStorage.setItem(LAST_MODE_KEY, portal === 'customer' ? 'customer' : 'business');
+    }
     if (!token) window.localStorage.removeItem(PORTAL_KEY);
   } catch {
     // Without storage the customer stays signed in for this page only.
@@ -42,6 +46,19 @@ export function rememberPortal(portal: Portal | undefined) {
     return;
   }
   window.dispatchEvent(new Event(CHANGE));
+}
+
+/**
+ * The mode this browser used last, kept after signing out, so a salon's people
+ * sign straight back into the mode they left (v1.7), as on Airbnb.
+ */
+export function lastMode(): 'customer' | 'business' | null {
+  try {
+    const mode = window.localStorage.getItem(LAST_MODE_KEY);
+    return mode === 'customer' || mode === 'business' ? mode : null;
+  } catch {
+    return null;
+  }
 }
 
 export function storedPortal(): Portal | null {

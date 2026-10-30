@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { api, errorMessage } from '@/lib/api';
 import { moveLocalFavoritesToAccount } from '@/lib/favorites';
 import { phoneComplete } from '@/lib/phone';
-import { setToken, storedPortal } from '@/lib/session';
+import { lastMode, setToken } from '@/lib/session';
 import type { Me } from '@/lib/types';
 import { PhoneInput } from './PhoneInput';
 import styles from './PhoneSignIn.module.css';
@@ -12,7 +12,11 @@ import styles from './PhoneSignIn.module.css';
 type Props = {
   /** Customer or business sign-in (v1.5); business only accepts phones registered with a shop. */
   as?: 'customer' | 'business';
-  /** The one sign-in in Profil (v1.7): people who work at a salon then choose how to continue. */
+  /**
+   * The one sign-in in Profil (v1.7): people who work at a salon go straight to
+   * business mode, or to customer mode if that is what this browser used last.
+   * Profil's switch button changes it afterwards.
+   */
   chooseMode?: boolean;
   onSignedIn: (me: Me) => void;
 };
@@ -44,7 +48,6 @@ export function PhoneSignIn({ as = 'customer', chooseMode = false, onSignedIn }:
   const [error, setError] = useState<string | null>(null);
   const [demoCode, setDemoCode] = useState<string | null>(null);
   const [account, setAccount] = useState<VerifyResult | null>(null);
-  const [choosing, setChoosing] = useState<{ result: VerifyResult; businessFirst: boolean } | null>(null);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -76,12 +79,15 @@ export function PhoneSignIn({ as = 'customer', chooseMode = false, onSignedIn }:
     setError(null);
     try {
       const res = await api<VerifyResult>('/auth/otp/verify', { method: 'POST', body: { phone, code, portal: as } });
-      // Read before the new session is stored: the mode this browser used last is offered first.
-      const businessFirst = storedPortal() !== 'customer';
+      // Read before the new session is stored, which records customer mode.
+      const toBusiness = chooseMode && res.hasBusiness && lastMode() !== 'customer';
       setToken(res.token, res.user.portal);
       await moveLocalFavoritesToAccount();
-      if (chooseMode && res.hasBusiness) setChoosing({ result: res, businessFirst });
-      else if (res.needsProfile) setAccount(res);
+      if (toBusiness) {
+        const r = await api<{ token: string; user: Me }>('/me/switch', { method: 'POST', body: { to: 'business' } });
+        setToken(r.token, r.user.portal);
+        onSignedIn(r.user);
+      } else if (res.needsProfile) setAccount(res);
       else onSignedIn(res.user);
     } catch (err) {
       setError(errorMessage(err));
@@ -91,20 +97,6 @@ export function PhoneSignIn({ as = 'customer', chooseMode = false, onSignedIn }:
   }
 
   if (account) return <CreateAccount result={account} onDone={onSignedIn} />;
-  if (choosing) {
-    return (
-      <ModeChoice
-        businessFirst={choosing.businessFirst}
-        onCustomer={() => (choosing.result.needsProfile ? setAccount(choosing.result) : onSignedIn(choosing.result.user))}
-        onBusiness={async () => {
-          const r = await api<{ token: string; user: Me }>('/me/switch', { method: 'POST', body: { to: 'business' } });
-          setToken(r.token, r.user.portal);
-          onSignedIn(r.user);
-        }}
-      />
-    );
-  }
-
   return (
     <div className={styles.wrap}>
       <div className="field">
@@ -158,48 +150,6 @@ export function PhoneSignIn({ as = 'customer', chooseMode = false, onSignedIn }:
           </button>
         </>
       )}
-      {error && (
-        <p className="alert alert-danger" role="alert">
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/** Shown after the code to people who work at a salon; the mode they used last is offered first. */
-function ModeChoice(props: { businessFirst: boolean; onCustomer: () => void; onBusiness: () => Promise<void> }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { businessFirst } = props;
-
-  async function business() {
-    setBusy(true);
-    setError(null);
-    try {
-      await props.onBusiness();
-    } catch (err) {
-      setError(errorMessage(err));
-      setBusy(false);
-    }
-  }
-
-  const options = [
-    <button key="b" type="button" className={`${styles.mode} ${businessFirst ? styles.modePrimary : ''}`} disabled={busy} onClick={business}>
-      <strong>İşletme olarak</strong>
-      <span>Randevu talepleri, takvim ve salonunuz</span>
-    </button>,
-    <button key="c" type="button" className={`${styles.mode} ${businessFirst ? '' : styles.modePrimary}`} disabled={busy} onClick={props.onCustomer}>
-      <strong>Müşteri olarak</strong>
-      <span>Kuaför bul, randevu al</span>
-    </button>,
-  ];
-  return (
-    <div className={styles.wrap}>
-      <p className={styles.notice}>
-        <strong>Bu numara bir salona kayıtlı. Nasıl devam etmek istersin?</strong> Daha sonra Profil’den diğerine geçebilirsin.
-      </p>
-      {businessFirst ? options : options.reverse()}
       {error && (
         <p className="alert alert-danger" role="alert">
           {error}
