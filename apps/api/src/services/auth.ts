@@ -105,7 +105,7 @@ export async function verifyOtp(
     /** Agreements ticked on the sign-in screen (v1.6). */
     consents?: ConsentInput[];
   },
-): Promise<{ token: string; user: User; needsProfile: boolean; needsTerms: boolean }> {
+): Promise<{ token: string; user: User; needsProfile: boolean; needsTerms: boolean; hasBusiness: boolean }> {
   const phone = normalizePhone(input.phone);
   const now = deps.clock.now();
   const result = await withTx(deps.db, async (tx) => {
@@ -145,7 +145,10 @@ export async function verifyOtp(
     // agreement completes their account once, right after the code (v1.7).
     const needsTerms = portal === 'customer' && !(await hasAccepted(tx, user.id, 'kullanici-sozlesmesi'));
     const needsProfile = portal === 'customer' && (!user.first_name || !user.last_name || !user.gender || needsTerms);
-    return { token: await createSession(tx, deps, user.id, portal, now), user, needsProfile, needsTerms };
+    // One sign-in for everyone (v1.7): people who work at a salon then choose how to continue.
+    const member = await tx.query('SELECT 1 FROM shop_members WHERE user_id = $1 AND active LIMIT 1', [user.id]);
+    const hasBusiness = (member.rowCount ?? 0) > 0;
+    return { token: await createSession(tx, deps, user.id, portal, now), user, needsProfile, needsTerms, hasBusiness };
   });
   if (!result) throw badRequest('OTP_INVALID', 'Code is invalid or expired');
   return result;

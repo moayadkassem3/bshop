@@ -174,7 +174,18 @@ describe('sign-in with the phone only (v1.7)', () => {
     await t.call('POST', '/me/consents', { token: first.token, body: [{ key: 'kullanici-sozlesmesi', version: currentVersion('kullanici-sozlesmesi') }] });
 
     const again = await verify();
-    expect(again).toMatchObject({ needsProfile: false, needsTerms: false, user: { first_name: 'Elif', gender: 'female' } });
+    expect(again).toMatchObject({ needsProfile: false, needsTerms: false, hasBusiness: false, user: { first_name: 'Elif', gender: 'female' } });
+  });
+
+  it('tells the one sign-in screen when the number works at a salon, which then switches to business', async () => {
+    await setupShop(t);
+    await t.call('POST', '/auth/otp/request', { body: { phone: PHONES.cumali } });
+    await t.tick();
+    const code = t.sms.to(PHONES.cumali).at(-1)!.match(/(\d{6})/)![1];
+    const res = (await t.call('POST', '/auth/otp/verify', { body: { phone: PHONES.cumali, code } })).body;
+    expect(res).toMatchObject({ hasBusiness: true, user: { portal: 'customer' } });
+    const switched = await t.call('POST', '/me/switch', { token: res.token, body: { to: 'business' } });
+    expect(switched.body.user.portal).toBe('staff');
   });
 });
 

@@ -14,10 +14,9 @@ import styles from './profile.module.css';
 
 const MODE_LABEL = { customer: 'Müşteri', owner: 'İşletme sahibi', staff: 'Personel' } as const;
 
-/** Profil tab: sign-in as customer or business (v1.5), the account, and switching modes. */
+/** Profil tab: one sign-in for everyone (v1.7), the account, and switching modes. */
 export function Profile() {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
-  const [choice, setChoice] = useState<'customer' | 'business' | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -41,14 +40,15 @@ export function Profile() {
   }
 
   if (me === undefined) return null;
-  return me ? <Account me={me} onChange={setMe} /> : <SignIn choice={choice} onChoice={setChoice} onSignedIn={signedIn} />;
+  return me ? <Account me={me} onChange={setMe} /> : <SignIn onSignedIn={signedIn} />;
 }
 
-function SignIn(props: {
-  choice: 'customer' | 'business' | null;
-  onChoice: (c: 'customer' | 'business' | null) => void;
-  onSignedIn: (me: Me) => void;
-}) {
+/**
+ * One sign-in for everyone (v1.7): the phone number, then the SMS code. People
+ * who work at a salon choose after the code whether to continue as the business
+ * or as a customer; salon owners who are not with us yet have a link below.
+ */
+function SignIn(props: { onSignedIn: (me: Me) => void }) {
   return (
     <div className={styles.signInPage}>
       <div className={styles.hero}>
@@ -62,56 +62,11 @@ function SignIn(props: {
       </div>
 
       <div className={styles.sheet}>
-        {props.choice === null && (
-          <>
-            <h2 className={styles.sheetTitle}>Nasıl devam etmek istersin?</h2>
-            <button type="button" className={`${styles.choice} ${styles.choicePrimary}`} onClick={() => props.onChoice('customer')}>
-              <span className={styles.choiceIcon} aria-hidden>
-                <PersonIcon />
-              </span>
-              <span className={styles.choiceText}>
-                <strong>Müşteriyim</strong>
-                <span>Kuaför arıyorum</span>
-              </span>
-              <span aria-hidden>›</span>
-            </button>
-            <button type="button" className={styles.choice} onClick={() => props.onChoice('business')}>
-              <span className={`${styles.choiceIcon} ${styles.choiceIconDark}`} aria-hidden>
-                <LogoMark size={26} />
-              </span>
-              <span className={styles.choiceText}>
-                <strong>İşletmeyim</strong>
-                <span>Hizmet vermek istiyorum</span>
-              </span>
-              <span aria-hidden>›</span>
-            </button>
-          </>
-        )}
-
-        {props.choice === 'customer' && (
-          <>
-            <button type="button" className={styles.back} onClick={() => props.onChoice(null)}>
-              ← Geri
-            </button>
-            <h2 className={styles.sheetTitle}>Müşteri girişi</h2>
-            <PhoneSignIn as="customer" onSignedIn={props.onSignedIn} />
-          </>
-        )}
-
-        {props.choice === 'business' && (
-          <>
-            <button type="button" className={styles.back} onClick={() => props.onChoice(null)}>
-              ← Geri
-            </button>
-            <h2 className={styles.sheetTitle}>İşletme girişi</h2>
-            <p className={styles.hint}>İşletme sahibi veya personel olarak kayıtlı telefon numaranızla girin.</p>
-            <PhoneSignIn as="business" onSignedIn={props.onSignedIn} />
-            <div className={styles.register}>
-              <span>İşletmeniz henüz kayıtlı değil mi?</span>
-              <Link href="/isletme-kaydi">İşletmenizi kaydedin →</Link>
-            </div>
-          </>
-        )}
+        <h2 className={styles.sheetTitle}>Giriş yap</h2>
+        <PhoneSignIn as="customer" chooseMode onSignedIn={props.onSignedIn} />
+        <Link href="/isletmeler" className={styles.businessLink}>
+          <span>İşletmeyim</span> Salonumu kaydetmek istiyorum ›
+        </Link>
       </div>
     </div>
   );
@@ -329,14 +284,5 @@ function MenuLink({ href, label }: { href: string; label: string }) {
         {label} <span aria-hidden>›</span>
       </Link>
     </li>
-  );
-}
-
-function PersonIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
-    </svg>
   );
 }
