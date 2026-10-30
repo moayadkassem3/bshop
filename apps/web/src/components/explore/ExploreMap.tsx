@@ -370,14 +370,16 @@ function MyShopCard({ shop }: { shop: BusinessShop }) {
         </span>
       </div>
       <div className={styles.myShopActions}>
-        {shop.reviewed_at ? (
+        {shop.reviewed_at && shop.visible ? (
           <Link href={`/${shop.slug}`} className="btn btn-primary">
             Müşteri gözüyle gör
           </Link>
         ) : (
-          <span className={styles.myShopPending}>Salon sayfanız onaydan sonra açılır.</span>
+          <span className={styles.myShopPending}>
+            {shop.reviewed_at ? 'Salonunuz abonelik başlayana kadar müşterilere görünmüyor.' : 'Salon sayfanız onaydan sonra açılır.'}
+          </span>
         )}
-        {shop.reviewed_at && <ShareShop shop={shop} onDone={setNote} />}
+        {shop.reviewed_at && shop.visible && <ShareShop shop={shop} onDone={setNote} />}
       </div>
       {note && (
         <p className={styles.myShopNote} role="status">

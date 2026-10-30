@@ -1,3 +1,4 @@
+import { SubscriptionBanner } from '@/components/SubscriptionBanner';
 import { TabBar } from '@/components/TabBar';
 import styles from './tabs.module.css';
 
@@ -5,7 +6,10 @@ import styles from './tabs.module.css';
 export default function TabsLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <div className={styles.content}>{children}</div>
+      <div className={styles.content}>
+        <SubscriptionBanner />
+        {children}
+      </div>
       <TabBar />
     </>
   );

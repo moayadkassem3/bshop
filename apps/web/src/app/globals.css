@@ -2,6 +2,8 @@
   /* Main navigation: a bottom bar on phones, a rail on the left on big screens (v1.7). */
   --nav-bottom: calc(64px + env(safe-area-inset-bottom));
   --nav-left: 0px;
+  /* The subscription warning bar's height on business screens (v1.7). */
+  --banner-h: 0px;
   /* Brand theme (v1.6): blue and near-black, from the founder's mockups. */
   --bg: #f3f5f8;
   --surface: #ffffff;

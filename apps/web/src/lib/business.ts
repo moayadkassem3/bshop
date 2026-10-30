@@ -19,10 +19,41 @@ export type BusinessShop = {
   cover_photo_id: string | null;
   subscription_status: 'none' | 'trial' | 'active' | 'past_due' | 'canceled';
   current_period_end: string | null;
+  grace_until: string | null;
+  /** Customers can see and book the salon now; a lapsed trial or subscription hides it (v1.7). */
+  visible: boolean;
+  subscription_requested_at: string | null;
   /** Bookable staff, which sets the plan; plan_id is null above 10 (priced individually). */
   seats: number;
   plan_id: string | null;
 };
+
+const TRIAL_WARNING_DAYS = 3;
+
+export type SubscriptionNotice = { tone: 'warning' | 'danger'; title: string; text: string };
+
+/**
+ * The bar shown on every business screen (v1.7): a few days before the trial
+ * ends, while a payment is late, and while the salon is hidden from customers.
+ */
+export function subscriptionNotice(shop: BusinessShop): SubscriptionNotice | null {
+  if (!shop.reviewed_at) return null;
+  if (shop.visible) {
+    if (shop.subscription_status === 'trial') {
+      const days = daysLeft(shop.current_period_end);
+      return days <= TRIAL_WARNING_DAYS
+        ? { tone: 'warning', title: `Ücretsiz denemenizin bitmesine ${days} gün kaldı.`, text: 'Salonunuzun görünür kalması için bir paket seçin.' }
+        : null;
+    }
+    if (shop.subscription_status === 'past_due') {
+      return { tone: 'warning', title: 'Ödemeniz gecikti.', text: 'Ödeme yapılana kadar salonunuz kısa süre sonra müşterilere gizlenir.' };
+    }
+    return null;
+  }
+  const title =
+    shop.subscription_status === 'trial' ? 'Deneme süreniz bitti.' : shop.subscription_status === 'past_due' ? 'Ödemeniz yapılmadı.' : 'Aboneliğiniz aktif değil.';
+  return { tone: 'danger', title, text: 'Salonunuz müşterilere görünmüyor ve yeni randevu alamıyor. Mevcut randevularınız geçerli.' };
+}
 
 /**
  * Calendar days (in Türkiye) until the trial or period ends, so "4 gün" matches

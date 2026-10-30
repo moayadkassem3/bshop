@@ -1,7 +1,7 @@
 /* The map fills the screen above the tab bar; everything else floats on it. */
 .page {
   position: fixed;
-  inset: 0 0 var(--nav-bottom) var(--nav-left);
+  inset: var(--banner-h, 0px) 0 var(--nav-bottom) var(--nav-left);
   overflow: hidden;
   background: #e9edf3;
 }

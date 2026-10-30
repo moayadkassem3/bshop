@@ -282,3 +282,34 @@ describe('photo compression (v1.7)', () => {
     expect(out.data.length).toBe(atFloor.length);
   });
 });
+
+describe('trial ended (v1.7)', () => {
+  it('hides the salon, tells its people, and lets the owner ask to subscribe', async () => {
+    const shop = await setupShop(t);
+    const admin = shop.tokens.admin;
+    const owner = shop.tokens.owner;
+    const mine = async () => (await t.call('GET', '/staff/shops', { token: owner })).body[0];
+    const end = new Date(t.clock.now().getTime() + 2 * 86_400_000).toISOString();
+    await t.call('PUT', `/admin/shops/${shop.shopId}/subscription`, { token: admin, body: { status: 'trial', currentPeriodEnd: end } });
+    expect(await mine()).toMatchObject({ visible: true, subscription_status: 'trial', subscription_requested_at: null });
+
+    t.clock.advance(3 * 24 * 60);
+    expect(await mine()).toMatchObject({ visible: false });
+    expect((await t.call('GET', `/public/shops/${shop.slug}`)).status).toBe(404);
+
+    const staff = await t.login(PHONES.cumali, { portal: 'staff' });
+    expect((await t.call('POST', `${shop.base}/subscription-request`, { token: staff })).status).toBe(403);
+    const asked = await t.call('POST', `${shop.base}/subscription-request`, { token: owner });
+    expect(asked.status).toBe(200);
+    await t.tick();
+    expect(t.sms.to(PHONES.admin).at(-1)).toBe(`Abonelik talebi: Salih Esen Nirvana For Men, 5 Personele kadar. Tel: ${PHONES.owner}`);
+    // Asking again the same day changes nothing.
+    t.clock.advance(60);
+    expect((await t.call('POST', `${shop.base}/subscription-request`, { token: owner })).body.requestedAt).toBe(asked.body.requestedAt);
+    expect((await mine()).subscription_requested_at).toBe(asked.body.requestedAt);
+
+    await t.call('PUT', `/admin/shops/${shop.shopId}/subscription`, { token: admin, body: { status: 'active' } });
+    expect(await mine()).toMatchObject({ visible: true });
+    expect((await t.call('GET', `/public/shops/${shop.slug}`)).status).toBe(200);
+  });
+});

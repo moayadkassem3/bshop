@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { api, errorMessage } from '@/lib/api';
 import { daysLeft, useBusinessShops, type BusinessShop } from '@/lib/business';
 import { formatPrice, TZ } from '@/lib/format';
 import { getToken, useBusinessMode } from '@/lib/session';
@@ -107,24 +107,72 @@ function Status({ shop, trialDays }: { shop: BusinessShop; trialDays: number }) 
     return <p className={styles.trial}>Salonunuz incelemede. {trialDays} günlük ücretsiz deneme, onaylandığında başlar.</p>;
   }
   const end = shop.current_period_end;
-  if (shop.subscription_status === 'trial' && end) {
-    const days = daysLeft(end);
-    return days ? (
-      <p className={styles.trial}>
-        Ücretsiz deneme: <strong className={styles.trialDays}>{days} gün</strong> kaldı
-        <span className={styles.trialEnd}>{endDate(end)} tarihine kadar</span>
-      </p>
-    ) : (
-      <p className={`${styles.trial} ${styles.trialOver}`}>Ücretsiz deneme süreniz bitti. Randevu almaya devam etmek için paketinizi başlatın.</p>
+  if (!shop.visible) {
+    const title =
+      shop.subscription_status === 'trial' ? 'Ücretsiz deneme süreniz bitti.' : shop.subscription_status === 'past_due' ? 'Ödemeniz yapılmadı.' : 'Aboneliğiniz aktif değil.';
+    return (
+      <div className={`${styles.trial} ${styles.trialOver}`}>
+        <p className={styles.statusText}>
+          <strong>{title}</strong> Salonunuz müşterilere görünmüyor ve yeni randevu alamıyor. Abonelik başlayınca hemen yeniden açılır.
+        </p>
+        <StartSubscription shop={shop} />
+      </div>
     );
   }
-  if (shop.subscription_status === 'active') {
-    return <p className={styles.trial}>Aboneliğiniz aktif{end ? ` · yenileme ${endDate(end)}` : ''}.</p>;
+  if (shop.subscription_status === 'trial' && end) {
+    return (
+      <p className={styles.trial}>
+        Ücretsiz deneme: <strong className={styles.trialDays}>{daysLeft(end)} gün</strong> kaldı
+        <span className={styles.trialEnd}>{endDate(end)} tarihine kadar</span>
+      </p>
+    );
   }
   if (shop.subscription_status === 'past_due') {
-    return <p className={`${styles.trial} ${styles.trialOver}`}>Ödemeniz bekleniyor. Salonunuz kısa süre içinde randevu almayı durdurur.</p>;
+    return (
+      <div className={`${styles.trial} ${styles.trialOver}`}>
+        <p className={styles.statusText}>
+          <strong>Ödemeniz gecikti.</strong> Ödeme yapılana kadar salonunuz kısa süre sonra müşterilere gizlenir.
+        </p>
+        <StartSubscription shop={shop} />
+      </div>
+    );
   }
-  return <p className={`${styles.trial} ${styles.trialOver}`}>Aboneliğiniz aktif değil.</p>;
+  return <p className={styles.trial}>Aboneliğiniz aktif{end ? ` · yenileme ${endDate(end)}` : ''}.</p>;
+}
+
+/**
+ * "Aboneliği başlat": until online payment is in place, the owner asks our team,
+ * who call back and start the subscription. Staff are told to ask the owner.
+ */
+function StartSubscription({ shop }: { shop: BusinessShop }) {
+  const [requested, setRequested] = useState(shop.subscription_requested_at);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (shop.role !== 'owner') return <p className={styles.statusText}>Aboneliği salon sahibi başlatabilir.</p>;
+  if (requested) return <p className={styles.statusText}>Talebiniz alındı. Ekibimiz sizi arayıp aboneliğinizi başlatacak.</p>;
+
+  async function start() {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await api<{ requestedAt: string }>(`/staff/shops/${shop.id}/subscription-request`, { method: 'POST' });
+      setRequested(r.requestedAt);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <button type="button" className={`btn ${styles.startBtn}`} disabled={busy} onClick={start}>
+        Aboneliği başlat
+      </button>
+      <p className={styles.statusNote}>Online ödeme yakında. Şimdilik ekibimiz sizi arayıp paketinizi başlatır.</p>
+      {error && <p className="alert alert-danger">{error}</p>}
+    </>
+  );
 }
 
 /** In customer mode, whether this account also belongs to a salon (then it has nothing to register). */

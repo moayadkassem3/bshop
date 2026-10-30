@@ -187,3 +187,26 @@
   font-weight: 700;
   text-decoration: none;
 }
+
+.statusText {
+  margin: 0;
+}
+
+.statusNote {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 550;
+  opacity: 0.85;
+}
+
+.trialOver {
+  display: grid;
+  gap: 10px;
+}
+
+.startBtn {
+  justify-self: start;
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #fff;
+}

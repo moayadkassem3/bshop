@@ -38,6 +38,7 @@ export const sms = {
   timeOffered: (c: { shop: string; from: string; when: string; deadline: string; link: string }) =>
     `${c.shop}: ${c.from} dolu. Yerine ${c.when} uygun mu? Son yanıt ${c.deadline}: ${c.link}`,
   // To our team, not to customers.
+  subscriptionRequest: (c: { salon: string; plan: string; phone: string }) => `Abonelik talebi: ${c.salon}, ${c.plan}. Tel: ${c.phone}`,
   quoteRequest: (c: { salon: string; staff: number; phone: string }) => `Yeni teklif talebi: ${c.salon}, ${c.staff} personel. Tel: ${c.phone}`,
 };
 

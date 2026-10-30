@@ -4,7 +4,7 @@ import type { Deps } from '../deps.js';
 import { applyAbsence, getAbsence, markAbsence } from '../services/absence.js';
 import { shopStats } from '../services/stats.js';
 import { offerNewTime, offerTimes } from '../services/offers.js';
-import { getShopSettings, setAutoConfirmHours, updateShopSettings } from '../services/shops.js';
+import { getShopSettings, requestSubscription, setAutoConfirmHours, updateShopSettings } from '../services/shops.js';
 import {
   addStaffAppointment,
   blockTime,
@@ -141,6 +141,12 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
       })
       .parse(req.body);
     return applyAbsence(deps, await auth(req), p.shopId, p.id, body.decisions);
+  });
+
+  // "Aboneliği başlat" (v1.7): asks our team to start the subscription, until online payment exists.
+  app.post('/staff/shops/:shopId/subscription-request', async (req) => {
+    const { shopId } = shopParams.parse(req.params);
+    return requestSubscription(deps, await auth(req), shopId);
   });
 
   // İstatistikler (v1.7): a month of page visits and appointments, for owners.

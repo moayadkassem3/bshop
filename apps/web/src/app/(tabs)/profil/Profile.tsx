@@ -202,6 +202,7 @@ type MyBusiness = {
   reviewed_at: string | null;
   subscription_status: 'none' | 'trial' | 'active' | 'past_due' | 'canceled';
   current_period_end: string | null;
+  visible: boolean;
 };
 
 function businessStatus(b: MyBusiness): { label: string; tone: string } {
@@ -246,12 +247,14 @@ function MyBusinesses() {
                 </Link>
               )}
               {/* The salon's public page, as customers see it (v1.7); it exists once our team approves the salon. */}
-              {b.reviewed_at ? (
+              {b.reviewed_at && b.visible ? (
                 <Link href={`/${b.slug}`} className={`${styles.menuItem} ${styles.editShop}`}>
                   Salonu müşteri gözüyle gör <span aria-hidden>›</span>
                 </Link>
               ) : (
-                <span className={`${styles.menuItem} ${styles.editShop} ${styles.pendingView}`}>Salon sayfası onaydan sonra açılır</span>
+                <span className={`${styles.menuItem} ${styles.editShop} ${styles.pendingView}`}>
+                  {b.reviewed_at ? 'Salon sayfası abonelik başlayana kadar kapalı' : 'Salon sayfası onaydan sonra açılır'}
+                </span>
               )}
             </li>
           );

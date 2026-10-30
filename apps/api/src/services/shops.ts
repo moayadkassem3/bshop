@@ -316,3 +316,44 @@ export async function setAutoConfirmHours(deps: Deps, user: User, shopId: string
     }
   });
 }
+
+/**
+ * "Aboneliği başlat" (v1.7): until online payment exists, an owner asks our team
+ * to start the subscription. Once a day at most; our team is told by SMS and
+ * activates it from the back office.
+ */
+export async function requestSubscription(deps: Deps, user: User, shopId: string) {
+  await requireOwner(deps.db, user, shopId);
+  const now = deps.clock.now();
+  return withTx(deps.db, async (tx) => {
+    await tx.query('SELECT id FROM shops WHERE id = $1 FOR UPDATE', [shopId]);
+    const recent = await tx.query<{ created_at: Date }>(
+      'SELECT created_at FROM subscription_requests WHERE shop_id = $1 AND created_at > $2 ORDER BY created_at DESC LIMIT 1',
+      [shopId, new Date(now.getTime() - 86_400_000)],
+    );
+    if (recent.rows[0]) return { requestedAt: recent.rows[0].created_at };
+    const { rows } = await tx.query<{ name: string; seats: number }>(
+      `SELECT s.name, (SELECT count(*)::int FROM shop_members m WHERE m.shop_id = s.id AND m.active AND m.bookable) AS seats
+       FROM shops s WHERE s.id = $1`,
+      [shopId],
+    );
+    const plan = planForStaff(rows[0]!.seats);
+    await tx.query('INSERT INTO subscription_requests (shop_id, user_id, plan_id, created_at) VALUES ($1, $2, $3, $4)', [
+      shopId,
+      user.id,
+      plan?.id ?? null,
+      now,
+    ]);
+    const admins = await tx.query<{ id: string; phone: string }>('SELECT id, phone FROM users WHERE is_platform_admin');
+    for (const admin of admins.rows) {
+      await queueSms(tx, now, {
+        shopId,
+        userId: admin.id,
+        phone: admin.phone,
+        template: 'subscriptionRequest',
+        body: sms.subscriptionRequest({ salon: rows[0]!.name, plan: plan?.name ?? `${rows[0]!.seats} personel (özel fiyat)`, phone: user.phone }),
+      });
+    }
+    return { requestedAt: now };
+  });
+}
