@@ -30,7 +30,7 @@ export function buildApp(deps: Deps, options: { logger?: boolean } = {}): Fastif
   };
 
   app.setErrorHandler((err, req, reply) => {
-    if (err instanceof AppError) return reply.status(err.status).send({ error: err.code, message: err.message });
+    if (err instanceof AppError) return reply.status(err.status).send({ error: err.code, message: err.message, ...err.details });
     if (err instanceof ZodError) {
       return reply.status(400).send({ error: 'VALIDATION', message: 'Invalid request', issues: err.issues });
     }

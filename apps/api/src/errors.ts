@@ -3,6 +3,8 @@ export class AppError extends Error {
     readonly status: number,
     readonly code: string,
     message: string = code,
+    /** Extra fields sent with the error, e.g. how long to wait before retrying. */
+    readonly details?: Record<string, unknown>,
   ) {
     super(message);
   }

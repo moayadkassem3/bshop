@@ -20,7 +20,7 @@ export function formatTime(instant: Date, timezone: string): string {
 type Ctx = { shop: string; when: string; link: string };
 
 export const sms = {
-  otp: (code: string) => `Randevu doğrulama kodunuz: ${code}. Kod 5 dakika geçerlidir. Kimseyle paylaşmayın.`,
+  otp: (code: string) => `Randevu doğrulama kodunuz: ${code}. Kod 10 dakika geçerlidir. Kimseyle paylaşmayın.`,
   confirmed: (c: Ctx & { staff: string }) =>
     `${c.shop}: ${c.when} randevunuz onaylandı (${c.staff}). Ödeme salonda. Randevularınız: ${c.link}`,
   declined: (c: Ctx) =>

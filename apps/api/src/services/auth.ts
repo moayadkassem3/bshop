@@ -8,10 +8,14 @@ import { normalizePhone } from '../phone.js';
 import { hasAccepted, recordConsents, type ConsentInput } from './consents.js';
 import { MINUTE } from '../domain/time.js';
 
-const OTP_TTL_MINUTES = 5;
+// Sign-in limits (v1.7, loosened): enough to stop someone running up the SMS bill,
+// loose enough that a person retrying a few times is never locked out for long.
+const OTP_TTL_MINUTES = 10;
 const OTP_MAX_ATTEMPTS = 5;
-const OTP_RESEND_SECONDS = 60;
-const OTP_MAX_PER_HOUR = 5;
+const OTP_RESEND_SECONDS = 30;
+const OTP_MAX_PER_HOUR = 10;
+// The test site sends no SMS, so it only stops double taps.
+const DEMO_RESEND_SECONDS = 10;
 
 /**
  * Which entrance a session was started from: the customer website, staff sign-in
@@ -69,16 +73,22 @@ export async function requestOtp(deps: Deps, rawPhone: string, as: SignInAs = 'c
   return withTx(deps.db, async (tx) => {
     // Serialise requests per phone so the rate limits hold under concurrency.
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [phone]);
-    const { rows } = await tx.query<{ last: Date | null; hour_count: number }>(
-      `SELECT max(created_at) AS last, count(*)::int AS hour_count
+    const { rows } = await tx.query<{ last: Date | null; first: Date | null; hour_count: number }>(
+      `SELECT max(created_at) AS last, min(created_at) AS first, count(*)::int AS hour_count
        FROM otp_codes WHERE phone = $1 AND created_at > $2`,
       [phone, new Date(now.getTime() - 60 * MINUTE)],
     );
-    const { last, hour_count } = rows[0]!;
-    if (last && now.getTime() - last.getTime() < OTP_RESEND_SECONDS * 1000) {
-      throw new AppError(429, 'OTP_TOO_SOON', 'Wait a minute before requesting another code');
+    const { last, first, hour_count } = rows[0]!;
+    const resend = deps.config.demoMode ? DEMO_RESEND_SECONDS : OTP_RESEND_SECONDS;
+    if (last && now.getTime() - last.getTime() < resend * 1000) {
+      const retryAfterSeconds = Math.ceil((last.getTime() + resend * 1000 - now.getTime()) / 1000);
+      throw new AppError(429, 'OTP_TOO_SOON', 'Wait before requesting another code', { retryAfterSeconds });
     }
-    if (hour_count >= OTP_MAX_PER_HOUR) throw new AppError(429, 'OTP_LIMIT', 'Too many codes requested');
+    if (!deps.config.demoMode && hour_count >= OTP_MAX_PER_HOUR && first) {
+      // The oldest code of the hour drops out of the count first.
+      const retryAfterSeconds = Math.ceil((first.getTime() + 60 * MINUTE - now.getTime()) / 1000);
+      throw new AppError(429, 'OTP_LIMIT', 'Too many codes requested', { retryAfterSeconds });
+    }
 
     const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
     await tx.query(

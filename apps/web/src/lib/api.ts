@@ -6,6 +6,8 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
+    /** Seconds until the request may be tried again, when the server says. */
+    readonly retryAfterSeconds?: number,
   ) {
     super(code);
   }
@@ -24,7 +26,7 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
   });
   if (res.status === 204) return undefined as T;
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError(res.status, data.error ?? 'UNKNOWN');
+  if (!res.ok) throw new ApiError(res.status, data.error ?? 'UNKNOWN', typeof data.retryAfterSeconds === 'number' ? data.retryAfterSeconds : undefined);
   return data as T;
 }
 
@@ -33,8 +35,8 @@ const MESSAGES: Record<string, string> = {
   PENDING_EXISTS: 'Bu salonda yanıt bekleyen bir talebiniz var. Yanıt gelince yeni randevu alabilirsiniz.',
   BOOKING_LIMIT: 'Bu salondaki yaklaşan randevu sınırına ulaştınız.',
   OTP_INVALID: 'Kod hatalı veya süresi dolmuş.',
-  OTP_TOO_SOON: 'Yeni kod istemek için bir dakika bekleyin.',
-  OTP_LIMIT: 'Çok fazla kod istendi. Lütfen daha sonra tekrar deneyin.',
+  OTP_TOO_SOON: 'Yeni kod istemek için biraz bekleyin.',
+  OTP_LIMIT: 'Bu numara için çok fazla kod istendi.',
   INVALID_PHONE: 'Telefon numarası geçerli değil.',
   NAME_REQUIRED: 'Ad ve soyad gerekli.',
   FORBIDDEN: 'Bu salon şu anda bu hesaptan randevu kabul etmiyor.',
@@ -59,7 +61,16 @@ const MESSAGES: Record<string, string> = {
   NOT_STARTED: 'Randevu saati henüz gelmedi.',
 };
 
+/** "45 saniye", "12 dakika": how long to wait, rounded up. */
+function waitLabel(seconds: number): string {
+  return seconds < 60 ? `${seconds} saniye` : `${Math.ceil(seconds / 60)} dakika`;
+}
+
 export function errorMessage(err: unknown): string {
+  if (err instanceof ApiError && err.retryAfterSeconds) {
+    if (err.code === 'OTP_TOO_SOON') return `Yeni kod istemek için ${waitLabel(err.retryAfterSeconds)} bekleyin.`;
+    if (err.code === 'OTP_LIMIT') return `Bu numara için çok fazla kod istendi. ${waitLabel(err.retryAfterSeconds)} sonra tekrar deneyebilirsiniz.`;
+  }
   if (err instanceof ApiError) return MESSAGES[err.code] ?? 'Bir sorun oluştu. Lütfen tekrar deneyin.';
   return 'Bağlantı kurulamadı. İnternetinizi kontrol edip tekrar deneyin.';
 }

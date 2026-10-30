@@ -289,13 +289,42 @@ describe('SMS codes', () => {
     expect(right.body.error).toBe('OTP_INVALID');
   });
 
-  it('codes expire after 5 minutes', async () => {
+  it('codes last 10 minutes', async () => {
     await t.call('POST', '/auth/otp/request', { body: { phone: PHONES.customer } });
     await t.tick();
     const code = t.sms.to(PHONES.customer)[0]!.match(/(\d{6})/)![1]!;
-    t.clock.advance(6);
+    t.clock.advance(11);
     const r = await t.call('POST', '/auth/otp/verify', { body: { phone: PHONES.customer, code } });
     expect(r.body.error).toBe('OTP_INVALID');
+  });
+
+  it('allows 10 codes an hour, 30 seconds apart, and says when to try again', async () => {
+    const ask = () => t.call('POST', '/auth/otp/request', { body: { phone: PHONES.customer } });
+    expect((await ask()).status).toBe(204);
+    t.clock.set(new Date(t.clock.now().getTime() + 20_000).toISOString());
+    expect((await ask()).body).toMatchObject({ error: 'OTP_TOO_SOON', retryAfterSeconds: 10 });
+    for (let i = 1; i < 10; i++) {
+      t.clock.advance(1);
+      expect((await ask()).status).toBe(204);
+    }
+    t.clock.advance(1);
+    // The first code was asked about 10 minutes ago; it leaves the hour's count 50 minutes from now.
+    const limited = (await ask()).body;
+    expect(limited.error).toBe('OTP_LIMIT');
+    expect(limited.retryAfterSeconds).toBeGreaterThan(49 * 60);
+    expect(limited.retryAfterSeconds).toBeLessThanOrEqual(50 * 60);
+  });
+
+  it('on the test site (no SMS sent) only double taps are stopped', async () => {
+    t.deps.config.demoMode = true;
+    try {
+      for (let i = 0; i < 15; i++) {
+        expect((await t.call('POST', '/auth/otp/request', { body: { phone: PHONES.customer } })).status).toBe(200);
+        t.clock.set(new Date(t.clock.now().getTime() + 11_000).toISOString());
+      }
+    } finally {
+      t.deps.config.demoMode = false;
+    }
   });
 });
 

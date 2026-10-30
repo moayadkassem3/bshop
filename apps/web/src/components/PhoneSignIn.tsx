@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api, errorMessage } from '@/lib/api';
+import { api, ApiError, errorMessage } from '@/lib/api';
 import { moveLocalFavoritesToAccount } from '@/lib/favorites';
 import { phoneComplete } from '@/lib/phone';
 import { lastMode, setToken } from '@/lib/session';
@@ -66,8 +66,10 @@ export function PhoneSignIn({ as = 'customer', chooseMode = false, onSignedIn }:
         setCode(res.demoCode);
       }
       setCodeSent(true);
-      setResendIn(60);
+      // Matches the server's wait between codes (shorter on the test site, which sends no SMS).
+      setResendIn(res?.demoCode ? 10 : 30);
     } catch (err) {
+      if (err instanceof ApiError && err.code === 'OTP_TOO_SOON' && err.retryAfterSeconds) setResendIn(err.retryAfterSeconds);
       setError(errorMessage(err));
     } finally {
       setBusy(false);
