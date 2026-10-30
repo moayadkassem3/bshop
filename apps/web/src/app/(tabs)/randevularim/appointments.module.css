@@ -206,3 +206,21 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
 }
+
+/* Something the salon changed since Randevular was last opened (v1.7). */
+.newDot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  vertical-align: middle;
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px;
+}

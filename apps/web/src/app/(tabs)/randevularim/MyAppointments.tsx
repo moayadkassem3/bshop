@@ -6,6 +6,7 @@ import { AppointmentStatus } from '@/components/AppointmentStatus';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { formatLongDate, formatPrice, formatTime } from '@/lib/format';
 import { getToken, setToken } from '@/lib/session';
+import { appointmentUpdates, markUpdatesSeen, updatesSeenAt } from '@/lib/updates';
 import type { CustomerAppointment } from '@/lib/types';
 import styles from './appointments.module.css';
 
@@ -13,6 +14,8 @@ export function MyAppointments() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [items, setItems] = useState<CustomerAppointment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // What the salon changed since Randevular was last opened: marked "Yeni" for this visit (v1.7).
+  const [fresh, setFresh] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     try {
@@ -29,7 +32,14 @@ export function MyAppointments() {
   useEffect(() => {
     const has = Boolean(getToken());
     setSignedIn(has);
-    if (has) load();
+    if (!has) return;
+    load();
+    appointmentUpdates(updatesSeenAt())
+      .then((ids) => {
+        setFresh(new Set(ids));
+        markUpdatesSeen();
+      })
+      .catch(() => undefined);
   }, [load]);
 
   // Keep pending requests fresh until the shop answers.
@@ -61,7 +71,7 @@ export function MyAppointments() {
     );
   }
 
-  return <List items={items} error={error} onChanged={load} />;
+  return <List items={items} fresh={fresh} error={error} onChanged={load} />;
 }
 
 type Tab = 'appointments' | 'requests';
@@ -94,18 +104,33 @@ function Header({ children }: { children?: React.ReactNode }) {
   );
 }
 
-function List(props: { items: CustomerAppointment[] | null; error: string | null; onChanged: () => void }) {
+function List(props: { items: CustomerAppointment[] | null; fresh: Set<string>; error: string | null; onChanged: () => void }) {
   const now = Date.now();
   const all = props.items ?? [];
+  const isFresh = (a: CustomerAppointment) => props.fresh.has(a.id);
+  // A change from the salon opens where it is: the right tab and Yaklaşan or Geçmiş.
+  const firstFresh = all.find(isFresh);
   const waiting = all.filter((a) => (a.status === 'pending' || a.status === 'offered') && isUpcoming(a, now)).length;
   const offers = all.some((a) => a.status === 'offered' && isUpcoming(a, now));
   const [tab, setTab] = useState<Tab | null>(null);
-  const [when, setWhen] = useState<When>('upcoming');
+  const [chosenWhen, setWhen] = useState<When | null>(null);
+  const when: When = chosenWhen ?? (firstFresh && !isUpcoming(firstFresh, now) ? 'past' : 'upcoming');
   // A new request opens on Talepler, so it is the first thing the customer sees after booking.
   // An offered time waits for the customer's answer, so it opens Talepler too.
   const shownTab: Tab =
-    tab ?? (offers || (waiting && !all.some((a) => a.status === 'confirmed' && isUpcoming(a, now))) ? 'requests' : 'appointments');
-  const shown = all.filter((a) => (shownTab === 'requests') === isRequest(a) && (when === 'upcoming') === isUpcoming(a, now));
+    tab ??
+    (firstFresh
+      ? isRequest(firstFresh)
+        ? 'requests'
+        : 'appointments'
+      : offers || (waiting && !all.some((a) => a.status === 'confirmed' && isUpcoming(a, now)))
+        ? 'requests'
+        : 'appointments');
+  const freshIn = (t: Tab, w?: When) => all.some((a) => isFresh(a) && (t === 'requests') === isRequest(a) && (!w || (w === 'upcoming') === isUpcoming(a, now)));
+  const shown = all
+    .filter((a) => (shownTab === 'requests') === isRequest(a) && (when === 'upcoming') === isUpcoming(a, now))
+    // What the salon just changed comes first.
+    .sort((a, b) => Number(isFresh(b)) - Number(isFresh(a)));
   const empty = EMPTY[shownTab][when];
 
   return (
@@ -116,6 +141,7 @@ function List(props: { items: CustomerAppointment[] | null; error: string | null
             <button key={t} type="button" role="tab" aria-selected={shownTab === t} className={shownTab === t ? styles.segOn : ''} onClick={() => setTab(t)}>
               {t === 'appointments' ? 'Randevular' : 'Talepler'}
               {t === 'requests' && waiting > 0 && <span className={styles.count}>{waiting}</span>}
+              {freshIn(t) && <span className={styles.newDot} aria-label="yeni" />}
             </button>
           ))}
         </div>
@@ -125,6 +151,7 @@ function List(props: { items: CustomerAppointment[] | null; error: string | null
           {(['upcoming', 'past'] as const).map((w) => (
             <button key={w} type="button" role="radio" aria-checked={when === w} className={`${styles.chip} ${when === w ? styles.chipOn : ''}`} onClick={() => setWhen(w)}>
               {w === 'upcoming' ? 'Yaklaşan' : 'Geçmiş'}
+              {freshIn(shownTab, w) && <span className={styles.newDot} aria-label="yeni" />}
             </button>
           ))}
         </div>
@@ -145,7 +172,7 @@ function List(props: { items: CustomerAppointment[] | null; error: string | null
             </div>
           )}
           {shown.map((a) => (
-            <AppointmentCard key={a.id} appointment={a} onChanged={props.onChanged} />
+            <AppointmentCard key={a.id} appointment={a} isNew={isFresh(a)} onChanged={props.onChanged} />
           ))}
         </div>
       </div>
@@ -171,7 +198,7 @@ function MapIcon() {
   );
 }
 
-function AppointmentCard({ appointment: a, onChanged }: { appointment: CustomerAppointment; onChanged: () => void }) {
+function AppointmentCard({ appointment: a, isNew, onChanged }: { appointment: CustomerAppointment; isNew: boolean; onChanged: () => void }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -210,7 +237,10 @@ function AppointmentCard({ appointment: a, onChanged }: { appointment: CustomerA
         <span className={styles.price}>{formatPrice(a.total_price_kurus, a.price_is_starting_from)}</span>
       </div>
       <p className={styles.services}>{(a.services ?? []).map((s) => s.name).join(' + ')}</p>
-      <AppointmentStatus appointment={a} />
+      <div className={styles.statusRow}>
+        {isNew && <span className="badge badge-danger">Yeni</span>}
+        <AppointmentStatus appointment={a} />
+      </div>
       {a.status === 'offered' && <OfferAnswer appointment={a} onChanged={onChanged} />}
       {upcoming && !confirming && (
         <button type="button" className={styles.cancel} onClick={() => setConfirming(true)}>

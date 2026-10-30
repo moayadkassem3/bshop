@@ -390,6 +390,11 @@ describe('Başka saat öner (v1.7)', () => {
     expect(slots).not.toContain(at('17:00'));
     expect((await t.call('GET', '/me/appointments', { token: c })).body[0]).toMatchObject({ status: 'offered', offered_from: at('16:00') });
 
+    // The customer's notifications list the salon's offer, so the website can mark it as new; never the sign-in code.
+    const inbox = (await t.call('GET', '/me/notifications', { token: c })).body as { template: string; appointment_id: string }[];
+    expect(inbox.map((n) => n.template)).toEqual(['time_offered']);
+    expect(inbox[0]!.appointment_id).toBe(id);
+
     expect((await t.call('POST', `/me/appointments/${id}/accept-offer`, { token: c })).body.status).toBe('confirmed');
     expect(await appointment(id)).toMatchObject({ status: 'confirmed', confirmed_via: 'offer' });
     await t.tick();

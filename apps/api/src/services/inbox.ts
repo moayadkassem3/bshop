@@ -12,14 +12,17 @@ export type InboxItem = {
 };
 
 /**
- * The person's own app notifications, newest first: the same messages the
- * phone receives as push, so the website can show them too (v1.7).
+ * The person's own notifications, newest first: the push alerts the staff app
+ * gets, and a customer's SMS about their appointments (confirmed, declined,
+ * cancelled or moved by the salon, another time offered), so the website can
+ * mark what changed (v1.7). Sign-in codes are never listed.
  */
 export async function listMyNotifications(deps: Deps, user: User, input: { after?: Date; limit?: number } = {}) {
   const { rows } = await deps.db.query<InboxItem>(
     `SELECT id, shop_id, appointment_id, template, payload->>'title' AS title, body, created_at
      FROM notifications
-     WHERE channel = 'push' AND recipient_user_id = $1 AND ($2::timestamptz IS NULL OR created_at > $2)
+     WHERE (channel = 'push' OR appointment_id IS NOT NULL) AND recipient_user_id = $1
+       AND ($2::timestamptz IS NULL OR created_at > $2)
      ORDER BY created_at DESC LIMIT $3`,
     [user.id, input.after ?? null, input.limit ?? 50],
   );

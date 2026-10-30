@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useNewCancellations } from '@/lib/business';
 import { useBusinessMode } from '@/lib/session';
+import { useAppointmentUpdates } from '@/lib/updates';
 import { LogoMark } from './Logo';
 import styles from './TabBar.module.css';
 
@@ -62,6 +63,8 @@ export function TabBar() {
   const pathname = usePathname();
   const business = useBusinessMode();
   const cancellations = useNewCancellations(business);
+  // Customers: what the salon changed (confirmed, cancelled, another time offered...) since Randevular was opened.
+  const updates = useAppointmentUpdates(!business);
   const tabs = TABS.filter((t) => (t.href === '/favoriler' ? !business : t.business ? business : true));
   return (
     <nav className={styles.bar} aria-label="Ana menü">
@@ -76,6 +79,11 @@ export function TabBar() {
               {tab.href === '/gecmis' && cancellations > 0 && (
                 <span className={styles.badge} aria-label={`${cancellations} yeni iptal`}>
                   {cancellations}
+                </span>
+              )}
+              {tab.href === '/randevularim' && !business && updates > 0 && (
+                <span className={styles.badge} aria-label={`${updates} randevuda yenilik`}>
+                  {updates}
                 </span>
               )}
               <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden>
