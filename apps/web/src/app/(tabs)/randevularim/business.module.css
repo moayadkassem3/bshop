@@ -170,3 +170,57 @@
   font-weight: 650;
   cursor: pointer;
 }
+
+/* "Başka saat öner": day and time chips (v1.7). */
+.offer {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.offerTitle {
+  margin: 0;
+  font-weight: 700;
+}
+
+.offerDays,
+.offerTimes {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.offerTimes {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.offerDays button,
+.offerTimes button {
+  flex-shrink: 0;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.offerTimes button {
+  font-variant-numeric: tabular-nums;
+}
+
+.offerDays .on,
+.offerTimes .on {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}

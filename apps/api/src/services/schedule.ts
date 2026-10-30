@@ -70,7 +70,7 @@ export async function loadDaySchedules(
 
   const busy = await q.query<{ member_id: string; start: Date; end: Date }>(
     `SELECT staff_id AS member_id, starts_at AS start, blocked_until AS end FROM appointments
-     WHERE staff_id = ANY($1::uuid[]) AND status IN ('pending', 'confirmed')
+     WHERE staff_id = ANY($1::uuid[]) AND status IN ('pending', 'offered', 'confirmed')
        AND starts_at < $3 AND blocked_until > $2 AND NOT (id = ANY($4::uuid[]))
      UNION ALL
      SELECT member_id, starts_at, ends_at FROM time_off
@@ -88,7 +88,7 @@ export async function dayLoadMinutes(q: Queryable, day: LocalDay, memberIds: str
   const { rows } = await q.query<{ member_id: string; minutes: number }>(
     `SELECT staff_id AS member_id, (sum(extract(epoch FROM ends_at - starts_at)) / 60)::int AS minutes
      FROM appointments
-     WHERE staff_id = ANY($1::uuid[]) AND status IN ('pending', 'confirmed')
+     WHERE staff_id = ANY($1::uuid[]) AND status IN ('pending', 'offered', 'confirmed')
        AND starts_at >= $2 AND starts_at < $3
      GROUP BY staff_id`,
     [memberIds, day.start.toJSDate(), day.start.plus({ days: 1 }).toJSDate()],

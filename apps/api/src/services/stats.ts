@@ -65,9 +65,9 @@ export async function shopStats(deps: Deps, user: User, shopId: string, month?: 
     views: { total: daily.reduce((n, d) => n + d.views, 0), bySource, daily },
     // Declined requests never became appointments; cancellations are shown on their own.
     appointments: {
-      total: count('pending', 'confirmed', 'completed', 'no_show'),
+      total: count('pending', 'offered', 'confirmed', 'completed', 'no_show'),
       completed: count('completed'),
-      upcoming: count('pending', 'confirmed'),
+      upcoming: count('pending', 'offered', 'confirmed'),
       noShow: count('no_show'),
       cancelled: count('cancelled'),
     },

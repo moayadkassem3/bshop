@@ -188,3 +188,21 @@
   color: #fff;
 }
 
+
+/* A time the salon offered instead (v1.7), waiting for the customer's answer. */
+.offer {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.offer p {
+  margin: 0 0 10px;
+}
+
+.offer .confirmActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}

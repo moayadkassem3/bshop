@@ -24,7 +24,7 @@ type Affected = {
 
 async function affectedAppointments(tx: pg.PoolClient, memberId: string, startsAt: Date, endsAt: Date) {
   const { rows } = await tx.query<AppointmentRow>(
-    `SELECT * FROM appointments WHERE staff_id = $1 AND status IN ('pending', 'confirmed')
+    `SELECT * FROM appointments WHERE staff_id = $1 AND status IN ('pending', 'offered', 'confirmed')
      AND starts_at < $3 AND ends_at > $2 ORDER BY starts_at`,
     [memberId, startsAt, endsAt],
   );
@@ -161,7 +161,7 @@ export async function applyAbsence(deps: Deps, user: User, shopId: string, absen
       const appt = (
         await tx.query<AppointmentRow>(
           `SELECT * FROM appointments WHERE id = $1 AND shop_id = $2 AND staff_id = $3
-           AND status IN ('pending', 'confirmed') AND starts_at < $5 AND ends_at > $4 FOR UPDATE`,
+           AND status IN ('pending', 'offered', 'confirmed') AND starts_at < $5 AND ends_at > $4 FOR UPDATE`,
           [d.appointmentId, shopId, absence.member_id, absence.starts_at, absence.ends_at],
         )
       ).rows[0];

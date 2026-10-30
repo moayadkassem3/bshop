@@ -81,7 +81,8 @@ export async function cancelByShop(deps: Deps, user: User, shopId: string, id: s
   const now = deps.clock.now();
   return withTx(deps.db, async (tx) => {
     const { appt } = await lockForStaff(tx, user, shopId, id);
-    if (!['pending', 'confirmed'].includes(appt.status)) throw conflict('NOT_CANCELLABLE', `Appointment is ${appt.status}`);
+    // An open offer can be withdrawn the same way.
+    if (!['pending', 'offered', 'confirmed'].includes(appt.status)) throw conflict('NOT_CANCELLABLE', `Appointment is ${appt.status}`);
     return cancelLocked(tx, deps, user, appt, now);
   });
 }
@@ -123,7 +124,7 @@ export async function listShopAppointments(
   const { rows } = await deps.db.query(
     `SELECT a.id, a.staff_id, m.display_name AS staff_name, a.status, a.source, a.starts_at, a.ends_at,
        a.customer_id, a.customer_name, a.customer_phone, a.guest_name, a.requested_staff, a.confirmed_via,
-       a.deadline_at, a.reminder_at, a.cancel_reason, a.cancelled_at, a.total_price_kurus, a.price_is_starting_from,
+       a.deadline_at, a.reminder_at, a.offered_from, a.cancel_reason, a.cancelled_at, a.total_price_kurus, a.price_is_starting_from,
        sc.no_show_count, sc.late_cancel_count,
        (SELECT json_agg(json_build_object('name', x.name, 'durationMinutes', x.duration_minutes, 'priceKurus', x.price_kurus)
           ORDER BY x.position) FROM appointment_services x WHERE x.appointment_id = a.id) AS services
@@ -172,7 +173,7 @@ export async function blockTime(
   return withTx(deps.db, async (tx) => {
     await tx.query('SELECT id FROM shop_members WHERE id = $1 FOR UPDATE', [input.staffId]);
     const clash = await tx.query(
-      `SELECT 1 FROM appointments WHERE staff_id = $1 AND status IN ('pending', 'confirmed')
+      `SELECT 1 FROM appointments WHERE staff_id = $1 AND status IN ('pending', 'offered', 'confirmed')
        AND starts_at < $3 AND blocked_until > $2 LIMIT 1`,
       [input.staffId, input.startsAt, input.endsAt],
     );

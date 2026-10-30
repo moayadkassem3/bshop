@@ -347,3 +347,79 @@ describe('protections without deposits (handoff 2.1)', () => {
     expect(slots.body.slots[0].startsAt).toBe(at('15:05'));
   });
 });
+
+describe('Başka saat öner (v1.7)', () => {
+  const free = async (shop: Awaited<ReturnType<typeof setupShop>>) =>
+    (
+      await t.call(
+        'GET',
+        `/public/shops/${shop.slug}/availability?date=2026-10-26&serviceIds=${shop.services.haircut}&staffId=${shop.staff.cumali}`,
+      )
+    ).body.slots.map((s: { startsAt: string }) => s.startsAt);
+
+  it('the salon offers another time; it holds that slot until the customer accepts', async () => {
+    const shop = await setupShop(t);
+    t.clock.set(at('14:00'));
+    const c = await customer();
+    const id = (await book(t, shop, c, { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('16:00') })).body
+      .appointments[0].id;
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
+    const tahir = await t.login(PHONES.tahir, { portal: 'staff' });
+
+    const times = (await t.call('GET', `${shop.base}/appointments/${id}/offer-times?date=2026-10-26`, { token: cumali })).body;
+    expect(times).toContain(at('17:00'));
+    expect(times).not.toContain(at('16:00')); // the time they asked for
+    expect(times).not.toContain(at('14:30')); // too soon for the customer to answer an hour ahead
+    expect((await t.call('POST', `${shop.base}/appointments/${id}/offer`, { token: tahir, body: { startsAt: at('17:00') } })).status).toBe(403);
+    expect((await t.call('POST', `${shop.base}/appointments/${id}/offer`, { token: cumali, body: { startsAt: at('16:00') } })).status).toBe(400);
+    expect((await t.call('POST', `${shop.base}/appointments/${id}/offer`, { token: cumali, body: { startsAt: at('14:45') } })).body.error).toBe(
+      'OFFER_TOO_SOON',
+    );
+
+    const offered = await t.call('POST', `${shop.base}/appointments/${id}/offer`, { token: cumali, body: { startsAt: at('17:00') } });
+    expect(offered.body).toMatchObject({ status: 'offered', startsAt: at('17:00') });
+    expect(await appointment(id)).toMatchObject({ status: 'offered', offered_from: new Date(at('16:00')) });
+    await t.tick();
+    expect(t.sms.to(PHONES.customer).at(-1)).toBe(
+      'Salih Esen Nirvana For Men: 26 Ekim 16:00 dolu. Yerine 17:00 uygun mu? Son yanıt 16:00: http://localhost:3001/randevularim',
+    );
+
+    // The asked-for time is free again; the offered one is held.
+    const slots = await free(shop);
+    expect(slots).toContain(at('16:00'));
+    expect(slots).not.toContain(at('17:00'));
+    expect((await t.call('GET', '/me/appointments', { token: c })).body[0]).toMatchObject({ status: 'offered', offered_from: at('16:00') });
+
+    expect((await t.call('POST', `/me/appointments/${id}/accept-offer`, { token: c })).body.status).toBe('confirmed');
+    expect(await appointment(id)).toMatchObject({ status: 'confirmed', confirmed_via: 'offer' });
+    await t.tick();
+    expect(t.push.to(await userId(PHONES.cumali)).at(-1)!.title).toBe('Önerilen saat kabul edildi');
+    expect((await t.call('POST', `/me/appointments/${id}/accept-offer`, { token: c })).status).toBe(409);
+  });
+
+  it('a declined or unanswered offer releases the time', async () => {
+    const shop = await setupShop(t);
+    t.clock.set(at('10:00'));
+    const c = await customer();
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
+    const request = async (time: string) =>
+      (await book(t, shop, c, { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at(time) })).body.appointments[0].id;
+
+    const first = await request('16:00');
+    await t.call('POST', `${shop.base}/appointments/${first}/offer`, { token: cumali, body: { startsAt: at('18:00') } });
+    // An open offer counts as the customer's one waiting request at this salon.
+    expect((await book(t, shop, c, { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('19:00') })).status).toBe(409);
+    expect((await t.call('POST', `/me/appointments/${first}/decline-offer`, { token: c })).body.status).toBe('declined');
+    expect(await free(shop)).toContain(at('18:00'));
+
+    const second = await request('16:00');
+    const offer = await t.call('POST', `${shop.base}/appointments/${second}/offer`, { token: cumali, body: { startsAt: at('19:00') } });
+    // The customer has until an hour before the offered time at the latest.
+    expect(offer.body.deadlineAt).toBe(at('18:00'));
+    t.clock.set(at('18:01'));
+    await t.tick();
+    expect(await appointment(second)).toMatchObject({ status: 'declined' });
+    expect(t.push.to(await userId(PHONES.cumali)).at(-1)!.title).toBe('Öneri yanıtsız kaldı');
+    expect((await t.call('POST', `/me/appointments/${second}/accept-offer`, { token: c })).status).toBe(409);
+  });
+});

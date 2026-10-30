@@ -148,7 +148,7 @@ export async function updateMember(
     if (input.active === false || input.bookable === false) {
       const upcoming = await tx.query<{ n: number }>(
         `SELECT count(*)::int AS n FROM appointments
-         WHERE staff_id = $1 AND status IN ('pending', 'confirmed') AND starts_at > $2`,
+         WHERE staff_id = $1 AND status IN ('pending', 'offered', 'confirmed') AND starts_at > $2`,
         [memberId, deps.clock.now()],
       );
       if (upcoming.rows[0]!.n > 0) {

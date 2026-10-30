@@ -67,10 +67,10 @@ export function MyAppointments() {
 type Tab = 'appointments' | 'requests';
 type When = 'upcoming' | 'past';
 
-// Talepler: requests the salon has not answered yet, and declined ones. Randevular: everything the salon accepted.
-const isRequest = (a: CustomerAppointment) => a.status === 'pending' || a.status === 'declined';
+// Talepler: requests not settled yet (including a time the salon offered), and declined ones. Randevular: everything agreed.
+const isRequest = (a: CustomerAppointment) => a.status === 'pending' || a.status === 'offered' || a.status === 'declined';
 const isUpcoming = (a: CustomerAppointment, now: number) =>
-  ['pending', 'confirmed'].includes(a.status) && new Date(a.starts_at).getTime() > now;
+  ['pending', 'offered', 'confirmed'].includes(a.status) && new Date(a.starts_at).getTime() > now;
 
 const EMPTY: Record<Tab, Record<When, { title: string; text: string | null }>> = {
   appointments: {
@@ -97,11 +97,14 @@ function Header({ children }: { children?: React.ReactNode }) {
 function List(props: { items: CustomerAppointment[] | null; error: string | null; onChanged: () => void }) {
   const now = Date.now();
   const all = props.items ?? [];
-  const waiting = all.filter((a) => a.status === 'pending' && isUpcoming(a, now)).length;
+  const waiting = all.filter((a) => (a.status === 'pending' || a.status === 'offered') && isUpcoming(a, now)).length;
+  const offers = all.some((a) => a.status === 'offered' && isUpcoming(a, now));
   const [tab, setTab] = useState<Tab | null>(null);
   const [when, setWhen] = useState<When>('upcoming');
   // A new request opens on Talepler, so it is the first thing the customer sees after booking.
-  const shownTab: Tab = tab ?? (waiting && !all.some((a) => a.status === 'confirmed' && isUpcoming(a, now)) ? 'requests' : 'appointments');
+  // An offered time waits for the customer's answer, so it opens Talepler too.
+  const shownTab: Tab =
+    tab ?? (offers || (waiting && !all.some((a) => a.status === 'confirmed' && isUpcoming(a, now))) ? 'requests' : 'appointments');
   const shown = all.filter((a) => (shownTab === 'requests') === isRequest(a) && (when === 'upcoming') === isUpcoming(a, now));
   const empty = EMPTY[shownTab][when];
 
@@ -208,6 +211,7 @@ function AppointmentCard({ appointment: a, onChanged }: { appointment: CustomerA
       </div>
       <p className={styles.services}>{(a.services ?? []).map((s) => s.name).join(' + ')}</p>
       <AppointmentStatus appointment={a} />
+      {a.status === 'offered' && <OfferAnswer appointment={a} onChanged={onChanged} />}
       {upcoming && !confirming && (
         <button type="button" className={styles.cancel} onClick={() => setConfirming(true)}>
           Randevuyu iptal et
@@ -232,5 +236,46 @@ function AppointmentCard({ appointment: a, onChanged }: { appointment: CustomerA
       )}
       {error && <p className="alert alert-danger">{error}</p>}
     </article>
+  );
+}
+
+/** "Salon yeni saat önerdi": the customer takes the offered time or turns it down. */
+function OfferAnswer({ appointment: a, onChanged }: { appointment: CustomerAppointment; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function answer(action: 'accept-offer' | 'decline-offer') {
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/me/appointments/${a.id}/${action}`, { method: 'POST' });
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+      onChanged();
+    }
+  }
+
+  return (
+    <div className={styles.offer}>
+      <p>
+        {a.offered_from && (
+          <>
+            İstediğiniz <strong>{formatLongDate(a.offered_from)} {formatTime(a.offered_from)}</strong> dolu olduğu için salon bu saati önerdi.{' '}
+          </>
+        )}
+        {a.deadline_at && <>Yanıt için son: {formatLongDate(a.deadline_at)} {formatTime(a.deadline_at)}.</>}
+      </p>
+      <div className={styles.confirmActions}>
+        <button type="button" className="btn" disabled={busy} onClick={() => answer('decline-offer')}>
+          Reddet
+        </button>
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => answer('accept-offer')}>
+          Kabul et
+        </button>
+      </div>
+      {error && <p className="alert alert-danger">{error}</p>}
+    </div>
   );
 }

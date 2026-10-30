@@ -33,6 +33,10 @@ export const sms = {
     `${c.shop}: ${c.previousStaff} bu saatte müsait değil. ${c.when} randevunuz ${c.staff} ile devam edecek. Değiştirmek veya iptal etmek için: ${c.link}`,
   shopApproved: (c: { shop: string; trialDays: number; link: string }) =>
     `${c.shop} onaylandı ve artık randevu alıyor. ${c.trialDays} günlük ücretsiz deneme süreniz başladı. Salon sayfanız: ${c.link}`,
+  // "Başka saat öner" (v1.7): the salon offers another time instead of declining.
+  // Kept to one SMS: dates are left out where they repeat (see offers.ts).
+  timeOffered: (c: { shop: string; from: string; when: string; deadline: string; link: string }) =>
+    `${c.shop}: ${c.from} dolu. Yerine ${c.when} uygun mu? Son yanıt ${c.deadline}: ${c.link}`,
   // To our team, not to customers.
   quoteRequest: (c: { salon: string; staff: number; phone: string }) => `Yeni teklif talebi: ${c.salon}, ${c.staff} personel. Tel: ${c.phone}`,
 };
@@ -63,6 +67,18 @@ export const push = {
   reassignedToYou: (a: Appt) => ({
     title: 'Size aktarılan randevu',
     body: `${a.customer} · ${a.services} · ${a.when}`,
+  }),
+  offerAccepted: (a: Appt) => ({
+    title: 'Önerilen saat kabul edildi',
+    body: `${a.customer} · ${a.services} · ${a.when}`,
+  }),
+  offerDeclined: (a: Appt) => ({
+    title: 'Önerilen saat kabul edilmedi',
+    body: `${a.customer} · ${a.when}. Saat yeniden boş.`,
+  }),
+  offerExpired: (a: Appt) => ({
+    title: 'Öneri yanıtsız kaldı',
+    body: `${a.customer} · ${a.when}. Saat yeniden boş.`,
   }),
   absenceNeedsReview: (a: { staff: string; count: number }) => ({
     title: `${a.staff} yok olarak işaretlendi`,

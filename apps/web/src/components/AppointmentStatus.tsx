@@ -15,10 +15,13 @@ export function AppointmentStatus({ appointment: a }: { appointment: CustomerApp
           )}
         </p>
       );
+    case 'offered':
+      return <span className="badge badge-warning">Salon yeni saat önerdi</span>;
     case 'confirmed':
       return <span className="badge badge-success">Onaylandı</span>;
     case 'declined':
-      return <span className="badge badge-danger">Salon kabul edemedi</span>;
+      // After an offer: the customer said no, or did not answer in time.
+      return <span className="badge badge-muted">{a.offered_from ? 'Önerilen saat kullanılmadı' : 'Salon kabul edemedi'}</span>;
     case 'cancelled':
       return (
         <span className="badge badge-muted">

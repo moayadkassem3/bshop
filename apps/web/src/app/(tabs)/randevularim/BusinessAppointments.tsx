@@ -38,7 +38,8 @@ export function BusinessAppointments() {
     const to = new Date(from.getTime() + REQUEST_WINDOW_DAYS * DAY);
     try {
       const list = await api<Appointment[]>(`/staff/shops/${shopId}/appointments?from=${from.toISOString()}&to=${to.toISOString()}`);
-      setRequests(list.filter((a) => a.status === 'pending'));
+      // Times offered instead stay here until the customer answers.
+      setRequests(list.filter((a) => a.status === 'pending' || a.status === 'offered'));
       setError(null);
     } catch (err) {
       setError(errorMessage(err));
@@ -52,6 +53,8 @@ export function BusinessAppointments() {
     return () => clearInterval(timer);
   }, [loadRequests]);
 
+
+  const pending = requests?.filter((a) => a.status === 'pending').length ?? 0;
 
   return (
     <>
@@ -80,7 +83,7 @@ export function BusinessAppointments() {
           <div className={styles.segmented} role="tablist" aria-label="Talepler veya takvim">
             <button type="button" role="tab" aria-selected={tab === 'requests'} className={tab === 'requests' ? styles.segOn : ''} onClick={() => setTab('requests')}>
               Talepler
-              {!!requests?.length && <span className={styles.count}>{requests.length}</span>}
+              {!!pending && <span className={styles.count}>{pending}</span>}
             </button>
             <button type="button" role="tab" aria-selected={tab === 'calendar'} className={tab === 'calendar' ? styles.segOn : ''} onClick={() => setTab('calendar')}>
               Takvim
@@ -245,6 +248,7 @@ const CANCELLED_BY: Record<string, string> = {
 
 const STATUS: Record<Appointment['status'], { label: string; tone: string }> = {
   pending: { label: 'Onay bekliyor', tone: 'badge-warning' },
+  offered: { label: 'Yeni saat önerildi', tone: 'badge-info' },
   confirmed: { label: 'Onaylandı', tone: 'badge-success' },
   declined: { label: 'Reddedildi', tone: 'badge-muted' },
   cancelled: { label: 'İptal edildi', tone: 'badge-muted' },
@@ -264,6 +268,7 @@ export function AppointmentCard(props: {
   const a = props.appointment;
   const [busy, setBusy] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [offering, setOffering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const started = new Date(a.starts_at).getTime() <= Date.now();
   const status = STATUS[a.status];
@@ -331,15 +336,43 @@ export function AppointmentCard(props: {
         <p className={biz.deadline}>Yanıt vermezseniz otomatik onaylanır. Otomatik onay saati: {formatTime(a.deadline_at)}</p>
       )}
 
-      {a.status === 'pending' && (
-        <div className={biz.actions}>
-          <button type="button" className="btn" disabled={busy} onClick={() => act('decline')}>
+      {a.status === 'offered' && (
+        <p className={biz.deadline}>
+          {a.offered_from && <>Müşterinin istediği: {formatLongDate(a.offered_from)} {formatTime(a.offered_from)}. </>}
+          Müşterinin yanıtı bekleniyor{a.deadline_at && <>; yanıt gelmezse {formatTime(a.deadline_at)} saatinde saat yeniden boşalır</>}.
+        </p>
+      )}
+
+      {a.status === 'pending' && !offering && (
+        <>
+          <div className={biz.actions}>
+            <button type="button" className="btn" disabled={busy} onClick={() => setOffering(true)}>
+              Başka saat öner
+            </button>
+            <button type="button" className="btn btn-primary" disabled={busy} onClick={() => act('confirm')}>
+              Onayla
+            </button>
+          </div>
+          <button type="button" className={styles.cancel} disabled={busy} onClick={() => act('decline')}>
             Reddet
           </button>
-          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => act('confirm')}>
-            Onayla
-          </button>
-        </div>
+        </>
+      )}
+      {a.status === 'pending' && offering && (
+        <OfferPicker
+          shopId={props.shopId}
+          appointment={a}
+          onDone={() => {
+            setOffering(false);
+            props.onChanged();
+          }}
+          onClose={() => setOffering(false)}
+        />
+      )}
+      {a.status === 'offered' && !confirmCancel && (
+        <button type="button" className={styles.cancel} onClick={() => setConfirmCancel(true)}>
+          Öneriyi geri çek
+        </button>
       )}
       {a.status === 'confirmed' && started && (
         <div className={biz.actions}>
@@ -358,7 +391,7 @@ export function AppointmentCard(props: {
       )}
       {confirmCancel && (
         <div className={styles.confirmBox}>
-          <p>Randevu iptal edilecek ve müşteriye SMS gönderilecek.</p>
+          <p>{a.status === 'offered' ? 'Öneri geri çekilecek ve müşteriye SMS gönderilecek.' : 'Randevu iptal edilecek ve müşteriye SMS gönderilecek.'}</p>
           <div className={styles.confirmActions}>
             <button type="button" className="btn" onClick={() => setConfirmCancel(false)} disabled={busy}>
               Vazgeç
@@ -371,5 +404,82 @@ export function AppointmentCard(props: {
       )}
       {error && <p className="alert alert-danger">{error}</p>}
     </article>
+  );
+}
+
+/**
+ * "Başka saat öner": pick a day and one of the staff member's free times. The
+ * customer gets an SMS and answers in Randevularım; the time is held until then.
+ */
+function OfferPicker(props: { shopId: string; appointment: Appointment; onDone: () => void; onClose: () => void }) {
+  const a = props.appointment;
+  const today = turkeyDate(new Date());
+  const days = Array.from({ length: 7 }, (_, i) => addDays(today, i));
+  const [date, setDate] = useState(turkeyDate(new Date(a.starts_at)) < today ? today : turkeyDate(new Date(a.starts_at)));
+  const [times, setTimes] = useState<string[] | null>(null);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setTimes(null);
+    setPicked(null);
+    api<string[]>(`/staff/shops/${props.shopId}/appointments/${a.id}/offer-times?date=${date}`)
+      .then((t) => !cancelled && setTimes(t))
+      .catch((err) => !cancelled && setError(errorMessage(err)));
+    return () => {
+      cancelled = true;
+    };
+  }, [props.shopId, a.id, date]);
+
+  async function send() {
+    if (!picked) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/staff/shops/${props.shopId}/appointments/${a.id}/offer`, { method: 'POST', body: { startsAt: picked } });
+      props.onDone();
+    } catch (err) {
+      setError(errorMessage(err));
+      setBusy(false);
+    }
+  }
+
+  const dayLabel = (d: string) =>
+    d === today ? 'Bugün' : d === addDays(today, 1) ? 'Yarın' : new Intl.DateTimeFormat('tr-TR', { weekday: 'short', day: 'numeric', timeZone: 'Europe/Istanbul' }).format(dayStart(d));
+
+  return (
+    <div className={biz.offer}>
+      <p className={biz.offerTitle}>Hangi saati önermek istersiniz?</p>
+      <div className={biz.offerDays} role="radiogroup" aria-label="Gün">
+        {days.map((d) => (
+          <button key={d} type="button" role="radio" aria-checked={d === date} className={d === date ? biz.on : ''} onClick={() => setDate(d)}>
+            {dayLabel(d)}
+          </button>
+        ))}
+      </div>
+      {times === null && !error && <p className="muted">Boş saatler yükleniyor…</p>}
+      {times && times.length === 0 && <p className="muted">Bu gün {a.staff_name} için uygun saat yok. Başka bir gün seçin.</p>}
+      {times && times.length > 0 && (
+        <div className={biz.offerTimes} role="radiogroup" aria-label="Saat">
+          {times.map((t) => (
+            <button key={t} type="button" role="radio" aria-checked={t === picked} className={t === picked ? biz.on : ''} onClick={() => setPicked(t)}>
+              {formatTime(t)}
+            </button>
+          ))}
+        </div>
+      )}
+      <p className={biz.deadline}>Müşteriye SMS gider ve Randevularım’dan yanıtlar. Yanıt gelmezse saat yeniden boşalır.</p>
+      {error && <p className="alert alert-danger">{error}</p>}
+      <div className={biz.actions}>
+        <button type="button" className="btn" disabled={busy} onClick={props.onClose}>
+          Vazgeç
+        </button>
+        <button type="button" className="btn btn-primary" disabled={busy || !picked} onClick={send}>
+          {picked ? `${formatTime(picked)} öner` : 'Saat seçin'}
+        </button>
+      </div>
+    </div>
   );
 }

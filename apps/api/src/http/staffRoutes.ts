@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Deps } from '../deps.js';
 import { applyAbsence, getAbsence, markAbsence } from '../services/absence.js';
 import { shopStats } from '../services/stats.js';
+import { offerNewTime, offerTimes } from '../services/offers.js';
 import { getShopSettings, setAutoConfirmHours, updateShopSettings } from '../services/shops.js';
 import {
   addStaffAppointment,
@@ -76,6 +77,18 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     const p = action.parse(req.params);
     return declineAppointment(deps, await auth(req), p.shopId, p.id);
   });
+  // "Başka saat öner" (v1.7): free times for the same staff member, then the offer itself.
+  app.get('/staff/shops/:shopId/appointments/:id/offer-times', async (req) => {
+    const p = action.parse(req.params);
+    const { date } = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(req.query);
+    return offerTimes(deps, await auth(req), p.shopId, p.id, date);
+  });
+  app.post('/staff/shops/:shopId/appointments/:id/offer', async (req) => {
+    const p = action.parse(req.params);
+    const { startsAt } = z.object({ startsAt: timestamp }).parse(req.body);
+    return offerNewTime(deps, await auth(req), p.shopId, p.id, startsAt);
+  });
+
   app.post('/staff/shops/:shopId/appointments/:id/cancel', async (req) => {
     const p = action.parse(req.params);
     return cancelByShop(deps, await auth(req), p.shopId, p.id);

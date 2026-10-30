@@ -43,12 +43,15 @@ export type AppointmentRow = {
   starts_at: Date;
   ends_at: Date;
   blocked_until: Date;
-  status: 'pending' | 'confirmed' | 'declined' | 'cancelled' | 'completed' | 'no_show';
+  status: 'pending' | 'offered' | 'confirmed' | 'declined' | 'cancelled' | 'completed' | 'no_show';
   source: 'online' | 'staff_entry' | 'walk_in';
   requested_staff: boolean;
   confirmed_via: string | null;
   deadline_at: Date | null;
   reminder_at: Date | null;
+  responded_by: string | null;
+  /** The time the customer asked for, when the salon offered another (v1.7). */
+  offered_from: Date | null;
   cancel_reason: string | null;
   total_price_kurus: number;
   price_is_starting_from: boolean;
@@ -125,7 +128,7 @@ async function lockStaff(tx: pg.PoolClient, staffIds: string[]) {
 
 async function insertAppointment(
   tx: pg.PoolClient,
-  a: Omit<AppointmentRow, 'id' | 'reminder_at' | 'cancel_reason'> & { reminder_at: Date | null; now: Date },
+  a: Omit<AppointmentRow, 'id' | 'reminder_at' | 'cancel_reason' | 'responded_by' | 'offered_from'> & { reminder_at: Date | null; now: Date },
   services: (ServiceRow & { duration: number })[],
 ): Promise<string> {
   const { rows } = await tx.query<{ id: string }>(
@@ -226,14 +229,14 @@ export async function createBooking(
     }
 
     const pending = await tx.query(
-      `SELECT 1 FROM appointments WHERE shop_id = $1 AND customer_id = $2 AND status = 'pending' LIMIT 1`,
+      `SELECT 1 FROM appointments WHERE shop_id = $1 AND customer_id = $2 AND status IN ('pending', 'offered') LIMIT 1`,
       [shop.id, user.id],
     );
     if (pending.rowCount) throw conflict('PENDING_EXISTS', 'You already have a request waiting for this shop');
 
     const future = await tx.query<{ n: number }>(
       `SELECT count(DISTINCT COALESCE(group_id, id))::int AS n FROM appointments
-       WHERE shop_id = $1 AND customer_id = $2 AND status IN ('pending', 'confirmed') AND starts_at > $3`,
+       WHERE shop_id = $1 AND customer_id = $2 AND status IN ('pending', 'offered', 'confirmed') AND starts_at > $3`,
       [shop.id, user.id, now],
     );
     if (future.rows[0]!.n >= shop.max_future_bookings) {
@@ -407,7 +410,7 @@ export async function createStaffAppointment(
 
 export async function listCustomerAppointments(deps: Deps, user: User) {
   const { rows } = await deps.db.query(
-    `SELECT a.id, a.status, a.starts_at, a.ends_at, a.deadline_at, a.guest_name, a.total_price_kurus,
+    `SELECT a.id, a.status, a.starts_at, a.ends_at, a.deadline_at, a.offered_from, a.guest_name, a.total_price_kurus,
        a.price_is_starting_from, a.confirmed_via, a.cancel_reason,
        s.name AS shop_name, s.slug AS shop_slug, s.address AS shop_address, s.cancellation_cutoff_minutes,
        m.display_name AS staff_name,

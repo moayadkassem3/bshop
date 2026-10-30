@@ -70,10 +70,12 @@ export type Me = {
 
 export type CustomerAppointment = {
   id: string;
-  status: 'pending' | 'confirmed' | 'declined' | 'cancelled' | 'completed' | 'no_show';
+  status: 'pending' | 'offered' | 'confirmed' | 'declined' | 'cancelled' | 'completed' | 'no_show';
   starts_at: string;
   ends_at: string;
   deadline_at: string | null;
+  /** The time asked for, when the salon offered another (v1.7). */
+  offered_from: string | null;
   guest_name: string | null;
   total_price_kurus: number;
   price_is_starting_from: boolean;

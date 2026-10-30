@@ -10,6 +10,7 @@ import { listMyNotifications } from '../services/inbox.js';
 import { registerShop } from '../services/registration.js';
 import type { AuthFn } from './app.js';
 import { id, timestamp } from './schemas.js';
+import { acceptOffer, declineOffer } from '../services/offers.js';
 
 export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.get('/me', async (req) => {
@@ -163,6 +164,16 @@ export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   });
 
   app.get('/me/appointments', async (req) => listCustomerAppointments(deps, await auth(req)));
+
+  // The customer's answer to a time the salon offered (v1.7).
+  app.post('/me/appointments/:id/accept-offer', async (req) => {
+    const user = await auth(req);
+    return acceptOffer(deps, user, z.object({ id }).parse(req.params).id);
+  });
+  app.post('/me/appointments/:id/decline-offer', async (req) => {
+    const user = await auth(req);
+    return declineOffer(deps, user, z.object({ id }).parse(req.params).id);
+  });
 
   app.post('/me/appointments/:id/cancel', async (req) => {
     const user = await auth(req);

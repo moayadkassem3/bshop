@@ -38,7 +38,7 @@ export type ShopAppointment = {
   id: string;
   staff_id: string;
   staff_name: string;
-  status: 'pending' | 'confirmed' | 'declined' | 'cancelled' | 'completed' | 'no_show';
+  status: 'pending' | 'offered' | 'confirmed' | 'declined' | 'cancelled' | 'completed' | 'no_show';
   source: string;
   starts_at: string;
   ends_at: string;
@@ -47,6 +47,8 @@ export type ShopAppointment = {
   guest_name: string | null;
   requested_staff: boolean;
   deadline_at: string | null;
+  /** The time the customer asked for, when the salon offered another (v1.7). */
+  offered_from: string | null;
   cancel_reason: string | null;
   cancelled_at: string | null;
   total_price_kurus: number;

@@ -2,6 +2,7 @@ import type { Deps } from '../deps.js';
 import { withTx } from '../db.js';
 import { push } from '../messages.js';
 import { queuePush } from '../notifications.js';
+import { expireOffers } from './offers.js';
 import { messageContext, ownerUserIds, queueResultSms } from './booking.js';
 
 /**
@@ -49,6 +50,7 @@ export async function runTimers(deps: Deps) {
       });
       await queueResultSms(tx, deps, r.id, 'confirmed');
     }
-    return { reminders: reminders.rowCount ?? 0, confirmed: confirmed.rowCount ?? 0 };
+    const offersExpired = await expireOffers(tx, now);
+    return { reminders: reminders.rowCount ?? 0, confirmed: confirmed.rowCount ?? 0, offersExpired };
   });
 }
