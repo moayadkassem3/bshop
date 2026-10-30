@@ -18,7 +18,9 @@ export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     // Profil (v1.7): owners and co-owners do not need "İşletmenizi kaydedin"; only people
     // who work at a salon see the switch to business mode.
     const { rows } = await deps.db.query<{ role: string }>('SELECT role FROM shop_members WHERE user_id = $1 AND active', [user.id]);
-    return { ...user, owns_shop: rows.some((r) => r.role === 'owner'), has_business: rows.length > 0 };
+    // Verified tick (v1.7): three completed visits booked through the app.
+    const tick = await deps.db.query<{ verified: boolean }>('SELECT verified_at IS NOT NULL AS verified FROM users WHERE id = $1', [user.id]);
+    return { ...user, owns_shop: rows.some((r) => r.role === 'owner'), has_business: rows.length > 0, verified: tick.rows[0]?.verified ?? false };
   });
 
   app.post('/me/switch', async (req) => {

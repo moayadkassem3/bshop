@@ -16,6 +16,7 @@ import { qrLink, shopHref } from '@/lib/views';
 import { AUDIENCE, distanceMeters, formatDistance, photoUrl, placeLabel } from '@/lib/shop';
 import type { NearbyShop } from '@/lib/types';
 import styles from './ExploreMap.module.css';
+import { VerifiedTick } from '@/components/VerifiedTick';
 
 /** Before the customer shares their location, the map opens on Kadıköy, İstanbul. */
 const KADIKOY = { lat: 40.9905, lng: 29.029 };
@@ -325,7 +326,10 @@ export function ExploreMap() {
                     </span>
                   )}
                   <span className={styles.itemText}>
-                    <span className={styles.itemName}>{shop.name}</span>
+                    <span className={styles.itemName}>
+                      {shop.name}
+                      {shop.verified && <VerifiedTick kind="salon" />}
+                    </span>
                     <span className={styles.itemMeta}>
                       {AUDIENCE[shop.audience as keyof typeof AUDIENCE] ?? 'Kuaför'}
                       {placeLabel(shop) ? ` · ${placeLabel(shop)}` : ''}
@@ -362,7 +366,10 @@ function MyShopCard({ shop }: { shop: BusinessShop }) {
           </span>
         )}
         <span className={styles.itemText}>
-          <span className={styles.itemName}>{shop.name}</span>
+          <span className={styles.itemName}>
+            {shop.name}
+            {shop.verified && <VerifiedTick kind="salon" />}
+          </span>
           <span className={styles.itemMeta}>
             {AUDIENCE[shop.audience]}
             {placeLabel(shop) ? ` · ${placeLabel(shop)}` : ''}

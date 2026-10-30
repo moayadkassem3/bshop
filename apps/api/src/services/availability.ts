@@ -131,6 +131,7 @@ export async function getShopProfile(deps: Deps, slug: string) {
     latitude: shop.latitude,
     longitude: shop.longitude,
     audience: shop.audience,
+    verified: shop.verified_at !== null,
     cancellationCutoffMinutes: shop.cancellation_cutoff_minutes,
     paymentAtShop: true,
     photos: await listPhotos(deps, shop.id),

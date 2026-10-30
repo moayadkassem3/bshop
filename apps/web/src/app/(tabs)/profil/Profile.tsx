@@ -11,6 +11,7 @@ import { formatPhone } from '@/lib/shop';
 import { getToken, rememberPortal, setToken } from '@/lib/session';
 import type { Me } from '@/lib/types';
 import styles from './profile.module.css';
+import { VerifiedTick } from '@/components/VerifiedTick';
 
 const MODE_LABEL = { customer: 'Müşteri', owner: 'İşletme sahibi', staff: 'Personel' } as const;
 
@@ -119,7 +120,10 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
         <span className={styles.avatar} aria-hidden>
           {(me.first_name ?? me.phone.slice(-2))[0]?.toLocaleUpperCase('tr')}
         </span>
-        <h1 className={styles.accountName}>{name || 'Hesabım'}</h1>
+        <h1 className={styles.accountName}>
+          {name || 'Hesabım'}
+          {me.verified && <VerifiedTick kind="customer" size={20} />}
+        </h1>
         <p className={styles.accountPhone}>{formatPhone(me.phone)}</p>
         <span className={styles.modeBadge}>{MODE_LABEL[mode]}</span>
       </header>
@@ -203,6 +207,7 @@ type MyBusiness = {
   subscription_status: 'none' | 'trial' | 'active' | 'past_due' | 'canceled';
   current_period_end: string | null;
   visible: boolean;
+  verified?: boolean;
 };
 
 function businessStatus(b: MyBusiness): { label: string; tone: string } {
@@ -236,7 +241,10 @@ function MyBusinesses() {
             <li key={b.id}>
               <div className={styles.business}>
                 <span>
-                  <strong>{b.name}</strong>
+                  <strong>
+                    {b.name}
+                    {b.verified && <VerifiedTick kind="salon" size={14} />}
+                  </strong>
                   <span className="muted">{label}</span>
                 </span>
                 <span className={`badge ${status.tone}`}>{status.label}</span>

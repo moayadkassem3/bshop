@@ -346,3 +346,11 @@
   font-size: 28px;
   letter-spacing: -0.02em;
 }
+
+/* Verified tick (v1.7): what it means, under the salon's name. */
+.verifiedNote {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+}

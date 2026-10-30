@@ -3,7 +3,7 @@ import { getPublicShopBySlug, PUBLIC_CONDITION } from './shops.js';
 import type { User } from './auth.js';
 
 const MAX_FAVORITES = 30;
-const SUMMARY_COLUMNS = `s.slug, s.name, s.district, s.city, s.audience,
+const SUMMARY_COLUMNS = `s.slug, s.name, s.district, s.city, s.audience, s.verified_at IS NOT NULL AS verified,
   (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id`;
 
 /**

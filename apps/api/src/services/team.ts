@@ -13,7 +13,7 @@ export async function listMyShops(deps: Deps, user: User) {
   if (user.portal === 'customer') throw forbidden('Sign in through staff or owner sign-in');
   const { rows } = await deps.db.query<{ id: string; name: string; slug: string; member_id: string; role: string; display_name: string; seats: number }>(
     `SELECT s.id, s.name, s.slug, m.id AS member_id, m.role, m.owner_label, m.display_name,
-       s.reviewed_at, sub.status AS subscription_status, sub.current_period_end, sub.grace_until,
+       s.reviewed_at, s.verified_at IS NOT NULL AS verified, sub.status AS subscription_status, sub.current_period_end, sub.grace_until,
        -- Whether customers can see and book the salon now (v1.7): a lapsed trial or subscription hides it.
        (${PUBLIC_CONDITION.replaceAll('$1', '$2')}) AS visible,
        (SELECT max(r.created_at) FROM subscription_requests r WHERE r.shop_id = s.id) AS subscription_requested_at,

@@ -428,3 +428,46 @@ describe('Başka saat öner (v1.7)', () => {
     expect((await t.call('POST', `/me/appointments/${second}/accept-offer`, { token: c })).status).toBe(409);
   });
 });
+
+describe('verified tick (v1.7)', () => {
+  it('a salon and a customer are verified after 3 completed bookings made through the app', async () => {
+    const shop = await setupShop(t);
+    const c = await customer();
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
+    const verified = async () => ({
+      shop: (await t.call('GET', `/public/shops/${shop.slug}`)).body.verified,
+      customer: (await t.call('GET', '/me', { token: c })).body.verified,
+    });
+    const visit = async (date: string) => {
+      t.clock.set(at('09:00', date));
+      const id = (await book(t, shop, c, { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: at('12:00', date) })).body
+        .appointments[0].id;
+      await t.call('POST', `${shop.base}/appointments/${id}/confirm`, { token: cumali });
+      t.clock.set(at('12:40', date));
+      expect((await t.call('POST', `${shop.base}/appointments/${id}/complete`, { token: cumali })).body.status).toBe('completed');
+      return id;
+    };
+
+    // A walk-in the salon enters itself does not count.
+    t.clock.set(at('10:00'));
+    const walkIn = (
+      await t.call('POST', `${shop.base}/appointments`, {
+        token: cumali,
+        body: { staffId: shop.staff.cumali, serviceIds: [shop.services.haircut], customerName: 'Kapıdan gelen', walkIn: true },
+      })
+    ).body.id;
+    t.clock.set(at('10:40'));
+    await t.call('POST', `${shop.base}/appointments/${walkIn}/complete`, { token: cumali });
+
+    await visit('2026-10-27');
+    await visit('2026-10-28');
+    expect(await verified()).toEqual({ shop: false, customer: false });
+    const third = await visit('2026-10-29');
+    expect(await verified()).toEqual({ shop: true, customer: true });
+
+    const list = (await t.call('GET', `${shop.base}/appointments?from=${at('00:00', '2026-10-29')}&to=${at('23:59', '2026-10-29')}`, { token: cumali })).body;
+    expect(list.find((a: { id: string }) => a.id === third)).toMatchObject({ customer_verified: true });
+    const nearby = (await t.call('GET', '/public/nearby?lat=40.99&lng=29.03')).body;
+    expect(nearby.find((s: { slug: string }) => s.slug === shop.slug)).toMatchObject({ verified: true });
+  });
+});

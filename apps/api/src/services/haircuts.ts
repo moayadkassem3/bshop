@@ -80,8 +80,10 @@ export async function listShopPosts(deps: Deps, shopId: string, limit = 12): Pro
  */
 export async function popularPosts(deps: Deps, input: { audience?: 'men' | 'women'; style?: string; limit?: number }) {
   const styles = input.style ? [input.style] : input.audience ? stylesFor(input.audience) : null;
-  const { rows } = await deps.db.query<Omit<HaircutPost, 'style_name'> & { shop_name: string; shop_slug: string; district: string | null; city: string | null }>(
-    `SELECT ${POST_COLUMNS}, s.name AS shop_name, s.slug AS shop_slug, s.district, s.city
+  const { rows } = await deps.db.query<
+    Omit<HaircutPost, 'style_name'> & { shop_name: string; shop_slug: string; shop_verified: boolean; district: string | null; city: string | null }
+  >(
+    `SELECT ${POST_COLUMNS}, s.name AS shop_name, s.slug AS shop_slug, s.verified_at IS NOT NULL AS shop_verified, s.district, s.city
      FROM haircut_posts p JOIN shops s ON s.id = p.shop_id JOIN subscriptions sub ON sub.shop_id = s.id
      WHERE ${PUBLIC_CONDITION} AND ($2::text[] IS NULL OR p.style = ANY($2))
      ORDER BY (1 + (SELECT count(*) FROM haircut_likes l WHERE l.post_id = p.id))

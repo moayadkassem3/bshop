@@ -24,6 +24,8 @@ export type ShopProfile = {
   instagram: string | null;
   latitude: number | null;
   longitude: number | null;
+  /** Verified tick (v1.7): 3 completed bookings made through the app. */
+  verified?: boolean;
   audience: 'men' | 'women' | 'unisex';
   cancellationCutoffMinutes: number;
   paymentAtShop: boolean;
@@ -50,6 +52,7 @@ export type ShopSummary = {
   city: string | null;
   audience: string;
   cover_photo_id: string | null;
+  verified?: boolean;
 };
 
 /** A shop in "Salonlarım": a favourite, or one booked before. */
@@ -65,6 +68,8 @@ export type Me = {
   owns_shop?: boolean;
   /** Works at a salon in any role; only they can switch to business mode (v1.7). */
   has_business?: boolean;
+  /** Verified tick (v1.7): 3 completed visits booked through the app. */
+  verified?: boolean;
   portal?: 'customer' | 'staff' | 'owner';
 };
 
@@ -104,6 +109,6 @@ export type HaircutPost = {
   like_count: number;
 };
 
-export type PopularPost = HaircutPost & { shop_name: string; shop_slug: string; district: string | null; city: string | null };
+export type PopularPost = HaircutPost & { shop_name: string; shop_slug: string; shop_verified?: boolean; district: string | null; city: string | null };
 
 export type HaircutStyle = { key: string; name: string; audience: 'men' | 'women' };

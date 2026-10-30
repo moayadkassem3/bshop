@@ -22,6 +22,7 @@ export type BusinessShop = {
   grace_until: string | null;
   /** Customers can see and book the salon now; a lapsed trial or subscription hides it (v1.7). */
   visible: boolean;
+  verified?: boolean;
   subscription_requested_at: string | null;
   /** Bookable staff, which sets the plan; plan_id is null above 10 (priced individually). */
   seats: number;
@@ -86,6 +87,8 @@ export type ShopAppointment = {
   price_is_starting_from: boolean;
   no_show_count: number | null;
   late_cancel_count: number | null;
+  /** The customer's verified tick (v1.7): 3 completed visits booked through the app. */
+  customer_verified?: boolean;
   services: { name: string; durationMinutes: number }[] | null;
 };
 

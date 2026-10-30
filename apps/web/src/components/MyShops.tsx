@@ -7,6 +7,7 @@ import { formatLongDate } from '@/lib/format';
 import { photoUrl, placeLabel } from '@/lib/shop';
 import type { MyShop } from '@/lib/types';
 import styles from './MyShops.module.css';
+import { VerifiedTick } from './VerifiedTick';
 
 /** Favoriler tab: favourite shops, then shops booked before, each one tap from booking. */
 export function MyShops() {
@@ -64,7 +65,10 @@ function Group({ title, shops }: { title: string; shops: MyShop[] }) {
                 <span className={styles.photo} aria-hidden />
               )}
               <span className={styles.text}>
-                <span className={styles.name}>{shop.name}</span>
+                <span className={styles.name}>
+                  {shop.name}
+                  {shop.verified && <VerifiedTick kind="salon" size={14} />}
+                </span>
                 {placeLabel(shop) && <span className={styles.meta}>{placeLabel(shop)}</span>}
                 {shop.last_visit && <span className={styles.meta}>Son randevu: {formatLongDate(shop.last_visit)}</span>}
               </span>

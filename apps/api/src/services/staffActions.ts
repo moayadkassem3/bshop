@@ -101,6 +101,7 @@ export async function markOutcome(
     if (appt.status !== 'confirmed') throw conflict('NOT_CONFIRMED', `Appointment is ${appt.status}`);
     if (appt.starts_at > now) throw badRequest('NOT_STARTED', 'The appointment has not started yet');
     await tx.query('UPDATE appointments SET status = $2, updated_at = $3 WHERE id = $1', [id, outcome, now]);
+    if (outcome === 'completed' && appt.source === 'online' && appt.customer_id) await earnVerifiedTicks(tx, shopId, appt.customer_id, now);
     if (outcome === 'no_show' && appt.customer_id) {
       await tx.query(
         `INSERT INTO shop_customers (shop_id, user_id, no_show_count) VALUES ($1, $2, 1)
@@ -125,12 +126,13 @@ export async function listShopAppointments(
     `SELECT a.id, a.staff_id, m.display_name AS staff_name, a.status, a.source, a.starts_at, a.ends_at,
        a.customer_id, a.customer_name, a.customer_phone, a.guest_name, a.requested_staff, a.confirmed_via,
        a.deadline_at, a.reminder_at, a.offered_from, a.cancel_reason, a.cancelled_at, a.total_price_kurus, a.price_is_starting_from,
-       sc.no_show_count, sc.late_cancel_count,
+       sc.no_show_count, sc.late_cancel_count, cu.verified_at IS NOT NULL AS customer_verified,
        (SELECT json_agg(json_build_object('name', x.name, 'durationMinutes', x.duration_minutes, 'priceKurus', x.price_kurus)
           ORDER BY x.position) FROM appointment_services x WHERE x.appointment_id = a.id) AS services
      FROM appointments a
      JOIN shop_members m ON m.id = a.staff_id
      LEFT JOIN shop_customers sc ON sc.shop_id = a.shop_id AND sc.user_id = a.customer_id
+     LEFT JOIN users cu ON cu.id = a.customer_id
      WHERE a.shop_id = $1 AND a.starts_at < $3 AND a.ends_at > $2 AND ($4::uuid IS NULL OR a.staff_id = $4)
      ORDER BY a.starts_at`,
     [shopId, input.from, input.to, staffFilter],
@@ -196,4 +198,22 @@ export async function removeTimeOff(deps: Deps, user: User, shopId: string, time
   if (!rows[0]) throw notFound('Time off');
   requireSelfOrOwner(member, rows[0].member_id);
   await deps.db.query('DELETE FROM time_off WHERE id = $1', [timeOffId]);
+}
+
+/** Completed bookings made through the app that earn the verified tick (v1.7), for salons and customers alike. */
+export const VERIFIED_AFTER = 3;
+
+/** After a completed visit: the salon and the customer get the tick at their third, and keep it. */
+async function earnVerifiedTicks(tx: pg.PoolClient, shopId: string, customerId: string, now: Date) {
+  const completed = `SELECT count(*) FROM appointments WHERE status = 'completed' AND source = 'online' AND customer_id IS NOT NULL`;
+  await tx.query(`UPDATE shops SET verified_at = $2 WHERE id = $1 AND verified_at IS NULL AND (${completed} AND shop_id = $1) >= $3`, [
+    shopId,
+    now,
+    VERIFIED_AFTER,
+  ]);
+  await tx.query(`UPDATE users SET verified_at = $2 WHERE id = $1 AND verified_at IS NULL AND (${completed} AND customer_id = $1) >= $3`, [
+    customerId,
+    now,
+    VERIFIED_AFTER,
+  ]);
 }

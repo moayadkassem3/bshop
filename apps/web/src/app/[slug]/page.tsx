@@ -10,6 +10,7 @@ import { loadProfile } from '@/lib/server';
 import { AUDIENCE, directionsUrl, formatPhone, todayHours, turkeyWeekday, WEEKDAYS, whatsappUrl } from '@/lib/shop';
 import { ServiceList } from './ServiceList';
 import styles from './shop.module.css';
+import { VerifiedTick } from '@/components/VerifiedTick';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -49,9 +50,13 @@ export default async function ShopProfilePage({ params }: Props) {
             {profile.district || profile.city ? ` · ${profile.district || profile.city}` : ''}
           </p>
           <div className={styles.titleRow}>
-            <h1 className={styles.name}>{profile.name}</h1>
+            <h1 className={styles.name}>
+              {profile.name}
+              {profile.verified && <VerifiedTick kind="salon" size={22} />}
+            </h1>
             <FavoriteButton slug={profile.slug} />
           </div>
+          {profile.verified && <p className={styles.verifiedNote}>Doğrulanmış salon · uygulama üzerinden en az 3 randevu tamamladı</p>}
           <p className={today?.open ? styles.openNow : styles.closedNow}>
             {today?.open ? `Bugün açık · ${today.open}–${today.close}` : 'Bugün kapalı'}
           </p>

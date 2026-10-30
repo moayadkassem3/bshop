@@ -30,12 +30,14 @@ export type Shop = {
   booking_horizon_days: number;
   max_future_bookings: number;
   reviewed_at: Date | null;
+  /** Verified tick (v1.7): set at the third completed booking made through the app. */
+  verified_at: Date | null;
 };
 
 const SHOP_COLUMNS = `s.id, s.slug, s.name, s.phone, s.address, s.district, s.city, s.whatsapp, s.instagram, s.about,
   s.latitude, s.longitude, s.timezone, s.audience,
   s.cancellation_cutoff_minutes, s.min_lead_minutes, s.buffer_minutes, s.slot_step_minutes,
-  s.booking_horizon_days, s.max_future_bookings, s.reviewed_at`;
+  s.booking_horizon_days, s.max_future_bookings, s.reviewed_at, s.verified_at`;
 
 /** Public = reviewed by our team and paid up (trial, active, or past due within the grace period). */
 export const PUBLIC_CONDITION = `s.reviewed_at IS NOT NULL AND (
@@ -63,7 +65,7 @@ export async function getPublicShopBySlug(q: Queryable, now: Date, slug: string)
 /** Home-page search by shop name or address. */
 export async function searchPublicShops(deps: Deps, query: string) {
   const { rows } = await deps.db.query(
-    `SELECT s.slug, s.name, s.address, s.district, s.city, s.audience,
+    `SELECT s.slug, s.name, s.address, s.district, s.city, s.audience, s.verified_at IS NOT NULL AS verified,
        (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id
      FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
      WHERE ${PUBLIC_CONDITION} AND (s.name ILIKE $2 OR s.address ILIKE $2 OR s.district ILIKE $2 OR s.city ILIKE $2)
@@ -93,7 +95,7 @@ export async function nearbyShops(deps: Deps, q: NearbyQuery) {
   const text = q.query?.trim() ? `%${q.query.trim().replace(/[%_\\]/g, (c) => `\\${c}`)}%` : null;
   const { rows } = await deps.db.query(
     `SELECT * FROM (
-       SELECT s.slug, s.name, s.district, s.city, s.audience, s.latitude, s.longitude,
+       SELECT s.slug, s.name, s.district, s.city, s.audience, s.latitude, s.longitude, s.verified_at IS NOT NULL AS verified,
          (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id,
          round(${distance})::int AS distance_m
        FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id

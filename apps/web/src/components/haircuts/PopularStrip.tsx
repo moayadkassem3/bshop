@@ -8,6 +8,7 @@ import { haircutPhotoUrl } from '@/lib/shop';
 import type { PopularPost } from '@/lib/types';
 import { shopHref } from '@/lib/views';
 import styles from './haircuts.module.css';
+import { VerifiedTick } from '@/components/VerifiedTick';
 
 /**
  * "Popüler kesimler" as a horizontal slider at the bottom of Favoriler (v1.7);
@@ -42,6 +43,7 @@ export function PopularStrip() {
               {p.style_name}
               <br />
               {p.shop_name}
+              {p.shop_verified && <VerifiedTick kind="salon" size={12} />}
             </span>
           </Link>
         ))}

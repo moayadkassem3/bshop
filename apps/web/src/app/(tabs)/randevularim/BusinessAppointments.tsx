@@ -7,6 +7,7 @@ import { useBusinessShops, type ShopAppointment } from '@/lib/business';
 import { formatPhone } from '@/lib/shop';
 import styles from './appointments.module.css';
 import biz from './business.module.css';
+import { VerifiedTick } from '@/components/VerifiedTick';
 
 type Member = { id: string; display_name: string; bookable: boolean; active: boolean };
 type Appointment = ShopAppointment;
@@ -301,6 +302,8 @@ export function AppointmentCard(props: {
           {props.showDate && <p className={biz.date}>{formatLongDate(a.starts_at)}</p>}
           <p className={biz.customer}>
             {a.guest_name ?? a.customer_name}
+            {/* The tick is the booking customer's; a guest booked on their behalf is someone else. */}
+            {a.customer_verified && !a.guest_name && <VerifiedTick kind="customer" size={15} />}
             {a.guest_name && <span className="muted"> · {a.customer_name} adına</span>}
           </p>
           <p className={biz.services}>{services}</p>

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { haircutPhotoUrl } from '@/lib/shop';
 import type { HaircutPost, PopularPost } from '@/lib/types';
 import styles from './haircuts.module.css';
+import { VerifiedTick } from '@/components/VerifiedTick';
 
 type Props = {
   post: HaircutPost | PopularPost;
@@ -38,7 +39,10 @@ export function HaircutCard({ post, href, liked, onToggleLike }: Props) {
       <div className={styles.footer}>
         {shop ? (
           <Link href={href} className={styles.shop}>
-            <strong>{shop.shop_name}</strong>
+            <strong>
+              {shop.shop_name}
+              {shop.shop_verified && <VerifiedTick kind="salon" size={14} />}
+            </strong>
             {(shop.district || shop.city) && <span>{shop.district || shop.city}</span>}
           </Link>
         ) : (
