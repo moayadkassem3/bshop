@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useNewCancellations } from '@/lib/business';
 import { useBusinessMode } from '@/lib/session';
+import { LogoMark } from './Logo';
 import styles from './TabBar.module.css';
 
 const TABS = [
@@ -53,7 +54,10 @@ const TABS = [
   },
 ];
 
-/** Fixed bottom navigation: Keşfet · Randevular · Favoriler (Geçmiş for businesses) · Profil. */
+/**
+ * Main navigation: Keşfet · Randevular · Favoriler (Geçmiş for businesses) · Profil.
+ * A bottom bar on phones; on big screens a rail on the left with the logo on top.
+ */
 export function TabBar() {
   const pathname = usePathname();
   const business = useBusinessMode();
@@ -61,6 +65,9 @@ export function TabBar() {
   const tabs = TABS.filter((t) => (t.href === '/favoriler' ? !business : t.business ? business : true));
   return (
     <nav className={styles.bar} aria-label="Ana menü">
+      <Link href="/" className={styles.logo} aria-label="Ana sayfa">
+        <LogoMark size={40} />
+      </Link>
       {tabs.map((tab) => {
         const active = tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href);
         return (

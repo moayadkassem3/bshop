@@ -2,7 +2,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  min-height: calc(100dvh - 72px - env(safe-area-inset-bottom));
+  min-height: calc(100dvh - var(--nav-bottom) - 8px);
 }
 
 .body {

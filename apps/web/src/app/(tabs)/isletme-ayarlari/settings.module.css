@@ -61,9 +61,9 @@
 
 .saveBar {
   position: fixed;
-  left: 0;
+  left: var(--nav-left);
   right: 0;
-  bottom: calc(64px + env(safe-area-inset-bottom));
+  bottom: var(--nav-bottom);
   z-index: 5;
   padding: 10px 0;
   background: var(--surface);

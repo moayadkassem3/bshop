@@ -1,5 +1,5 @@
 .signInPage {
-  min-height: calc(100dvh - 64px);
+  min-height: calc(100dvh - var(--nav-bottom));
   display: flex;
   flex-direction: column;
   background: var(--ink);

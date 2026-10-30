@@ -1,4 +1,7 @@
 :root {
+  /* Main navigation: a bottom bar on phones, a rail on the left on big screens (v1.7). */
+  --nav-bottom: calc(64px + env(safe-area-inset-bottom));
+  --nav-left: 0px;
   /* Brand theme (v1.6): blue and near-black, from the founder's mockups. */
   --bg: #f3f5f8;
   --surface: #ffffff;
@@ -224,4 +227,11 @@ select {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --nav-bottom: 0px;
+    --nav-left: 88px;
+  }
 }

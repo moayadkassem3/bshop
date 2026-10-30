@@ -202,7 +202,7 @@ export function ExploreMap() {
   }
 
   // In business mode the salon's own card is shown above, so the list holds the others.
-  const listed = home && myShop ? sorted?.filter((s) => s.slug !== myShop.slug) ?? null : sorted;
+  const listed = home && myShop ? (sorted?.filter((s) => s.slug !== myShop.slug) ?? null) : sorted;
 
   function goHome() {
     if (home) mapRef.current?.flyTo({ center: [home.lng, home.lat], zoom: 15 });
@@ -211,56 +211,6 @@ export function ExploreMap() {
   return (
     <div className={styles.page}>
       <div ref={container} className={styles.map} aria-label="Kuaför haritası" />
-
-      <div className={styles.top}>
-        <div className={styles.search}>
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" />
-          </svg>
-          <input
-            className={styles.searchInput}
-            placeholder="Kuaför ya da hizmet ara"
-            aria-label="Kuaför ya da hizmet ara"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => setSheetOpen(true)}
-          />
-        </div>
-        <div className={styles.chips} role="radiogroup" aria-label="Salon türü">
-          {(
-            [
-              ['all', 'Tümü'],
-              ['men', 'Erkek kuaförü'],
-              ['women', 'Kadın kuaförü'],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              role="radio"
-              aria-checked={audience === value}
-              className={`${styles.chip} ${audience === value ? styles.chipOn : ''}`}
-              onClick={() => pickAudience(value)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        {home ? (
-          <button type="button" className={styles.locationPill} onClick={goHome}>
-            <span className={styles.pillLogo} dangerouslySetInnerHTML={{ __html: logoGlyphSvg(15) }} />
-            Salonum
-          </button>
-        ) : (
-          <button type="button" className={styles.locationPill} onClick={() => locate()} disabled={locating}>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path d="m3 11 18-8-8 18-2-8z" />
-            </svg>
-            {user ? 'Mevcut konumum' : locating ? 'Konum alınıyor…' : 'Konumumu kullan'}
-          </button>
-        )}
-      </div>
 
       <button
         type="button"
@@ -276,68 +226,119 @@ export function ExploreMap() {
         </svg>
       </button>
 
-      <section className={`${styles.sheet} ${sheetOpen ? styles.sheetOpen : ''}`} aria-labelledby="nearby-title">
-        <button type="button" className={styles.handle} onClick={() => setSheetOpen((o) => !o)} aria-expanded={sheetOpen}>
-          {/* A wide arrow: tap to open the list (points up) or close it (points down). */}
-          <svg className={styles.handleArrow} viewBox="0 0 48 16" width="48" height="16" aria-hidden>
-            <path d="M5 12 24 4l19 8" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="sr-only">{sheetOpen ? 'Listeyi küçült' : 'Listeyi büyüt'}</span>
-        </button>
-        {home && myShop && <MyShopCard shop={myShop} />}
-        <h1 id="nearby-title" className={home ? styles.sheetSubtitle : styles.sheetTitle}>
-          {home ? 'Çevredeki salonlar' : 'Yakındaki kuaförler'}
-        </h1>
-        <p className={styles.sheetMeta}>
-          {listed ? (
-            <>
-              {home ? 'Salonunuzun çevresinde' : user ? 'Yakınınızda' : 'Bu bölgede'} <strong>{listed.length} kuaför</strong> · en yakından uzağa
-            </>
-          ) : (
-            'Kuaförler yükleniyor…'
-          )}
-        </p>
-        {!user && !business && (
-          <div className={styles.locationHint}>
-            <span>Size en yakın kuaförleri görmek için konumunuzu paylaşın.</span>
-            <button type="button" className="btn btn-primary" onClick={() => locate()} disabled={locating}>
-              Konumumu kullan
-            </button>
+      {/* Phones: these float on the map. Big screens: one panel on the left, the map beside it. */}
+      <div className={styles.panel}>
+        <div className={styles.top}>
+          <div className={styles.search}>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <input
+              className={styles.searchInput}
+              placeholder="Kuaför ya da hizmet ara"
+              aria-label="Kuaför ya da hizmet ara"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setSheetOpen(true)}
+            />
           </div>
-        )}
-        {locationError && <p className="alert alert-danger">{locationError}</p>}
-        <ul className={styles.list} role="list">
-          {(listed ?? []).map((shop) => (
-            <li key={shop.slug} id={`shop-${shop.slug}`}>
-              <Link
-                href={shopHref(shop.slug, 'kesfet')}
-                className={`${styles.item} ${shop.slug === selected ? styles.itemSelected : ''}`}
-                onMouseEnter={() => setSelected(shop.slug)}
+          <div className={styles.chips} role="radiogroup" aria-label="Salon türü">
+            {(
+              [
+                ['all', 'Tümü'],
+                ['men', 'Erkek kuaförü'],
+                ['women', 'Kadın kuaförü'],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={audience === value}
+                className={`${styles.chip} ${audience === value ? styles.chipOn : ''}`}
+                onClick={() => pickAudience(value)}
               >
-                {shop.cover_photo_id ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={photoUrl(shop.cover_photo_id)} alt="" className={styles.thumb} width={56} height={56} />
-                ) : (
-                  <span className={`${styles.thumb} ${styles.initial}`} aria-hidden>
-                    {shop.name[0]}
-                  </span>
-                )}
-                <span className={styles.itemText}>
-                  <span className={styles.itemName}>{shop.name}</span>
-                  <span className={styles.itemMeta}>
-                    {AUDIENCE[shop.audience as keyof typeof AUDIENCE] ?? 'Kuaför'}
-                    {placeLabel(shop) ? ` · ${placeLabel(shop)}` : ''}
-                  </span>
-                </span>
-                <span className={styles.distance}>{formatDistance(shop.distance_m)}</span>
-              </Link>
-            </li>
-          ))}
-          {listed && listed.length === 0 && (
-            <li className={styles.empty}>Bu bölgede aramanızla eşleşen kuaför bulunamadı. Haritayı kaydırmayı deneyin.</li>
+                {label}
+              </button>
+            ))}
+          </div>
+          {home ? (
+            <button type="button" className={styles.locationPill} onClick={goHome}>
+              <span className={styles.pillLogo} dangerouslySetInnerHTML={{ __html: logoGlyphSvg(15) }} />
+              Salonum
+            </button>
+          ) : (
+            <button type="button" className={styles.locationPill} onClick={() => locate()} disabled={locating}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="m3 11 18-8-8 18-2-8z" />
+              </svg>
+              {user ? 'Mevcut konumum' : locating ? 'Konum alınıyor…' : 'Konumumu kullan'}
+            </button>
           )}
-        </ul>
-      </section>
+        </div>
+
+        <section className={`${styles.sheet} ${sheetOpen ? styles.sheetOpen : ''}`} aria-labelledby="nearby-title">
+          <button type="button" className={styles.handle} onClick={() => setSheetOpen((o) => !o)} aria-expanded={sheetOpen}>
+            {/* A wide arrow: tap to open the list (points up) or close it (points down). */}
+            <svg className={styles.handleArrow} viewBox="0 0 48 16" width="48" height="16" aria-hidden>
+              <path d="M5 12 24 4l19 8" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="sr-only">{sheetOpen ? 'Listeyi küçült' : 'Listeyi büyüt'}</span>
+          </button>
+          {home && myShop && <MyShopCard shop={myShop} />}
+          <h1 id="nearby-title" className={home ? styles.sheetSubtitle : styles.sheetTitle}>
+            {home ? 'Çevredeki salonlar' : 'Yakındaki kuaförler'}
+          </h1>
+          <p className={styles.sheetMeta}>
+            {listed ? (
+              <>
+                {home ? 'Salonunuzun çevresinde' : user ? 'Yakınınızda' : 'Bu bölgede'} <strong>{listed.length} kuaför</strong> · en yakından uzağa
+              </>
+            ) : (
+              'Kuaförler yükleniyor…'
+            )}
+          </p>
+          {!user && !business && (
+            <div className={styles.locationHint}>
+              <span>Size en yakın kuaförleri görmek için konumunuzu paylaşın.</span>
+              <button type="button" className="btn btn-primary" onClick={() => locate()} disabled={locating}>
+                Konumumu kullan
+              </button>
+            </div>
+          )}
+          {locationError && <p className="alert alert-danger">{locationError}</p>}
+          <ul className={styles.list} role="list">
+            {(listed ?? []).map((shop) => (
+              <li key={shop.slug} id={`shop-${shop.slug}`}>
+                <Link
+                  href={shopHref(shop.slug, 'kesfet')}
+                  className={`${styles.item} ${shop.slug === selected ? styles.itemSelected : ''}`}
+                  onMouseEnter={() => setSelected(shop.slug)}
+                >
+                  {shop.cover_photo_id ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photoUrl(shop.cover_photo_id)} alt="" className={styles.thumb} width={56} height={56} />
+                  ) : (
+                    <span className={`${styles.thumb} ${styles.initial}`} aria-hidden>
+                      {shop.name[0]}
+                    </span>
+                  )}
+                  <span className={styles.itemText}>
+                    <span className={styles.itemName}>{shop.name}</span>
+                    <span className={styles.itemMeta}>
+                      {AUDIENCE[shop.audience as keyof typeof AUDIENCE] ?? 'Kuaför'}
+                      {placeLabel(shop) ? ` · ${placeLabel(shop)}` : ''}
+                    </span>
+                  </span>
+                  <span className={styles.distance}>{formatDistance(shop.distance_m)}</span>
+                </Link>
+              </li>
+            ))}
+            {listed && listed.length === 0 && <li className={styles.empty}>Bu bölgede aramanızla eşleşen kuaför bulunamadı. Haritayı kaydırmayı deneyin.</li>}
+          </ul>
+        </section>
+      </div>
     </div>
   );
 }
@@ -430,7 +431,17 @@ function ShareShop({ shop, onDone }: { shop: BusinessShop; onDone: (note: string
 
   return (
     <button type="button" className={`btn ${styles.shareBtn}`} disabled={!file} onClick={share}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
         <path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
       </svg>
       Paylaş
