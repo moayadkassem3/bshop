@@ -224,3 +224,64 @@
   background: var(--primary);
   color: #fff;
 }
+
+/* Closed times and "Saat kapat" (v1.7). */
+.blockButton {
+  margin-bottom: 12px;
+  border-style: dashed;
+}
+
+.blockForm {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 16px;
+}
+
+.timeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+}
+
+.closed {
+  border-style: dashed;
+  background: repeating-linear-gradient(135deg, var(--surface), var(--surface) 10px, var(--bg) 10px, var(--bg) 20px);
+}
+
+.closedRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.closedTime {
+  min-width: 96px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.closedText {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.closedText span {
+  font-size: 13px;
+  color: var(--muted);
+}

@@ -60,6 +60,9 @@ const MESSAGES: Record<string, string> = {
   NOT_PENDING: 'Bu talep az önce yanıtlandı veya otomatik onaylandı.',
   NOT_CONFIRMED: 'Bu randevunun durumu değişti.',
   NOT_STARTED: 'Randevu saati henüz gelmedi.',
+  HOURS_OVERLAP: 'Bir günün saatleri çakışıyor. Molaları açılış ile kapanış arasına yerleştirin.',
+  OVERLAPS_APPOINTMENTS: 'Bu aralıkta randevu var. Önce randevuyu iptal edin veya başka saate alın, sonra kapatın.',
+  INVALID_RANGE: 'Bitiş saati, başlangıçtan sonra olmalı.',
 };
 
 /** "45 saniye", "12 dakika": how long to wait, rounded up. */

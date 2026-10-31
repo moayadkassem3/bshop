@@ -189,6 +189,19 @@ export async function blockTime(
   });
 }
 
+/** Closed times in a range, for the calendar (v1.7): staff see their own, owners everyone's. */
+export async function listTimeOff(deps: Deps, user: User, shopId: string, input: { from: Date; to: Date }) {
+  const member = await requireMember(deps.db, user, shopId);
+  const { rows } = await deps.db.query(
+    `SELECT t.id, t.member_id AS staff_id, m.display_name AS staff_name, t.kind, t.starts_at, t.ends_at, t.note
+     FROM time_off t JOIN shop_members m ON m.id = t.member_id
+     WHERE t.shop_id = $1 AND t.starts_at < $3 AND t.ends_at > $2 AND ($4::uuid IS NULL OR t.member_id = $4)
+     ORDER BY t.starts_at`,
+    [shopId, input.from, input.to, member.role === 'owner' ? null : member.id],
+  );
+  return rows;
+}
+
 export async function removeTimeOff(deps: Deps, user: User, shopId: string, timeOffId: string) {
   const member: Membership = await requireMember(deps.db, user, shopId);
   const { rows } = await deps.db.query<{ member_id: string }>('SELECT member_id FROM time_off WHERE id = $1 AND shop_id = $2', [

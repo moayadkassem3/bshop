@@ -573,3 +573,33 @@ describe('one app: customer or business sign-in, and switching (v1.5)', () => {
     expect((await t.call('POST', '/me/switch', { token: plain, body: { to: 'business' } })).body.error).toBe('NOT_BUSINESS');
   });
 });
+
+describe('working hours and closed times (v1.7)', () => {
+  it('reads hours (own for staff, anyone for owners) and lists closed times for the calendar', async () => {
+    const shop = await setupShop(t);
+    const owner = shop.tokens.owner;
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
+    // A lunch break: two ranges on Monday.
+    const week = [
+      { weekday: 1, startMinute: 600, endMinute: 780 },
+      { weekday: 1, startMinute: 840, endMinute: 1260 },
+    ];
+    expect((await t.call('PUT', `${shop.base}/members/${shop.staff.cumali}/hours`, { token: cumali, body: week })).status).toBe(204);
+    expect((await t.call('GET', `${shop.base}/members/${shop.staff.cumali}/hours`, { token: owner })).body).toEqual(week);
+    expect((await t.call('GET', `${shop.base}/members/${shop.staff.tahir}/hours`, { token: cumali })).status).toBe(403);
+
+    const block = await t.call('POST', `${shop.base}/blocks`, {
+      token: cumali,
+      body: { staffId: shop.staff.cumali, startsAt: at('16:00'), endsAt: at('17:00'), note: 'Doktor' },
+    });
+    expect(block.status).toBe(201);
+    const day = `from=${at('00:00')}&to=${at('23:59')}`;
+    expect((await t.call('GET', `${shop.base}/time-off?${day}`, { token: owner })).body).toMatchObject([
+      { id: block.body.id, staff_id: shop.staff.cumali, staff_name: 'Cumali Esen', kind: 'block', note: 'Doktor' },
+    ]);
+    const tahir = await t.login(PHONES.tahir, { portal: 'staff' });
+    expect((await t.call('GET', `${shop.base}/time-off?${day}`, { token: tahir })).body).toEqual([]);
+    expect((await t.call('DELETE', `${shop.base}/time-off/${block.body.id}`, { token: cumali })).status).toBe(204);
+    expect((await t.call('GET', `${shop.base}/time-off?${day}`, { token: owner })).body).toEqual([]);
+  });
+});

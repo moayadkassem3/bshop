@@ -404,3 +404,11 @@
   font-weight: 700;
   text-decoration: none;
 }
+
+.hoursLink {
+  justify-self: start;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}

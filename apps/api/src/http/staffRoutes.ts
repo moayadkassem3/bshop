@@ -8,6 +8,7 @@ import { getShopSettings, requestSubscription, setAutoConfirmHours, updateShopSe
 import {
   addStaffAppointment,
   blockTime,
+  listTimeOff,
   cancelByShop,
   confirmAppointment,
   declineAppointment,
@@ -26,6 +27,7 @@ import {
   setCustomerBlocked,
   setMemberServices,
   setWorkingHours,
+  getWorkingHours,
   updateMember,
   updateService,
 } from '../services/team.js';
@@ -114,6 +116,11 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     const { shopId } = shopParams.parse(req.params);
     return reply.status(201).send(await blockTime(deps, user, shopId, range.parse(req.body)));
   });
+  app.get('/staff/shops/:shopId/time-off', async (req) => {
+    const { shopId } = shopParams.parse(req.params);
+    const q = z.object({ from: timestamp, to: timestamp }).parse(req.query);
+    return listTimeOff(deps, await auth(req), shopId, q);
+  });
   app.delete('/staff/shops/:shopId/time-off/:id', async (req, reply) => {
     const p = action.parse(req.params);
     await removeTimeOff(deps, await auth(req), p.shopId, p.id);
@@ -186,6 +193,10 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
       .parse(req.body);
     await updateMember(deps, await auth(req), p.shopId, p.id, body);
     return reply.status(204).send();
+  });
+  app.get('/staff/shops/:shopId/members/:id/hours', async (req) => {
+    const p = action.parse(req.params);
+    return getWorkingHours(deps, await auth(req), p.shopId, p.id);
   });
   app.put('/staff/shops/:shopId/members/:id/hours', async (req, reply) => {
     const p = action.parse(req.params);

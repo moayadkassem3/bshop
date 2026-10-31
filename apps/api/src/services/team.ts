@@ -201,6 +201,18 @@ export async function setWorkingHours(
   });
 }
 
+/** A member's weekly hours, for "Çalışma saatleri" (v1.7): their own for staff, anyone's for owners. */
+export async function getWorkingHours(deps: Deps, user: User, shopId: string, memberId: string) {
+  const me = await requireMember(deps.db, user, shopId);
+  requireSelfOrOwner(me, memberId);
+  const { rows } = await deps.db.query<{ weekday: number; startMinute: number; endMinute: number }>(
+    `SELECT weekday, start_minute AS "startMinute", end_minute AS "endMinute" FROM working_hours
+     WHERE shop_id = $1 AND member_id = $2 ORDER BY weekday, start_minute`,
+    [shopId, memberId],
+  );
+  return rows;
+}
+
 export async function listCatalog(deps: Deps) {
   const { rows } = await deps.db.query('SELECT id, name, duration_minutes FROM catalog_services ORDER BY id');
   return rows;

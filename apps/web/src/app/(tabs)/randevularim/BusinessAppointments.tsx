@@ -7,6 +7,7 @@ import { useBusinessShops, type ShopAppointment } from '@/lib/business';
 import { formatPhone } from '@/lib/shop';
 import styles from './appointments.module.css';
 import biz from './business.module.css';
+import { BlockForm, TimeOffCard, type TimeOff } from './TimeBlocks';
 import { VerifiedTick } from '@/components/VerifiedTick';
 
 type Member = { id: string; display_name: string; bookable: boolean; active: boolean };
@@ -100,7 +101,7 @@ export function BusinessAppointments() {
           <p className="alert alert-info">İşletmeniz inceleniyor. Onaylandıktan sonra müşteriler randevu alabilir.</p>
         )}
         {shopId && tab === 'requests' && <Requests shopId={shopId} items={requests} onChanged={loadRequests} />}
-        {shopId && shop && tab === 'calendar' && <Calendar shopId={shopId} isOwner={shop.role === 'owner'} onChanged={loadRequests} />}
+        {shopId && shop && tab === 'calendar' && <Calendar shopId={shopId} isOwner={shop.role === 'owner'} myMemberId={shop.member_id} onChanged={loadRequests} />}
       </div>
     </>
   );
@@ -128,13 +129,15 @@ function Requests({ shopId, items, onChanged }: { shopId: string; items: Appoint
   );
 }
 
-function Calendar(props: { shopId: string; isOwner: boolean; onChanged: () => void }) {
+function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string; onChanged: () => void }) {
   const today = turkeyDate(new Date());
   const [date, setDate] = useState(today);
   const [items, setItems] = useState<Appointment[] | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [staffId, setStaffId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [closed, setClosed] = useState<TimeOff[]>([]);
+  const [blocking, setBlocking] = useState(false);
 
   useEffect(() => {
     if (!props.isOwner) return;
@@ -147,11 +150,13 @@ function Calendar(props: { shopId: string; isOwner: boolean; onChanged: () => vo
     const from = dayStart(date);
     const to = new Date(from.getTime() + DAY);
     try {
-      setItems(
-        await api<Appointment[]>(
-          `/staff/shops/${props.shopId}/appointments?from=${from.toISOString()}&to=${to.toISOString()}${staffId ? `&staffId=${staffId}` : ''}`,
-        ),
-      );
+      const range = `from=${from.toISOString()}&to=${to.toISOString()}`;
+      const [list, off] = await Promise.all([
+        api<Appointment[]>(`/staff/shops/${props.shopId}/appointments?${range}${staffId ? `&staffId=${staffId}` : ''}`),
+        api<TimeOff[]>(`/staff/shops/${props.shopId}/time-off?${range}`),
+      ]);
+      setItems(list);
+      setClosed(off.filter((t) => !staffId || t.staff_id === staffId));
       setError(null);
     } catch (err) {
       setError(errorMessage(err));
@@ -205,9 +210,32 @@ function Calendar(props: { shopId: string; isOwner: boolean; onChanged: () => vo
         </div>
       )}
 
+      {!blocking && (
+        <button type="button" className={`btn btn-block ${biz.blockButton}`} onClick={() => setBlocking(true)}>
+          Saat kapat
+        </button>
+      )}
+      {blocking && (
+        <BlockForm
+          shopId={props.shopId}
+          date={date}
+          members={members}
+          myMemberId={props.myMemberId}
+          isOwner={props.isOwner}
+          onClose={() => setBlocking(false)}
+          onDone={() => {
+            setBlocking(false);
+            load();
+          }}
+        />
+      )}
+
       {error && <p className="alert alert-danger">{error}</p>}
       <div className={styles.wrap}>
-        {items && active.length === 0 && (
+        {closed.map((t) => (
+          <TimeOffCard key={t.id} shopId={props.shopId} item={t} date={date} showStaff={props.isOwner} onChanged={load} />
+        ))}
+        {items && active.length === 0 && closed.length === 0 && (
           <div className={`card ${styles.empty}`}>
             <h2>Randevu yok</h2>
             <p>Bu gün için randevu bulunmuyor.</p>

@@ -143,6 +143,7 @@ export function Salonum() {
               <ul className={`card ${styles.links}`} role="list">
                 <ShortcutLink href="/?harita" icon="map" label="Haritada gör" hint="Salonunuz ve çevredeki salonlar" />
                 {owner && <ShortcutLink href="/qr" icon="qr" label="QR kod" hint="Salonunuza asın, müşteriler okutup randevu alsın" />}
+                <ShortcutLink href="/calisma-saatleri" icon="clock" label="Çalışma saatleri" hint={owner ? 'Ekibin haftalık saatleri ve molaları' : 'Haftalık saatleriniz ve molalarınız'} />
                 <ShortcutLink href="/calismalar" icon="camera" label="Kesim fotoğrafı paylaş" hint="Popüler kesimler’de görünür" />
                 {owner && <ShortcutLink href="/istatistikler" icon="chart" label="İstatistikler" hint="Sayfa ziyaretleri ve randevular, ay ay" />}
                 {owner && (
@@ -172,6 +173,12 @@ const ICONS = {
       <rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2" />
       <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2" />
       <path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 20.5h2M20.5 14v2" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
     </>
   ),
   chart: <path d="M4 20h16M7.5 17v-6M12 17V5M16.5 17V9" strokeWidth="2.2" />,

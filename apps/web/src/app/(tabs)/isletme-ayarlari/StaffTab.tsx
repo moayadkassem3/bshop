@@ -216,6 +216,11 @@ function MemberEditor(props: {
         <input type="checkbox" checked={bookable} onChange={(e) => setBookable(e.target.checked)} />
         Randevu alıyor
       </label>
+      {m.bookable && (
+        <Link href={`/calisma-saatleri?kisi=${m.id}`} className={own.hoursLink}>
+          Çalışma saatleri ve molalar ›
+        </Link>
+      )}
       {confirmRemove ? (
         <div className={own.confirm}>
           <p>{m.display_name} ekipten çıkarılacak ve uygulamaya giremeyecek. Yaklaşan randevusu varsa önce onları iptal edin.</p>
