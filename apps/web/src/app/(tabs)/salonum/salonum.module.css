@@ -115,24 +115,8 @@
   text-decoration: none;
 }
 
-.month {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px 18px;
-  padding: 16px;
-  color: var(--ink-2);
-  text-decoration: none;
-}
 
-.month strong {
-  font-size: 22px;
-  color: var(--ink);
-}
 
-.month .more {
-  margin-left: auto;
-}
 
 .primary {
   display: grid;

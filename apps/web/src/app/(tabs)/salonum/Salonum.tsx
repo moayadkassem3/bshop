@@ -11,19 +11,16 @@ import page from '../randevularim/appointments.module.css';
 import biz from '../randevularim/business.module.css';
 import styles from './salonum.module.css';
 
-type Month = { views: { total: number }; appointments: { total: number } };
-
 const LIVE = new Set<ShopAppointment['status']>(['pending', 'offered', 'confirmed']);
 
 /**
  * Salonum (v1.7): the first tab in business mode. Today at a glance (requests
- * waiting, the day's appointments), this month's numbers for owners, and the
- * salon's shortcuts: its page, sharing, QR code, the map, settings.
+ * waiting, the day's appointments) and the salon's shortcuts: its page,
+ * sharing, the map, QR code, statistics, photos, settings.
  */
 export function Salonum() {
   const { shops, shop, shopId, selectShop, error: shopsError } = useBusinessShops();
   const [items, setItems] = useState<ShopAppointment[] | null>(null);
-  const [month, setMonth] = useState<Month | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const owner = shop?.role === 'owner';
@@ -46,13 +43,6 @@ export function Salonum() {
       clearInterval(timer);
     };
   }, [shopId]);
-
-  useEffect(() => {
-    if (!shop || shop.role !== 'owner') return setMonth(null);
-    api<Month>(`/staff/shops/${shop.id}/stats`)
-      .then(setMonth)
-      .catch(() => setMonth(null));
-  }, [shop]);
 
   const now = Date.now();
   const today = turkeyDate(new Date());
@@ -131,21 +121,6 @@ export function Salonum() {
               )}
             </section>
 
-            {owner && month && (
-              <section aria-labelledby="month-title" className={styles.section}>
-                <h2 id="month-title">Bu ay</h2>
-                <Link href="/istatistikler" className={`card ${styles.month}`}>
-                  <span>
-                    <strong>{month.views.total.toLocaleString('tr-TR')}</strong> sayfa ziyareti
-                  </span>
-                  <span>
-                    <strong>{month.appointments.total.toLocaleString('tr-TR')}</strong> randevu
-                  </span>
-                  <span className={styles.more}>İstatistikler ›</span>
-                </Link>
-              </section>
-            )}
-
             <section aria-labelledby="salon-title" className={styles.section}>
               <h2 id="salon-title">Salonunuz</h2>
               {shop.reviewed_at && shop.visible ? (
@@ -168,6 +143,7 @@ export function Salonum() {
               <ul className={`card ${styles.links}`} role="list">
                 <ShortcutLink href="/?harita" icon="map" label="Haritada gör" hint="Salonunuz ve çevredeki salonlar" />
                 {owner && <ShortcutLink href="/qr" icon="qr" label="QR kod" hint="Salonunuza asın, müşteriler okutup randevu alsın" />}
+                {owner && <ShortcutLink href="/istatistikler" icon="chart" label="İstatistikler" hint="Sayfa ziyaretleri ve randevular, ay ay" />}
                 <ShortcutLink href="/calismalar" icon="camera" label="Kesim fotoğrafı paylaş" hint="Popüler kesimler’de görünür" />
                 {owner && (
                   <ShortcutLink
@@ -198,6 +174,7 @@ const ICONS = {
       <path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 20.5h2M20.5 14v2" />
     </>
   ),
+  chart: <path d="M4 20h16M7.5 17v-6M12 17V5M16.5 17V9" strokeWidth="2.2" />,
   camera: (
     <>
       <path d="M3.5 8.5A2 2 0 0 1 5.5 6.5h2l1.5-2h6l1.5 2h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z" />
