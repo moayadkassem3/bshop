@@ -362,13 +362,6 @@
   min-height: 44px;
 }
 
-.shareBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
 .myShopNote {
   margin: 0;
   font-size: 13px;

@@ -9,9 +9,23 @@ import { LogoMark } from './Logo';
 import styles from './TabBar.module.css';
 
 const TABS = [
+  // Business mode starts on Salonum (v1.7); customers start on Keşfet.
+  {
+    href: '/salonum',
+    label: 'Salonum',
+    business: true,
+    icon: (
+      <>
+        <path d="M3.5 9.5 5 4.5h14l1.5 5" />
+        <path d="M3.5 9.5c0 1.4 1.2 2.5 2.7 2.5s2.7-1.1 2.7-2.5c0 1.4 1.2 2.5 2.7 2.5s2.7-1.1 2.7-2.5c0 1.4 1.2 2.5 2.7 2.5s2.7-1.1 2.7-2.5" />
+        <path d="M5 12v8h14v-8M10 20v-4.5h4V20" />
+      </>
+    ),
+  },
   {
     href: '/',
     label: 'Keşfet',
+    customer: true,
     icon: <path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5zM9 4v13.5M15 6.5V20" />,
   },
   {
@@ -65,14 +79,16 @@ export function TabBar() {
   const cancellations = useNewCancellations(business);
   // Customers: what the salon changed (confirmed, cancelled, another time offered...) since Randevular was opened.
   const updates = useAppointmentUpdates(!business);
-  const tabs = TABS.filter((t) => (t.href === '/favoriler' ? !business : t.business ? business : true));
+  const tabs = TABS.filter((t) => (t.href === '/favoriler' || t.customer ? !business : t.business ? business : true));
   return (
     <nav className={styles.bar} aria-label="Ana menü">
       <Link href="/" className={styles.logo} aria-label="Ana sayfa">
         <LogoMark size={40} />
       </Link>
       {tabs.map((tab) => {
-        const active = tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href);
+        // The map opened from Salonum ("Haritada gör") still belongs to Salonum.
+        const active =
+          tab.href === '/' ? pathname === '/' : tab.href === '/salonum' ? pathname.startsWith('/salonum') || pathname === '/' : pathname.startsWith(tab.href);
         return (
           <Link key={tab.href} href={tab.href} className={`${styles.tab} ${active ? styles.active : ''}`} aria-current={active ? 'page' : undefined}>
             <span className={styles.icon}>

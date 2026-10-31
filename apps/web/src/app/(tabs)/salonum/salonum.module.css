@@ -1,0 +1,181 @@
+.page {
+  display: grid;
+  gap: 22px;
+  padding-bottom: 40px;
+}
+
+.shopName {
+  display: flex;
+  align-items: center;
+}
+
+.section {
+  display: grid;
+  gap: 10px;
+}
+
+.section h2 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.tile {
+  display: grid;
+  gap: 2px;
+  padding: 16px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.tileValue {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.tileLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+/* Requests waiting for an answer stand out. */
+.tileAlert {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.tileAlert .tileLabel {
+  color: rgb(255 255 255 / 0.85);
+}
+
+.next {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.nextTitle {
+  margin: 0;
+  font-weight: 700;
+}
+
+.next ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.next li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nextTime {
+  min-width: 52px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 750;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.nextText {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.nextText span {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more {
+  justify-self: start;
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.month {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 18px;
+  padding: 16px;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+
+.month strong {
+  font-size: 22px;
+  color: var(--ink);
+}
+
+.month .more {
+  margin-left: auto;
+}
+
+.primary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.primary :global(.btn) {
+  min-height: 46px;
+}
+
+.closed {
+  margin: 0;
+  padding: 14px 16px;
+  color: var(--muted);
+}
+
+.links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.links li + li {
+  border-top: 1px solid var(--line);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.link > span:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.link > span:first-child span {
+  font-size: 13px;
+  color: var(--muted);
+}
