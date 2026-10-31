@@ -76,7 +76,49 @@
   margin-top: 18px;
 }
 
+.story {
+  display: grid;
+  gap: 12px;
+  margin: 28px 0 40px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.story h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.storyLead {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* The story at a glance, in its 9:16 shape. */
+.storyPreview {
+  justify-self: center;
+  width: min(260px, 70%);
+  height: auto;
+  aspect-ratio: 9 / 16;
+  border-radius: 18px;
+  background: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.storyNote {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
 @media print {
+  .story {
+    display: none;
+  }
+
   .top,
   .link,
   .actions,

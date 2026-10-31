@@ -6,6 +6,7 @@ import { useBusinessShops } from '@/lib/business';
 import { BRAND } from '@/lib/config';
 import { qrPosterPng, qrSvg, saveFile } from '@/lib/qr';
 import { qrLink } from '@/lib/views';
+import { StoryShare } from './StoryShare';
 import styles from './qr.module.css';
 import { BackArrow } from '@/components/BackArrow';
 
@@ -84,6 +85,7 @@ export function QrPoster() {
               </button>
             </div>
             {!shop.reviewed_at && <p className="alert alert-info">Salonunuz onaylanana kadar bu bağlantı açılmaz.</p>}
+            {link && <StoryShare shop={shop} link={link} />}
           </>
         )}
       </main>
