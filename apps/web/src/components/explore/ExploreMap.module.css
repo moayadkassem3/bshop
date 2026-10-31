@@ -1,0 +1,458 @@
+/* The map fills the screen above the tab bar; everything else floats on it. */
+.page {
+  position: fixed;
+  inset: var(--banner-h, 0px) 0 var(--nav-bottom) var(--nav-left);
+  overflow: hidden;
+  background: #e9edf3;
+}
+
+.map {
+  position: absolute;
+  inset: 0;
+}
+
+.top {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  z-index: 5;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  max-width: 560px;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  padding: 0 16px;
+  background: var(--surface);
+  border-radius: 18px;
+  box-shadow: 0 6px 24px rgb(14 16 19 / 0.16);
+  color: var(--muted);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chip {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--surface);
+  box-shadow: 0 2px 10px rgb(14 16 19 / 0.12);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chipOn {
+  background: var(--primary);
+  color: #fff;
+}
+
+.locationPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 650;
+  box-shadow: 0 4px 14px rgb(14 16 19 / 0.25);
+  cursor: pointer;
+}
+
+.locateButton {
+  position: absolute;
+  right: 14px;
+  bottom: calc(34vh + 14px);
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 4px 16px rgb(14 16 19 / 0.18);
+  cursor: pointer;
+}
+
+/* Map pins */
+/* No position here: MapLibre places each marker with position: absolute and a transform.
+   Overriding it stacks the pins in page flow, so every pin after the first drifts down. */
+.pin {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 3px solid var(--primary);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 4px 12px rgb(14 16 19 / 0.25);
+  cursor: pointer;
+}
+
+.pinSelected {
+  background: var(--primary);
+  color: #fff;
+  z-index: 2;
+}
+
+/* Business mode: your own salon stands out in ink, above the others. */
+.pinMine {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+  z-index: 1;
+}
+
+.pinMine.pinSelected {
+  border-color: var(--ink);
+  background: var(--primary);
+  z-index: 2;
+}
+
+.pinSelected::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgb(14 16 19 / 0.3);
+}
+
+.userDot {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 12px rgb(31 72 201 / 0.2);
+}
+
+/* Bottom sheet */
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  height: 34vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -8px 30px rgb(14 16 19 / 0.14);
+  transition: height 0.25s ease;
+}
+
+.sheetOpen {
+  height: 72vh;
+}
+
+.handle {
+  align-self: center;
+  padding: 10px 40px 6px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.handleArrow {
+  display: block;
+  color: #c9cfd8;
+  transition: transform 0.2s;
+}
+
+.sheetOpen .handleArrow {
+  transform: rotate(180deg);
+}
+
+.sheetTitle {
+  margin: 4px 0 2px;
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.sheetMeta strong {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.sheetMeta {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.locationHint {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.locationHint :global(.btn) {
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 16px;
+  align-content: start;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  text-decoration: none;
+}
+
+.itemSelected {
+  border-color: var(--primary);
+  background: var(--surface-2);
+}
+
+.thumb {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  object-fit: cover;
+  background: var(--ink);
+}
+
+.initial {
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.itemText {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.itemName {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemMeta {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.distance {
+  flex-shrink: 0;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.itemSelected .distance {
+  background: var(--primary);
+  color: #fff;
+}
+
+.empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Business mode: the salon's own card at the top of the sheet (v1.7). */
+.myShop {
+  display: grid;
+  gap: 10px;
+  margin: 2px 0 18px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1.5px solid var(--primary);
+}
+
+.myShopLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.myShopRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.myShopActions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.myShopActions .btn {
+  min-height: 44px;
+}
+
+.myShopNote {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.myShopPending {
+  align-self: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.sheetSubtitle {
+  margin: 0 0 2px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.pillLogo {
+  display: inline-flex;
+}
+
+/* Phones: the panel adds no box, so the search and the sheet float on the map as before. */
+.panel {
+  display: contents;
+}
+
+/* Big screens (v1.7): search, filters and the list in one panel on the left; the map beside it. */
+@media (min-width: 1024px) {
+  .panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    width: 400px;
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+  }
+
+  .map {
+    left: 400px;
+  }
+
+  .top {
+    position: static;
+    max-width: none;
+    padding: calc(16px + env(safe-area-inset-top)) 16px 12px;
+  }
+
+  .search {
+    background: var(--bg);
+    box-shadow: none;
+  }
+
+  .chip {
+    background: var(--bg);
+    box-shadow: none;
+  }
+
+  .chipOn {
+    background: var(--primary);
+  }
+
+  .locationPill {
+    box-shadow: none;
+  }
+
+  .sheet,
+  .sheetOpen {
+    position: static;
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    border-radius: 0;
+    box-shadow: none;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+  }
+
+  /* The list is always open here. */
+  .handle {
+    display: none;
+  }
+
+  .locateButton {
+    right: 20px;
+    bottom: 24px;
+  }
+}

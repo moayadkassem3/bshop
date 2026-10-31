@@ -1,0 +1,16 @@
+/* The page fills the screen so Popüler kesimler sits in its bottom half, above the tab bar. */
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--nav-bottom) - 8px);
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom {
+  margin-top: auto;
+}

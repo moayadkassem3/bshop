@@ -1,0 +1,239 @@
+:root {
+  /* Main navigation: a bottom bar on phones, a rail on the left on big screens (v1.7). */
+  --nav-bottom: calc(64px + env(safe-area-inset-bottom));
+  --nav-left: 0px;
+  /* The subscription warning bar's height on business screens (v1.7). */
+  --banner-h: 0px;
+  /* Brand theme (v1.6): blue and near-black, from the founder's mockups. */
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --surface-2: #f5f8ff;
+  --ink: #0e1013;
+  --ink-2: #3a3f48;
+  --muted: #666c78;
+  --line: #e1e5eb;
+  --primary: #1f48c9;
+  --primary-hover: #1a3cab;
+  --primary-ink: #ffffff;
+  --primary-soft: #e7edfc;
+  --primary-light: #8daeff;
+  --dark-2: #1c2027;
+  --dark-muted: #9aa0a9;
+  --success: #15803d;
+  --success-soft: #e5f5ea;
+  --warning: #b45309;
+  --warning-soft: #fdf0e1;
+  --danger: #c62828;
+  --danger-soft: #fdecec;
+  --radius: 20px;
+  --radius-sm: 14px;
+  --shadow: 0 1px 2px rgb(14 16 19 / 0.04), 0 8px 24px rgb(14 16 19 / 0.05);
+  --font: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.narrow {
+  max-width: 600px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.05s;
+}
+
+.btn:hover {
+  border-color: var(--ink-2);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-ink);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.input {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 16px;
+  width: 100%;
+}
+
+.input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-info {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.badge-success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.badge-warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.badge-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.badge-muted {
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.alert {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.alert-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.alert-info {
+  background: var(--primary-soft);
+  color: var(--primary-hover);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --nav-bottom: 0px;
+    --nav-left: 88px;
+  }
+}

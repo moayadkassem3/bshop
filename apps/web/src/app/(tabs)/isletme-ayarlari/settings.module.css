@@ -1,0 +1,414 @@
+.page {
+  padding-bottom: 150px;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--primary-light);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.section {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.section h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.card {
+  padding: 16px;
+}
+
+.type {
+  padding: 12px 14px;
+}
+
+.cover {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.92);
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.removePhoto {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(14 16 19 / 0.7);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.saveBar {
+  position: fixed;
+  left: var(--nav-left);
+  right: 0;
+  bottom: var(--nav-bottom);
+  z-index: 5;
+  padding: 10px 0;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
+.ok,
+.bad {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.ok {
+  color: var(--success);
+}
+
+.bad {
+  color: var(--warning);
+}
+
+.tabs {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.intro {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.list {
+  display: grid;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.list > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.rowMain strong {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.rowMain em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.rowMain > span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.rowPrice {
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.chevron {
+  color: var(--muted);
+  font-size: 20px;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.editRow {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: var(--surface-2);
+}
+
+.fields {
+  display: grid;
+  gap: 12px;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.rowActions {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.rowActions .btn {
+  min-height: 42px;
+  padding: 0 16px;
+}
+
+.danger {
+  border: 0;
+  background: none;
+  padding: 6px 0;
+  color: var(--danger);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dangerBtn {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+.confirm {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  font-size: 14px;
+}
+
+.confirm p {
+  margin: 0 0 10px;
+  line-height: 1.45;
+}
+
+.link {
+  border: 0;
+  background: none;
+  padding: 6px 0;
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.addButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.addOne {
+  margin-bottom: 10px;
+}
+
+.panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.panel h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.panelActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.catalog {
+  display: grid;
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.catalog li + li {
+  border-top: 1px solid var(--line);
+}
+
+.catalog button {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 0;
+  background: var(--surface);
+  text-align: left;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.catalog button span:last-child {
+  color: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pickedName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0;
+}
+
+.emptyRow {
+  padding: 14px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.removed {
+  margin-top: 6px;
+}
+
+.removed summary {
+  padding: 8px 0;
+  color: var(--muted);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.removedRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.segmented button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  font-weight: 650;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.segmented .segOn {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+.planBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: #fff;
+}
+
+.planBox > div > span {
+  display: block;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.planPrice {
+  font-size: 22px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.planPrice small {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.planBox a {
+  flex-shrink: 0;
+  color: var(--primary-light);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hoursLink {
+  justify-self: start;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}

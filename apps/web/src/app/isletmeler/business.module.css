@@ -1,0 +1,212 @@
+.back {
+  display: inline-block;
+  margin-top: calc(20px + env(safe-area-inset-top));
+  color: var(--primary);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.hero {
+  padding: 20px 0 8px;
+}
+
+.kicker {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 6vw, 38px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+.benefits {
+  margin: 20px 0 0;
+  padding-left: 20px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.pricing {
+  margin-top: 28px;
+}
+
+.pricing h2 {
+  margin: 0;
+}
+
+.pricing > p {
+  margin: 4px 0 14px;
+}
+
+.plans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.plan {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+}
+
+.planName {
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.planPrice {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.planPrice span {
+  margin-left: 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.features {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.trial {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 650;
+}
+
+.note a {
+  color: var(--primary);
+  font-weight: 650;
+}
+
+.note {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.apply {
+  margin-top: 28px;
+  padding: 20px;
+  border-radius: var(--radius);
+  background: var(--primary-soft);
+  scroll-margin-top: 80px;
+}
+
+.apply h2 {
+  margin: 0 0 8px;
+}
+
+.apply p {
+  margin: 0 0 14px;
+  line-height: 1.55;
+}
+
+/* A salon already with us (v1.7): prices come first, its own plan on top. */
+.pricingFirst {
+  margin-top: 8px;
+}
+
+.shopSelect {
+  margin: 0 0 12px;
+}
+
+.planWide {
+  grid-column: 1 / -1;
+}
+
+.planCurrent {
+  border: 2px solid var(--primary);
+  background: var(--surface-2);
+}
+
+.planBadge {
+  justify-self: start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.planSeats {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.trialDays {
+  font-size: 1.15em;
+}
+
+.trialEnd {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 550;
+  opacity: 0.85;
+}
+
+.trialOver {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.pricing .pageTitle {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+
+.quoteLink {
+  justify-self: start;
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.statusText {
+  margin: 0;
+}
+
+.statusNote {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 550;
+  opacity: 0.85;
+}
+
+.trialOver {
+  display: grid;
+  gap: 10px;
+}
+
+.startBtn {
+  justify-self: start;
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #fff;
+}

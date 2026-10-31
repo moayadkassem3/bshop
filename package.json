@@ -1,0 +1,12 @@
+{
+  "name": "bshop",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "test": "npm test --workspace apps/api",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

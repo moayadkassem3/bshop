@@ -1,0 +1,75 @@
+.back {
+  display: inline-block;
+  margin-top: calc(20px + env(safe-area-inset-top));
+  color: var(--primary);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.indexTitle {
+  margin: 16px 0;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+
+.list {
+  list-style: none;
+  margin: 0 0 32px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.list a {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.doc {
+  padding: 8px 0 48px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.doc h1 {
+  color: var(--ink);
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.doc h2 {
+  margin-top: 28px;
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.doc blockquote {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.doc table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.doc th,
+.doc td {
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}

@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+  <!-- Test build only: exact timing for the delayed test alert. Production alerts arrive by push. -->
+  <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+  <!-- Test build only: wake the screen, and the "display over other apps" fallback. -->
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+  <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+  <application>
+    <receiver android:name=".AlertReceiver" android:exported="false" />
+  </application>
+</manifest>

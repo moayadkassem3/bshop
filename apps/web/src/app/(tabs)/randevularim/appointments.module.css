@@ -1,0 +1,226 @@
+.header {
+  padding-bottom: 20px;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 18px;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--dark-2);
+}
+
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 11px;
+  background: none;
+  color: var(--dark-muted);
+  font-weight: 750;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.segmented .segOn {
+  background: var(--primary);
+  color: #fff;
+}
+
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.body {
+  padding-top: 18px;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.chip {
+  min-height: 40px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chip.chipOn {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+.wrap {
+  display: grid;
+  gap: 12px;
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin-top: 44px;
+  padding: 36px 20px;
+  text-align: center;
+}
+
+.empty h2 {
+  margin: 10px 0 0;
+  font-size: 20px;
+}
+
+.empty p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.empty .btn {
+  margin-top: 14px;
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.card p {
+  margin: 0;
+}
+
+/* Status badges keep their own width inside the card's grid. */
+.card > span {
+  justify-self: start;
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.when {
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.shop {
+  display: inline-block;
+  margin-top: 2px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.price {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.services {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.cancel {
+  justify-self: start;
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  color: var(--danger);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirmBox {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  font-size: 14px;
+}
+
+.confirmBox p {
+  margin: 0 0 10px;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 8px;
+}
+
+.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+
+/* A time the salon offered instead (v1.7), waiting for the customer's answer. */
+.offer {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.offer p {
+  margin: 0 0 10px;
+}
+
+.offer .confirmActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Something the salon changed since Randevular was last opened (v1.7). */
+.newDot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  vertical-align: middle;
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px;
+}

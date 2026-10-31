@@ -1,0 +1,237 @@
+.signInPage {
+  min-height: calc(100dvh - var(--nav-bottom));
+  display: flex;
+  flex-direction: column;
+  background: var(--ink);
+}
+
+.hero {
+  flex: 1;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 10px;
+  padding: 48px 16px 32px;
+  text-align: center;
+  color: #fff;
+}
+
+.heroMark {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 24px;
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 0 10px #111a33;
+}
+
+.brand {
+  margin: 22px 0 0;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.tagline {
+  margin: 0;
+  color: var(--dark-muted);
+  font-size: 17px;
+}
+
+.sheet {
+  display: grid;
+  gap: 12px;
+  padding: 24px 16px 28px;
+  background: var(--surface);
+  border-radius: 28px 28px 0 0;
+}
+
+.sheet > * {
+  max-width: 560px;
+  width: 100%;
+  justify-self: center;
+}
+
+.sheetTitle {
+  margin: 0 0 4px;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.accountHeader {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: calc(32px + env(safe-area-inset-top)) 16px 28px;
+  background: var(--ink);
+  color: #fff;
+  text-align: center;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--primary);
+  font-size: 36px;
+  font-weight: 800;
+  box-shadow: 0 0 0 6px rgb(255 255 255 / 0.08);
+}
+
+.accountName {
+  margin: 10px 0 0;
+  font-size: 26px;
+}
+
+.accountPhone {
+  margin: 0;
+  color: var(--dark-muted);
+}
+
+.modeBadge {
+  margin-top: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.12);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.business {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 16px;
+}
+
+.business > span:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.business .muted {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.businessEnd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+
+.groupTitle {
+  margin: 24px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.menu li + li {
+  border-top: 1px solid var(--line);
+}
+
+.menuItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 56px;
+  padding: 0 16px;
+  border: 0;
+  background: none;
+  text-align: left;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nameForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.nameForm > button,
+.nameForm > :nth-child(3) {
+  grid-column: 1 / -1;
+}
+
+.switchMode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 24px;
+  min-height: 52px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.switchMode:disabled {
+  opacity: 0.6;
+}
+
+.switchMode + .signOut {
+  margin-top: 12px;
+}
+
+.signOut {
+  display: block;
+  width: 100%;
+  margin: 24px 0;
+  min-height: 52px;
+  border: 1.5px solid #f2c9c9;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--danger);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+
+
+/* Below "Giriş yap": salons that are not with us yet. */
+.businessLink {
+  display: block;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.businessLink span {
+  margin-right: 4px;
+  color: var(--ink);
+  font-weight: 750;
+}

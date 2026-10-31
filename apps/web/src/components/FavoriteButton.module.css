@@ -1,0 +1,36 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    transform 0.1s;
+}
+
+.button:active {
+  transform: scale(0.94);
+}
+
+.on {
+  color: #d1344a;
+  border-color: #f4c7cf;
+  background: #fdf0f2;
+}
+
+.withLabel {
+  width: auto;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 650;
+  font-size: 15px;
+}
