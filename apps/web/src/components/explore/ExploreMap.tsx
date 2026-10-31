@@ -38,6 +38,7 @@ export function ExploreMap() {
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const sheetDrag = useSheetDrag(sheetOpen, setSheetOpen);
 
   // Business mode (v1.7): the map stays on the salon instead of the phone's location, and
   // the sheet opens with the salon's own card; nearby salons are measured from the salon.
@@ -280,8 +281,14 @@ export function ExploreMap() {
           )}
         </div>
 
-        <section className={`${styles.sheet} ${sheetOpen ? styles.sheetOpen : ''}`} aria-labelledby="nearby-title">
-          <button type="button" className={styles.handle} onClick={() => setSheetOpen((o) => !o)} aria-expanded={sheetOpen}>
+        <section
+          ref={sheetDrag.ref}
+          className={`${styles.sheet} ${sheetOpen ? styles.sheetOpen : ''} ${sheetDrag.height !== null ? styles.sheetDragging : ''}`}
+          style={sheetDrag.height !== null ? { height: sheetDrag.height } : undefined}
+          aria-labelledby="nearby-title"
+        >
+          <div className={styles.grab} {...sheetDrag.handlers}>
+          <button type="button" className={styles.handle} onClick={sheetDrag.onHandleClick} aria-expanded={sheetOpen}>
             {/* A wide arrow: tap to open the list (points up) or close it (points down). */}
             <svg className={styles.handleArrow} viewBox="0 0 48 16" width="48" height="16" aria-hidden>
               <path d="M5 12 24 4l19 8" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
@@ -301,6 +308,7 @@ export function ExploreMap() {
               'Kuaförler yükleniyor…'
             )}
           </p>
+          </div>
           {!user && !business && (
             <div className={styles.locationHint}>
               <span>Size en yakın kuaförleri görmek için konumunuzu paylaşın.</span>
@@ -398,4 +406,70 @@ function MyShopCard({ shop }: { shop: BusinessShop }) {
       )}
     </div>
   );
+}
+
+/**
+ * Drag the list sheet up and down by its top part (v1.7), as in map apps: it
+ * follows the finger, then settles open or closed by where it was let go, or by
+ * the direction of a quick flick. A tap on the arrow still toggles, and links
+ * and buttons in the top part keep working. Off on big screens, where the list
+ * is a fixed column.
+ */
+function useSheetDrag(open: boolean, setOpen: (open: boolean) => void) {
+  const ref = useRef<HTMLElement>(null);
+  const [height, setHeight] = useState<number | null>(null);
+  const drag = useRef<{ id: number; startY: number; startH: number; lastY: number; lastT: number; v: number; moved: boolean } | null>(null);
+  const dragged = useRef(false);
+
+  const handlers = {
+    onPointerDown(e: React.PointerEvent<HTMLElement>) {
+      const sheet = ref.current;
+      if (!sheet || e.button !== 0 || getComputedStyle(sheet).position === 'static') return;
+      const target = e.target as HTMLElement;
+      if (target.closest('a, input, select, textarea') || (target.closest('button') && !target.closest('[aria-expanded]'))) return;
+      dragged.current = false;
+      drag.current = { id: e.pointerId, startY: e.clientY, startH: sheet.getBoundingClientRect().height, lastY: e.clientY, lastT: e.timeStamp, v: 0, moved: false };
+    },
+    onPointerMove(e: React.PointerEvent<HTMLElement>) {
+      const d = drag.current;
+      if (!d || e.pointerId !== d.id) return;
+      const dy = e.clientY - d.startY;
+      if (!d.moved) {
+        if (Math.abs(dy) < 6) return;
+        d.moved = true;
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }
+      d.v = (e.clientY - d.lastY) / Math.max(1, e.timeStamp - d.lastT);
+      d.lastY = e.clientY;
+      d.lastT = e.timeStamp;
+      const vh = window.innerHeight;
+      setHeight(Math.min(vh * 0.9, Math.max(vh * 0.14, d.startH - dy)));
+    },
+    onPointerUp(e: React.PointerEvent<HTMLElement>) {
+      const d = drag.current;
+      drag.current = null;
+      if (!d || !d.moved) return;
+      dragged.current = true;
+      const vh = window.innerHeight;
+      const h = d.startH - (e.clientY - d.startY);
+      // A flick (faster than ~0.4 px/ms) decides by direction; otherwise the nearer state wins.
+      setOpen(Math.abs(d.v) > 0.4 ? d.v < 0 : h > vh * 0.53);
+      setHeight(null);
+    },
+    onPointerCancel() {
+      drag.current = null;
+      setHeight(null);
+    },
+  };
+
+  // After a drag the browser may still send a click to the arrow: ignore that one.
+  const onHandleClick = () => {
+    if (dragged.current) {
+      dragged.current = false;
+      return;
+    }
+    setOpen(!open);
+  };
+
+  return { ref, height, handlers, onHandleClick };
 }

@@ -180,7 +180,7 @@
   background: var(--surface);
   border-radius: 24px 24px 0 0;
   box-shadow: 0 -8px 30px rgb(14 16 19 / 0.14);
-  transition: height 0.25s ease;
+  transition: height var(--dur-3) var(--ease-out);
 }
 
 .sheetOpen {
@@ -454,5 +454,27 @@
   .locateButton {
     right: 20px;
     bottom: 24px;
+  }
+}
+
+/* The sheet's top part can be dragged (v1.7): the page must not scroll under the finger. */
+.grab {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sheetDragging {
+  transition: none;
+}
+
+@media (min-width: 1024px) {
+  .grab {
+    touch-action: auto;
+    user-select: auto;
+    -webkit-user-select: auto;
   }
 }
