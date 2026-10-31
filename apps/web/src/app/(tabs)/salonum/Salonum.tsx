@@ -170,7 +170,6 @@ export function Salonum() {
                 {owner && <ShortcutLink href="/qr" label="QR kod" hint="Salonunuza asın, müşteriler okutup randevu alsın" />}
                 <ShortcutLink href="/calismalar" label="Kesim fotoğrafı paylaş" hint="Popüler kesimler’de görünür" />
                 {owner && <ShortcutLink href="/isletme-ayarlari" label="Salon bilgileri" hint="Adres, fotoğraflar, hizmetler, personel" onClick={() => rememberShop(shop.id)} />}
-                {owner && <ShortcutLink href="/isletmeler" label="Paketler ve fiyatlar" />}
               </ul>
             </section>
           </>

@@ -118,11 +118,16 @@
 
 .business .muted {
   font-size: 13px;
+  font-weight: 500;
 }
 
-.panelLink {
-  margin-top: 12px;
+.businessEnd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
+
 
 .groupTitle {
   margin: 24px 0 8px;
@@ -211,19 +216,7 @@
   cursor: pointer;
 }
 
-.editShop {
-  min-height: 48px;
-  border-top: 1px solid var(--line);
-  color: var(--primary);
-  font-size: 15px;
-  font-weight: 700;
-}
 
-.pendingView {
-  color: var(--muted);
-  font-weight: 600;
-  cursor: default;
-}
 
 /* Below "Giriş yap": salons that are not with us yet. */
 .businessLink {

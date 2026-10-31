@@ -222,6 +222,11 @@ function businessStatus(b: MyBusiness): { label: string; tone: string } {
 }
 
 /** The shops this person belongs to, with their label (v1.6: owner, co-owner, staff) and review/trial state. */
+/**
+ * The salons this person belongs to, with their role and review/trial state.
+ * Everything about a salon lives on Salonum (v1.7); a row opens it on that salon.
+ * Profil keeps what is about the person: details, plans, mode, legal, sign-out.
+ */
 function MyBusinesses() {
   const [shops, setShops] = useState<MyBusiness[] | null>(null);
   useEffect(() => {
@@ -239,7 +244,7 @@ function MyBusinesses() {
           const label = b.role === 'staff' ? 'Personel' : b.owner_label === 'co_owner' ? 'Ortak' : 'Sahibi';
           return (
             <li key={b.id}>
-              <div className={styles.business}>
+              <Link href="/salonum" className={`${styles.menuItem} ${styles.business}`} onClick={() => rememberShop(b.id)}>
                 <span>
                   <strong>
                     {b.name}
@@ -247,43 +252,15 @@ function MyBusinesses() {
                   </strong>
                   <span className="muted">{label}</span>
                 </span>
-                <span className={`badge ${status.tone}`}>{status.label}</span>
-              </div>
-              {b.role === 'owner' && (
-                <Link href="/isletme-ayarlari" className={`${styles.menuItem} ${styles.editShop}`} onClick={() => rememberShop(b.id)}>
-                  Salon bilgilerini düzenle <span aria-hidden>›</span>
-                </Link>
-              )}
-              {/* The salon's public page, as customers see it (v1.7); it exists once our team approves the salon. */}
-              {b.reviewed_at && b.visible ? (
-                <Link href={`/${b.slug}`} className={`${styles.menuItem} ${styles.editShop}`}>
-                  Salonu müşteri gözüyle gör <span aria-hidden>›</span>
-                </Link>
-              ) : (
-                <span className={`${styles.menuItem} ${styles.editShop} ${styles.pendingView}`}>
-                  {b.reviewed_at ? 'Salon sayfası abonelik başlayana kadar kapalı' : 'Salon sayfası onaydan sonra açılır'}
+                <span className={styles.businessEnd}>
+                  <span className={`badge ${status.tone}`}>{status.label}</span>
+                  <span aria-hidden>›</span>
                 </span>
-              )}
+              </Link>
             </li>
           );
         })}
       </ul>
-      <Link href="/randevularim" className={`btn btn-primary btn-block ${styles.panelLink}`}>
-        Randevu talepleri ve takvim
-      </Link>
-      <Link href="/calismalar" className={`btn btn-block ${styles.panelLink}`}>
-        Kesim fotoğrafı paylaş
-      </Link>
-      {shops.some((b) => b.role === 'owner') && (
-        <>
-          <Link href="/istatistikler" className={`btn btn-block ${styles.panelLink}`}>
-            İstatistikler
-          </Link>
-          <Link href="/qr" className={`btn btn-block ${styles.panelLink}`}>
-            Salon QR kodu
-          </Link>
-        </>
-      )}
     </>
   );
 }
