@@ -143,8 +143,8 @@ export function Salonum() {
               <ul className={`card ${styles.links}`} role="list">
                 <ShortcutLink href="/?harita" icon="map" label="Haritada gör" hint="Salonunuz ve çevredeki salonlar" />
                 {owner && <ShortcutLink href="/qr" icon="qr" label="QR kod" hint="Salonunuza asın, müşteriler okutup randevu alsın" />}
-                {owner && <ShortcutLink href="/istatistikler" icon="chart" label="İstatistikler" hint="Sayfa ziyaretleri ve randevular, ay ay" />}
                 <ShortcutLink href="/calismalar" icon="camera" label="Kesim fotoğrafı paylaş" hint="Popüler kesimler’de görünür" />
+                {owner && <ShortcutLink href="/istatistikler" icon="chart" label="İstatistikler" hint="Sayfa ziyaretleri ve randevular, ay ay" />}
                 {owner && (
                   <ShortcutLink
                     href="/isletme-ayarlari"
