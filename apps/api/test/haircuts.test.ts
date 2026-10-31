@@ -8,8 +8,21 @@ const t = useTestApp();
 const jpeg = () => sharp({ create: { width: 300, height: 400, channels: 3, background: '#334' } }).jpeg().toBuffer();
 
 describe('Popüler kesimler (v1.7)', () => {
+  it("a salon posts only its own customers' styles", async () => {
+    const shop = await setupShop(t);
+    const upload = async (style: string) =>
+      t.call('POST', `${shop.base}/posts?style=${style}`, { token: shop.tokens.owner, body: await jpeg(), contentType: 'image/jpeg' });
+    await t.call('PATCH', `${shop.base}/settings`, { token: shop.tokens.owner, body: { audience: 'men' } });
+    expect((await upload('bob')).body.error).toBe('STYLE_NOT_OFFERED');
+    expect((await upload('skin-fade')).status).toBe(201);
+    await t.call('PATCH', `${shop.base}/settings`, { token: shop.tokens.owner, body: { audience: 'unisex' } });
+    expect((await upload('bob')).status).toBe(201);
+  });
+
   it('salons post their work; customers see it ranked by likes and like it once', async () => {
     const shop = await setupShop(t);
+    // Unisex, so it can post both men's and women's styles.
+    await t.call('PATCH', `${shop.base}/settings`, { token: shop.tokens.owner, body: { audience: 'unisex' } });
     const post = (style: string, token = shop.tokens.owner) =>
       t.call('POST', `${shop.base}/posts?style=${style}&caption=${encodeURIComponent('Yeni sezon')}`, { token, body: undefined as never, contentType: 'image/jpeg' });
     const upload = async (style: string, token = shop.tokens.owner) =>

@@ -24,6 +24,12 @@ export function MyWork() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [style, setStyle] = useState('');
+  const groups: ('men' | 'women')[] = shop?.audience === 'men' ? ['men'] : shop?.audience === 'women' ? ['women'] : ['men', 'women'];
+  // Switching to a salon of another type clears a style it does not offer.
+  useEffect(() => {
+    if (style && !styleList.some((s) => s.key === style && groups.includes(s.audience))) setStyle('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shop?.audience]);
   const [caption, setCaption] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,17 +131,26 @@ export function MyWork() {
                 <label htmlFor="w-style">Kesim</label>
                 <select id="w-style" className="input" value={style} onChange={(e) => setStyle(e.target.value)}>
                   <option value="">Seçin</option>
-                  {(['men', 'women'] as const).map((group) => (
-                    <optgroup key={group} label={group === 'men' ? 'Erkek' : 'Kadın'}>
-                      {styleList
-                        .filter((s) => s.audience === group)
+                  {/* Only the styles of the salon's own customers: a men's salon sees men's styles (v1.7). */}
+                  {groups.length === 1
+                    ? styleList
+                        .filter((s) => s.audience === groups[0])
                         .map((s) => (
                           <option key={s.key} value={s.key}>
                             {s.name}
                           </option>
-                        ))}
-                    </optgroup>
-                  ))}
+                        ))
+                    : groups.map((group) => (
+                        <optgroup key={group} label={group === 'men' ? 'Erkek' : 'Kadın'}>
+                          {styleList
+                            .filter((s) => s.audience === group)
+                            .map((s) => (
+                              <option key={s.key} value={s.key}>
+                                {s.name}
+                              </option>
+                            ))}
+                        </optgroup>
+                      ))}
                 </select>
               </div>
               <div className="field">

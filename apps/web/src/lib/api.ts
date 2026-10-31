@@ -56,6 +56,7 @@ const MESSAGES: Record<string, string> = {
   CANNOT_DEMOTE_SELF: 'Kendinizi ekipten çıkaramaz veya rolünüzü düşüremezsiniz.',
   OWN_SHOP: 'Çalıştığınız salondan müşteri olarak randevu alamazsınız.',
   POST_LIMIT: 'Paylaşım sınırına ulaşıldı. Eski paylaşımlardan birini kaldırın.',
+  STYLE_NOT_OFFERED: 'Bu kesim salonunuzun müşterilerine uygun değil. Listeden başka bir kesim seçin.',
   NOT_PENDING: 'Bu talep az önce yanıtlandı veya otomatik onaylandı.',
   NOT_CONFIRMED: 'Bu randevunun durumu değişti.',
   NOT_STARTED: 'Randevu saati henüz gelmedi.',

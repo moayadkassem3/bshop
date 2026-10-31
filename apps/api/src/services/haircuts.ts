@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Deps } from '../deps.js';
 import { withTx } from '../db.js';
-import { conflict, forbidden, notFound } from '../errors.js';
+import { badRequest, conflict, forbidden, notFound } from '../errors.js';
 import { HAIRCUT_STYLES, stylesFor } from '../domain/styles.js';
 import { requireMember } from './access.js';
 import type { User } from './auth.js';
@@ -30,6 +30,12 @@ const POST_COLUMNS = `p.id, p.style, p.caption, p.width, p.height, p.created_at,
 /** Owners and staff post their work; staff showcase their own cuts. */
 export async function addPost(deps: Deps, user: User, shopId: string, data: Buffer, input: { style: string; caption?: string | null }) {
   await requireMember(deps.db, user, shopId);
+  // A men's salon posts men's styles, a women's salon women's; unisex salons both (v1.7).
+  const { rows: shopRows } = await deps.db.query<{ audience: 'men' | 'women' | 'unisex' }>('SELECT audience FROM shops WHERE id = $1', [shopId]);
+  const styleAudience = HAIRCUT_STYLES.find((s) => s.key === input.style)?.audience;
+  if (styleAudience && shopRows[0] && shopRows[0].audience !== 'unisex' && shopRows[0].audience !== styleAudience) {
+    throw badRequest('STYLE_NOT_OFFERED', 'This style is not for this salon’s customers');
+  }
   const processed = await processImage(data, 'post');
   const key = `${shopId}/posts/${randomUUID()}.webp`;
   return withTx(deps.db, async (tx) => {
