@@ -354,3 +354,13 @@
   font-weight: 600;
   color: var(--primary);
 }
+
+.kicker a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.kicker a:hover,
+.kicker a:focus-visible {
+  text-decoration: underline;
+}

@@ -7,7 +7,7 @@ import { readPhoto } from '../services/photos.js';
 import { shopSummaries } from '../services/favorites.js';
 import { LEGAL_DOCUMENTS } from '../domain/legal.js';
 import { PLAN_FEATURES, PLAN_TERMS, PLANS } from '../domain/plans.js';
-import { nearbyShops, searchPublicShops } from '../services/shops.js';
+import { listingDistricts, listingShops, nearbyShops, searchPublicShops, sitemapEntries } from '../services/shops.js';
 import { HAIRCUT_STYLES, STYLE_KEYS } from '../domain/styles.js';
 import { popularPosts, readPostPhoto } from '../services/haircuts.js';
 import { recordShopView, VIEW_SOURCES } from '../services/stats.js';
@@ -53,6 +53,19 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
       .parse(req.query);
     return nearbyShops(deps, { latitude: q.lat, longitude: q.lng, query: q.q, audience: q.audience, radiusKm: q.radiusKm, limit: q.limit });
   });
+
+  // Listing pages (v1.7): /istanbul, /istanbul/avcilar, /istanbul/avcilar/erkek-kuaforu.
+  app.get('/public/listing', async (req) => {
+    const q = z
+      .object({ city: z.string().trim().min(2).max(40), district: z.string().trim().min(2).max(80).optional(), audience: z.enum(['men', 'women']).optional() })
+      .parse(req.query);
+    return listingShops(deps, q);
+  });
+  app.get('/public/listing/districts', async (req) => {
+    const { city } = z.object({ city: z.string().trim().min(2).max(40) }).parse(req.query);
+    return listingDistricts(deps, city);
+  });
+  app.get('/public/sitemap', async () => sitemapEntries(deps));
 
   app.get('/public/plans', async () => ({ plans: PLANS, features: PLAN_FEATURES, terms: PLAN_TERMS }));
 

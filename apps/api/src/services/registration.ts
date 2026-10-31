@@ -2,7 +2,8 @@ import type pg from 'pg';
 import type { Deps } from '../deps.js';
 import { withTx } from '../db.js';
 import { badRequest, conflict } from '../errors.js';
-import { RESERVED_SLUGS, slugify } from '../domain/slug.js';
+import { shopLinkCandidates } from '../domain/slug.js';
+import { slugIsFree } from './shops.js';
 import { normalizePhone, normalizeShopPhone } from '../phone.js';
 import { createSession, upsertUserByPhone, type User } from './auth.js';
 import { assertIncludesRequired, recordConsents, type ConsentInput } from './consents.js';
@@ -32,14 +33,10 @@ export type RegistrationInput = {
   consents: ConsentInput[];
 };
 
-/** A free link for the shop, based on its name: "nirvana-for-men", then "nirvana-for-men-2", ... */
-async function freeSlug(tx: pg.PoolClient, name: string): Promise<string> {
-  const base = slugify(name);
-  for (let n = 1; n < 100; n++) {
-    const candidate = n === 1 ? base : `${base}-${n}`;
-    if (RESERVED_SLUGS.has(candidate)) continue;
-    const taken = await tx.query('SELECT 1 FROM shops WHERE slug = $1', [candidate]);
-    if (!taken.rowCount) return candidate;
+/** A free link for the shop: its name, or name + district ("mk-avcilar") when the name is short or taken. */
+async function freeSlug(tx: pg.PoolClient, name: string, district: string, city: string): Promise<string> {
+  for (const candidate of shopLinkCandidates(name, district, city)) {
+    if (await slugIsFree(tx, candidate)) return candidate;
   }
   throw conflict('SLUG_TAKEN', 'Choose a different shop name');
 }
@@ -68,7 +65,7 @@ export async function registerShop(deps: Deps, user: User, input: RegistrationIn
     const pending = await tx.query('SELECT 1 FROM shops WHERE registered_by = $1 AND reviewed_at IS NULL LIMIT 1', [user.id]);
     if (pending.rowCount) throw conflict('REGISTRATION_PENDING', 'Your previous registration is still under review');
 
-    const slug = await freeSlug(tx, input.name);
+    const slug = await freeSlug(tx, input.name, input.district, input.city);
     const shop = (
       await tx.query<{ id: string }>(
         `INSERT INTO shops (name, slug, phone, whatsapp, instagram, about, address, district, city, latitude, longitude,

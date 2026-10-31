@@ -1,21 +1,26 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { ViewTracker } from '@/components/ViewTracker';
 import { ShopWork } from '@/components/haircuts/ShopWork';
 import { PhotoGallery, PhotoGrid } from '@/components/PhotoGallery';
 import { formatDuration, formatPrice } from '@/lib/format';
+import { PlacePage, placeMetadata } from '@/components/places/PlacePage';
+import { placeHref, provinceBySlug, typeForAudience } from '@/lib/places';
 import { loadProfile } from '@/lib/server';
 import { AUDIENCE, directionsUrl, formatPhone, todayHours, turkeyWeekday, WEEKDAYS, whatsappUrl } from '@/lib/shop';
 import { ServiceList } from './ServiceList';
 import styles from './shop.module.css';
 import { VerifiedTick } from '@/components/VerifiedTick';
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const profile = await loadProfile((await params).slug);
+  const { slug } = await params;
+  const province = provinceBySlug(slug);
+  if (province) return placeMetadata({ province });
+  const profile = await loadProfile(slug);
   return profile
     ? {
         title: profile.name,
@@ -25,10 +30,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /** The shop's public profile (handoff v1.3), behind its link and QR code. */
-export default async function ShopProfilePage({ params }: Props) {
+export default async function ShopProfilePage({ params, searchParams }: Props) {
   const { slug } = await params;
+  // /istanbul is the province's listing page (v1.7); no salon can have a province's name as its link.
+  const province = provinceBySlug(slug);
+  if (province) return <PlacePage province={province} />;
   const profile = await loadProfile(slug);
   if (!profile) notFound();
+  // An earlier link (e.g. "kuafor-mk") still works and moves to the current one ("mk-avcilar").
+  // The query is kept, so an old QR code's ?k=qr still counts as a QR visit.
+  if (profile.slug !== slug) {
+    const query = new URLSearchParams(Object.entries(await searchParams).flatMap(([k, v]) => (typeof v === 'string' ? [[k, v]] : [])));
+    permanentRedirect(`/${profile.slug}${query.size ? `?${query}` : ''}`);
+  }
+  const cityHref = profile.city ? placeHref(profile.city) : null;
+  const districtHref = profile.city ? placeHref(profile.city, profile.district) : null;
+  const typeHref = profile.city && profile.district ? placeHref(profile.city, profile.district, typeForAudience(profile.audience)) : null;
 
   const directions = directionsUrl(profile);
   const today = todayHours(profile.openingHours);
@@ -45,9 +62,21 @@ export default async function ShopProfilePage({ params }: Props) {
 
       <div className="container narrow">
         <header className={styles.profileHeader}>
+          {/* Each part leads to its listing page (v1.7): this type in this district, the district, the province. */}
           <p className={styles.kicker}>
-            {AUDIENCE[profile.audience]}
-            {profile.district || profile.city ? ` · ${profile.district || profile.city}` : ''}
+            {typeHref || districtHref ? <Link href={(typeHref ?? districtHref)!}>{AUDIENCE[profile.audience]}</Link> : AUDIENCE[profile.audience]}
+            {profile.district && (
+              <>
+                {' · '}
+                {districtHref && districtHref !== cityHref ? <Link href={districtHref}>{profile.district}</Link> : profile.district}
+              </>
+            )}
+            {profile.city && (
+              <>
+                {profile.district ? ', ' : ' · '}
+                {cityHref ? <Link href={cityHref}>{profile.city}</Link> : profile.city}
+              </>
+            )}
           </p>
           <div className={styles.titleRow}>
             <h1 className={styles.name}>

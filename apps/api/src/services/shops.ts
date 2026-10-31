@@ -5,6 +5,7 @@ import { PLAN_TERMS, planForStaff } from '../domain/plans.js';
 import { sms } from '../messages.js';
 import { queueSms } from '../notifications.js';
 import { normalizePhone, normalizeShopPhone } from '../phone.js';
+import { PROVINCE_SLUGS, RESERVED_SLUGS, shopLinkCandidates, SLUG_PATTERN } from '../domain/slug.js';
 import { requireOwner, requirePlatformAdmin } from './access.js';
 import { upsertUserByPhone, type User } from './auth.js';
 
@@ -51,11 +52,14 @@ export async function getShopById(q: Queryable, shopId: string): Promise<Shop> {
   return rows[0];
 }
 
-/** A shop customers can see and book, or 404 (inactive shops are indistinguishable from missing ones). */
+/**
+ * A shop customers can see and book, or 404 (inactive shops are indistinguishable from missing ones).
+ * An earlier link of the salon still finds it (v1.7); the website then redirects to the current one.
+ */
 export async function getPublicShopBySlug(q: Queryable, now: Date, slug: string): Promise<Shop> {
   const { rows } = await q.query<Shop>(
     `SELECT ${SHOP_COLUMNS} FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
-     WHERE ${PUBLIC_CONDITION} AND s.slug = $2`,
+     WHERE ${PUBLIC_CONDITION} AND (s.slug = $2 OR s.id = (SELECT h.shop_id FROM shop_slug_history h WHERE h.slug = $2))`,
     [now, slug],
   );
   if (!rows[0]) throw notFound('Shop');
@@ -142,8 +146,7 @@ export function normalizeInstagram(input: string): string {
 export async function createShop(deps: Deps, admin: User, input: CreateShopInput) {
   requirePlatformAdmin(admin);
   return withTx(deps.db, async (tx) => {
-    const exists = await tx.query('SELECT 1 FROM shops WHERE slug = $1', [input.slug]);
-    if (exists.rowCount) throw conflict('SLUG_TAKEN', 'This shop link is already used');
+    if (!(await slugIsFree(tx, input.slug))) throw conflict('SLUG_TAKEN', 'This shop link is already used');
     const shop = (
       await tx.query<{ id: string }>(
         `INSERT INTO shops (name, slug, phone, address, district, city, whatsapp, instagram, latitude, longitude, audience)
@@ -358,4 +361,83 @@ export async function requestSubscription(deps: Deps, user: User, shopId: string
     }
     return { requestedAt: now };
   });
+}
+
+/** A link no salon uses now or used before (old links keep redirecting), and not one of the site's own pages. */
+export async function slugIsFree(q: Queryable, slug: string): Promise<boolean> {
+  if (RESERVED_SLUGS.has(slug) || !SLUG_PATTERN.test(slug)) return false;
+  const { rowCount } = await q.query('SELECT 1 FROM shops WHERE slug = $1 UNION ALL SELECT 1 FROM shop_slug_history WHERE slug = $1', [slug]);
+  return !rowCount;
+}
+
+/**
+ * Links from before v1.7 that the new rule improves: "kuafor-mk" (a short name),
+ * "nirvana-2" (a taken name) or a province's name now become name + district,
+ * e.g. "mk-avcilar". The old link is kept in the history, so it still works.
+ * Safe to run on every start.
+ */
+export async function improveShopLinks(deps: Deps) {
+  const { rows } = await deps.db.query<{ id: string; slug: string; name: string; district: string | null; city: string | null }>(
+    `SELECT id, slug, name, district, city FROM shops WHERE slug LIKE 'kuafor-%' OR slug ~ '-[0-9]+$' OR slug = ANY($1::text[])`,
+    [PROVINCE_SLUGS],
+  );
+  const renamed: { from: string; to: string }[] = [];
+  for (const shop of rows) {
+    await withTx(deps.db, async (tx) => {
+      await tx.query('SELECT id FROM shops WHERE id = $1 FOR UPDATE', [shop.id]);
+      for (const candidate of shopLinkCandidates(shop.name, shop.district, shop.city)) {
+        if (candidate === shop.slug && !RESERVED_SLUGS.has(candidate)) return;
+        if (/-[0-9]+$/.test(candidate) || candidate.startsWith('kuafor-')) return; // no better link than the one it has
+        if (!(await slugIsFree(tx, candidate))) continue;
+        await tx.query('INSERT INTO shop_slug_history (slug, shop_id, retired_at) VALUES ($1, $2, $3)', [shop.slug, shop.id, deps.clock.now()]);
+        await tx.query('UPDATE shops SET slug = $2 WHERE id = $1', [shop.id, candidate]);
+        renamed.push({ from: shop.slug, to: candidate });
+        return;
+      }
+    });
+  }
+  return renamed;
+}
+
+/**
+ * Listing pages (v1.7): /istanbul/avcilar/erkek-kuaforu and the like. Public salons
+ * in a province (and district), optionally men's or women's; unisex salons appear
+ * under both. Verified salons first.
+ */
+export async function listingShops(deps: Deps, input: { city: string; district?: string; audience?: 'men' | 'women' }) {
+  const { rows } = await deps.db.query(
+    `SELECT s.slug, s.name, s.address, s.district, s.city, s.audience, s.verified_at IS NOT NULL AS verified,
+       (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id
+     FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
+     WHERE ${PUBLIC_CONDITION} AND lower(s.city) = lower($2) AND ($3::text IS NULL OR lower(s.district) = lower($3))
+       AND ($4::text IS NULL OR s.audience IN ($4, 'unisex'))
+     ORDER BY s.verified_at IS NULL, s.name COLLATE "tr-x-icu"
+     LIMIT 200`,
+    [deps.clock.now(), input.city, input.district ?? null, input.audience ?? null],
+  );
+  return rows;
+}
+
+/** The province page: its districts that have public salons, with counts by type. */
+export async function listingDistricts(deps: Deps, city: string) {
+  const { rows } = await deps.db.query<{ district: string; total: number; men: number; women: number }>(
+    `SELECT s.district, count(*)::int AS total,
+       count(*) FILTER (WHERE s.audience IN ('men', 'unisex'))::int AS men,
+       count(*) FILTER (WHERE s.audience IN ('women', 'unisex'))::int AS women
+     FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
+     WHERE ${PUBLIC_CONDITION} AND lower(s.city) = lower($2) AND s.district IS NOT NULL AND s.district <> ''
+     GROUP BY s.district ORDER BY s.district COLLATE "tr-x-icu"`,
+    [deps.clock.now(), city],
+  );
+  return rows;
+}
+
+/** For the sitemap: every public salon and the places that have salons. */
+export async function sitemapEntries(deps: Deps) {
+  const { rows } = await deps.db.query<{ slug: string; city: string | null; district: string | null; audience: string }>(
+    `SELECT s.slug, s.city, s.district, s.audience
+     FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id WHERE ${PUBLIC_CONDITION}`,
+    [deps.clock.now()],
+  );
+  return rows;
 }

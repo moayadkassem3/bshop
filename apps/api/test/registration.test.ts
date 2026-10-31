@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { improveShopLinks } from '../src/services/shops.js';
 import { currentVersion } from '../src/domain/legal.js';
 import { slugify } from '../src/domain/slug.js';
 import { databaseStorage } from '../src/storage.js';
@@ -115,7 +116,7 @@ describe('self-service shop registration (v1.6)', () => {
   it('gives each shop a free link from its name', async () => {
     expect(slugify('Salih Esen Nirvana For✂Men')).toBe('salih-esen-nirvana-for-men');
     expect(slugify('Şık Saçlar Güzellik')).toBe('sik-saclar-guzellik');
-    expect(slugify('Ö')).toBe('kuafor-o');
+    expect(slugify('Ö')).toBe('o');
     const a = await t.login(PHONES.customer, { names: { firstName: 'A', lastName: 'B' } });
     const b = await t.login(PHONES.customer2, { names: { firstName: 'C', lastName: 'D' } });
     const first = await t.call('POST', '/registrations', { token: a, body: registration({ name: 'Profil' }) });
@@ -123,7 +124,8 @@ describe('self-service shop registration (v1.6)', () => {
       token: b,
       body: registration({ name: 'Profil', members: [], phone: '0532 999 99 99' }),
     });
-    expect([first.body.slug, second.body.slug]).toEqual(['profil-2', 'profil-3']);
+    // "profil" is one of the site's pages, so the district is added; then the city (v1.7).
+    expect([first.body.slug, second.body.slug]).toEqual(['profil-cankaya', 'profil-cankaya-ankara']);
   });
 });
 
@@ -234,5 +236,37 @@ describe('cancellations reach the salon (v1.7)', () => {
     const history = (await t.call('GET', `/staff/shops/${shop.shopId}/appointments?from=${from}&to=${to}`, { token: owner })).body;
     expect(history[0]).toMatchObject({ status: 'cancelled', cancel_reason: 'customer' });
     expect(history[0].cancelled_at).toBeTruthy();
+  });
+});
+
+describe('salon links and listing pages (v1.7)', () => {
+  it('a short or taken name gets the district; old links still find the salon; listings by place and type', async () => {
+    const boss = await admin();
+    const register = async (phone: string, overrides: Record<string, unknown>) => {
+      const token = await t.login(phone, { names: { firstName: 'Ali', lastName: 'Kaya' } });
+      const r = await t.call('POST', '/registrations', { token, body: registration({ members: [], ...overrides }) });
+      await t.call('POST', `/admin/shops/${r.body.shopId}/review`, { token: boss });
+      return r.body.slug as string;
+    };
+    const istanbul = { city: 'İstanbul', latitude: 40.98, longitude: 28.72 };
+    expect(await register(PHONES.customer, { name: 'mk', district: 'Avcılar', ...istanbul })).toBe('mk-avcilar');
+    expect(await register(PHONES.customer2, { name: 'mk', district: 'Avcılar', ...istanbul })).toBe('mk-avcilar-istanbul');
+    expect(await register(PHONES.owner, { name: 'Ankara', audience: 'women' })).toBe('ankara-cankaya');
+
+    // A link from before the new rule is upgraded once; the old one keeps finding the salon.
+    await t.db.query("UPDATE shops SET slug = 'kuafor-mk' WHERE slug = 'mk-avcilar'");
+    expect(await improveShopLinks(t.deps)).toEqual([{ from: 'kuafor-mk', to: 'mk-avcilar' }]);
+    expect(await improveShopLinks(t.deps)).toEqual([]);
+    expect((await t.call('GET', '/public/shops/kuafor-mk')).body.slug).toBe('mk-avcilar');
+
+    const slugs = async (q: Record<string, string>) =>
+      ((await t.call('GET', `/public/listing?${new URLSearchParams(q)}`)).body as { slug: string }[]).map((s) => s.slug).sort();
+    expect(await slugs({ city: 'İstanbul' })).toEqual(['mk-avcilar', 'mk-avcilar-istanbul']);
+    expect(await slugs({ city: 'İstanbul', district: 'Avcılar', audience: 'men' })).toEqual(['mk-avcilar', 'mk-avcilar-istanbul']);
+    expect(await slugs({ city: 'Ankara', district: 'Çankaya', audience: 'men' })).toEqual([]);
+    expect(await slugs({ city: 'Ankara', district: 'Çankaya', audience: 'women' })).toEqual(['ankara-cankaya']);
+    expect((await t.call('GET', `/public/listing/districts?city=${encodeURIComponent('İstanbul')}`)).body).toEqual([
+      { district: 'Avcılar', total: 2, men: 2, women: 0 },
+    ]);
   });
 });

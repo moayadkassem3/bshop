@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { BookingFlow } from '@/components/booking/BookingFlow';
 import { loadProfile } from '@/lib/server';
 import styles from '../shop.module.css';
@@ -17,6 +17,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
   const [{ slug }, { personel }] = await Promise.all([params, searchParams]);
   const profile = await loadProfile(slug);
   if (!profile) notFound();
+  // An earlier link still works and moves to the current one (v1.7).
+  if (profile.slug !== slug) permanentRedirect(`/${profile.slug}/randevu${personel ? `?personel=${encodeURIComponent(personel)}` : ''}`);
 
   return (
     <div className="container narrow">
