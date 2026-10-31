@@ -9,6 +9,7 @@ import { SalonTab } from './SalonTab';
 import { ServicesTab } from './ServicesTab';
 import { StaffTab } from './StaffTab';
 import own from './settings.module.css';
+import { BackArrow } from '@/components/BackArrow';
 
 const TABS = [
   { key: 'salon', label: 'Salon' },
@@ -41,8 +42,9 @@ export function ShopSettings() {
     <>
       <header className={`page-header ${styles.header}`}>
         <div className="container narrow">
-          <Link href="/profil" className={own.back}>
-            ← Profil
+          <Link href="/salonum" className={own.back}>
+            <BackArrow />
+            Salonum
           </Link>
           <h1>Salon bilgileri</h1>
           {shops && shops.length > 1 ? (

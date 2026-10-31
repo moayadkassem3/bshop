@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SERVER_API_URL } from '@/lib/config';
 import styles from './legal.module.css';
+import { BackArrow } from '@/components/BackArrow';
 
 export const metadata: Metadata = { title: 'Sözleşmeler ve yasal metinler' };
 
@@ -14,7 +15,8 @@ export default async function LegalIndex() {
   return (
     <div className="container narrow">
       <Link href="/profil" className={styles.back}>
-        ← Profil
+        <BackArrow />
+        Profil
       </Link>
       <h1 className={styles.indexTitle}>Sözleşmeler ve yasal metinler</h1>
       <ul className={`card ${styles.list}`} role="list">

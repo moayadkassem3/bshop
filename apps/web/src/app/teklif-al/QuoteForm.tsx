@@ -10,13 +10,14 @@ import { phoneComplete } from '@/lib/phone';
 import { getToken } from '@/lib/session';
 import type { Me } from '@/lib/types';
 import styles from './quote.module.css';
+import { BackArrow } from '@/components/BackArrow';
 
 type Source = 'fiyatlar' | 'kayit' | 'ayarlar';
 
 const BACK: Record<Source, { href: string; label: string }> = {
-  fiyatlar: { href: '/isletmeler', label: '← Paketler ve fiyatlar' },
-  kayit: { href: '/isletme-kaydi', label: '← Kayda dön' },
-  ayarlar: { href: '/isletme-ayarlari#personel', label: '← Personel' },
+  fiyatlar: { href: '/isletmeler', label: 'Paketler ve fiyatlar' },
+  kayit: { href: '/isletme-kaydi', label: 'Kayda dön' },
+  ayarlar: { href: '/isletme-ayarlari#personel', label: 'Personel' },
 };
 
 const ABOVE = 10;
@@ -123,6 +124,7 @@ export function QuoteForm() {
     return (
       <div className={`container narrow ${styles.page}`}>
         <Link href={back.href} className={styles.back}>
+          <BackArrow />
           {back.label}
         </Link>
         <div className={`card ${styles.done}`} role="status">
@@ -146,6 +148,7 @@ export function QuoteForm() {
   return (
     <div className={`container narrow ${styles.page}`}>
       <Link href={back.href} className={styles.back}>
+        <BackArrow />
         {back.label}
       </Link>
       <header className={styles.head}>

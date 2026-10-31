@@ -5,6 +5,7 @@ import { SALON_TYPES, slugify, type SalonType } from '@/lib/places';
 import { loadDistricts, loadListing } from '@/lib/server';
 import { AUDIENCE, photoUrl } from '@/lib/shop';
 import styles from './places.module.css';
+import { BackArrow } from '@/components/BackArrow';
 
 export type Place = { province: string; district?: string; type?: SalonType };
 
@@ -38,7 +39,8 @@ export async function PlacePage(p: Place) {
   return (
     <div className={`container narrow ${styles.page}`}>
       <Link href="/" className={styles.back}>
-        ← Keşfet
+        <BackArrow />
+        Keşfet
       </Link>
       <nav className={styles.crumbs} aria-label="Konum">
         <Link href={provinceHref}>{p.province}</Link>

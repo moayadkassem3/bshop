@@ -7,6 +7,7 @@ import { BRAND } from '@/lib/config';
 import { qrPosterPng, qrSvg, saveFile } from '@/lib/qr';
 import { qrLink } from '@/lib/views';
 import styles from './qr.module.css';
+import { BackArrow } from '@/components/BackArrow';
 
 /**
  * The salon's QR code (v1.7): it opens the salon's page. The logo sits in the
@@ -42,8 +43,9 @@ export function QrPoster() {
     <div className={styles.page}>
       <header className={styles.top}>
         <div className="container narrow">
-          <Link href="/profil" className={styles.back}>
-            ← Profil
+          <Link href="/salonum" className={styles.back}>
+            <BackArrow />
+            Salonum
           </Link>
           <h1>QR kod</h1>
           <p>Salonunuza asın: müşteriler okutunca salon sayfanız açılır ve randevu alır.</p>

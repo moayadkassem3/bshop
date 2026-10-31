@@ -9,6 +9,7 @@ import { ServiceStep } from './ServiceStep';
 import { StaffStep } from './StaffStep';
 import { TimeStep } from './TimeStep';
 import styles from './booking.module.css';
+import { BackArrow } from '@/components/BackArrow';
 
 type Step = 'services' | 'staff' | 'time' | 'confirm' | 'done';
 const STEPS: { key: Exclude<Step, 'done'>; label: string }[] = [
@@ -179,7 +180,8 @@ export function BookingFlow({ profile, presetStaffId }: { profile: ShopProfile; 
       )}
       {step === 'confirm' && (
         <button type="button" className={`btn ${styles.backLink}`} onClick={back}>
-          ← Saati değiştir
+          <BackArrow />
+          Saati değiştir
         </button>
       )}
     </div>

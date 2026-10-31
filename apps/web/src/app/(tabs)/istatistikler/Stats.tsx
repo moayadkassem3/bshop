@@ -8,6 +8,7 @@ import type { ViewSource } from '@/lib/views';
 import page from '../randevularim/appointments.module.css';
 import biz from '../randevularim/business.module.css';
 import styles from './stats.module.css';
+import { BackArrow } from '@/components/BackArrow';
 
 type ShopStats = {
   month: string;
@@ -72,8 +73,9 @@ export function Stats() {
     <>
       <header className={`page-header ${page.header}`}>
         <div className="container narrow">
-          <Link href="/profil" className={styles.back}>
-            ← Profil
+          <Link href="/salonum" className={styles.back}>
+            <BackArrow />
+            Salonum
           </Link>
           <h1>İstatistikler</h1>
           {shops && shops.length > 1 ? (

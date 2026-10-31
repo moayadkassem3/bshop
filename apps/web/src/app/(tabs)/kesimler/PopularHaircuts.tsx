@@ -11,6 +11,7 @@ import type { HaircutStyle, PopularPost } from '@/lib/types';
 import styles from '../randevularim/appointments.module.css';
 import { shopHref } from '@/lib/views';
 import own from './kesimler.module.css';
+import { BackArrow } from '@/components/BackArrow';
 
 /**
  * Popüler kesimler (v1.7): salons' work from across Türkiye, most liked and
@@ -45,7 +46,8 @@ export function PopularHaircuts() {
       <header className={`page-header ${styles.header}`}>
         <div className="container narrow">
           <Link href="/" className={own.back}>
-            ← Keşfet
+            <BackArrow />
+            Keşfet
           </Link>
           <h1>Popüler kesimler</h1>
           <p>Salonların son çalışmaları. Beğendiğin kesime dokun, salonundan randevu al.</p>

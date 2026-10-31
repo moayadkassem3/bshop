@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { SERVER_API_URL } from '@/lib/config';
 import { Pricing, type Plans } from './Pricing';
 import styles from './business.module.css';
+import { BackArrow } from '@/components/BackArrow';
 
 export const metadata: Metadata = { title: 'İşletmeler için' };
 
@@ -22,7 +23,8 @@ export default async function BusinessPage() {
   return (
     <div className="container narrow">
       <Link href="/profil" className={styles.back}>
-        ← Profil
+        <BackArrow />
+        Profil
       </Link>
       <Pricing
         plans={plans}

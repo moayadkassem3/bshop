@@ -16,6 +16,7 @@ import { DistrictSelect, focusFor } from './places';
 import { PROVINCES } from './provinces';
 import { SALON_TYPES } from './salonTypes';
 import styles from './register.module.css';
+import { BackArrow } from '@/components/BackArrow';
 
 // MapLibre only runs in the browser.
 const LocationPicker = dynamic(() => import('./LocationPicker').then((m) => m.LocationPicker), {
@@ -212,7 +213,7 @@ export function RegisterWizard() {
 
   if (me === null) {
     return (
-      <Shell title="İşletmenizi kaydedin" back={{ href: '/isletmeler', label: '← Vazgeç' }}>
+      <Shell title="İşletmenizi kaydedin" back={{ href: '/isletmeler', label: 'Vazgeç' }}>
         <p className={styles.kicker}>Başlamadan önce</p>
         <h1 className={styles.title}>Telefon numaranızı doğrulayın</h1>
         <p className={styles.lead}>Bu numara işletme sahibi hesabınız olur. Kayda kaldığınız yerden devam edebilirsiniz.</p>
@@ -231,7 +232,7 @@ export function RegisterWizard() {
       title={STEPS[step - 1]!}
       progress={step / (STEPS.length + 1)}
       count={`${step}/${STEPS.length + 1}`}
-      back={step > 1 ? { onClick: () => go(step - 1), label: '← Geri' } : { href: '/isletmeler', label: '← Vazgeç' }}
+      back={step > 1 ? { onClick: () => go(step - 1), label: 'Geri' } : { href: '/isletmeler', label: 'Vazgeç' }}
     >
       {step === 1 && <TypeStep draft={draft} update={update} />}
       {step === 2 && <DetailsStep draft={draft} update={update} />}
@@ -281,10 +282,12 @@ function Shell(props: {
         <div className={`container narrow ${styles.topRow}`}>
           {'href' in props.back ? (
             <Link href={props.back.href} className={styles.topBack}>
+              <BackArrow />
               {props.back.label}
             </Link>
           ) : (
             <button type="button" className={styles.topBack} onClick={props.back.onClick}>
+              <BackArrow />
               {props.back.label}
             </button>
           )}
@@ -895,7 +898,7 @@ function PhotosStep({ shopId, onDone }: { shopId: string; onDone: () => void }) 
   }
 
   return (
-    <Shell title="Fotoğraflar" progress={1} count={`${STEPS.length + 1}/${STEPS.length + 1}`} back={{ href: '/profil', label: '← Profil' }}>
+    <Shell title="Fotoğraflar" progress={1} count={`${STEPS.length + 1}/${STEPS.length + 1}`} back={{ href: '/profil', label: 'Profil' }}>
       <Heading
         kicker="Başvurunuz alındı"
         title="Salonunuzun fotoğraflarını ekleyin"
@@ -939,7 +942,7 @@ function PhotosStep({ shopId, onDone }: { shopId: string; onDone: () => void }) 
 
 function Done({ slug }: { slug: string }) {
   return (
-    <Shell title="İncelemede" back={{ href: '/profil', label: '← Profil' }}>
+    <Shell title="İncelemede" back={{ href: '/profil', label: 'Profil' }}>
       <div className={styles.done}>
         <span className={styles.doneMark} aria-hidden>
           ⏳
