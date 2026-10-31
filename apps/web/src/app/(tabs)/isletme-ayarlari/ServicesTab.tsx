@@ -189,7 +189,7 @@ export function ServicesTab({ shopId, visible }: { shopId: string; visible: bool
 
 function ServiceFields({ draft, onChange, idPrefix, nameLocked = false }: { draft: Draft; onChange: (d: Draft) => void; idPrefix: string; nameLocked?: boolean }) {
   return (
-    <div className={own.fields}>
+    <div className={`${own.fields} motion-reveal`}>
       {!nameLocked && (
         <div className="field">
           <label htmlFor={`${idPrefix}-name`}>Hizmet adı</label>

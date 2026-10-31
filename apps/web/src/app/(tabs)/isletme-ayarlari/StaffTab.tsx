@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/format';
 import { phoneComplete } from '@/lib/phone';
 import { formatPhone } from '@/lib/shop';
 import own from './settings.module.css';
+import { FORWARD } from '@/lib/motion';
 
 type Member = {
   id: string;
@@ -86,7 +87,7 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
               <small>/ay</small>
             </span>
           ) : (
-            <Link href={`/teklif-al?kaynak=ayarlar&personel=${bookable}`}>Teklif alın ›</Link>
+            <Link transitionTypes={FORWARD} href={`/teklif-al?kaynak=ayarlar&personel=${bookable}`}>Teklif alın ›</Link>
           )}
         </div>
       )}
@@ -197,7 +198,7 @@ function MemberEditor(props: {
   const canChangeRole = !founder && !props.isMe;
 
   return (
-    <div className={own.fields}>
+    <div className={`${own.fields} motion-reveal`}>
       <div className="field">
         <label htmlFor={`m-${m.id}`}>Müşterilerin göreceği ad</label>
         <input id={`m-${m.id}`} className="input" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
@@ -217,12 +218,12 @@ function MemberEditor(props: {
         Randevu alıyor
       </label>
       {m.bookable && (
-        <Link href={`/calisma-saatleri?kisi=${m.id}`} className={own.hoursLink}>
+        <Link transitionTypes={FORWARD} href={`/calisma-saatleri?kisi=${m.id}`} className={own.hoursLink}>
           Çalışma saatleri ve molalar ›
         </Link>
       )}
       {confirmRemove ? (
-        <div className={own.confirm}>
+        <div className={`${own.confirm} motion-reveal`}>
           <p>{m.display_name} ekipten çıkarılacak ve uygulamaya giremeyecek. Yaklaşan randevusu varsa önce onları iptal edin.</p>
           <div className={own.panelActions}>
             <button type="button" className="btn" onClick={() => setConfirmRemove(false)}>
@@ -267,7 +268,7 @@ function NewMember(props: { busy: boolean; onCancel: () => void; onAdd: (body: {
   const [bookable, setBookable] = useState(true);
   const ok = name.trim().length > 0 && phoneComplete(phone);
   return (
-    <div className={`card ${own.panel}`}>
+    <div className={`card ${own.panel} motion-reveal`}>
       <h3>Yeni kişi</h3>
       <div className={own.segmented} role="radiogroup" aria-label="Rol">
         {(['staff', 'co_owner'] as const).map((r) => (

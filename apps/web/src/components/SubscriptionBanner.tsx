@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { subscriptionNotice, useBusinessShops } from '@/lib/business';
 import { useBusinessMode } from '@/lib/session';
 import styles from './SubscriptionBanner.module.css';
+import { FORWARD } from '@/lib/motion';
 
 /**
  * On every business screen (v1.7): the trial is about to end, a payment is late,
@@ -45,7 +46,7 @@ export function SubscriptionBanner() {
         shop.subscription_requested_at && notice.tone === 'danger' ? (
           <span className={styles.note}>Talebiniz alındı, sizi arayacağız.</span>
         ) : (
-          <Link href="/isletmeler" className={styles.cta}>
+          <Link transitionTypes={FORWARD} href="/isletmeler" className={styles.cta}>
             {notice.tone === 'danger' ? 'Aboneliği başlat' : 'Paketler'}
           </Link>
         )

@@ -16,6 +16,8 @@ import type { NearbyShop } from '@/lib/types';
 import styles from './ExploreMap.module.css';
 import { ShareShop } from '@/components/ShareShop';
 import { VerifiedTick } from '@/components/VerifiedTick';
+import { FORWARD } from '@/lib/motion';
+import { SkeletonList } from '@/components/Skeleton';
 
 /** Before the customer shares their location, the map opens on Kadıköy, İstanbul. */
 const KADIKOY = { lat: 40.9905, lng: 29.029 };
@@ -308,10 +310,12 @@ export function ExploreMap() {
             </div>
           )}
           {locationError && <p className="alert alert-danger">{locationError}</p>}
+          {!listed && <SkeletonList rows={3} label="Kuaförler yükleniyor" />}
           <ul className={styles.list} role="list">
             {(listed ?? []).map((shop) => (
-              <li key={shop.slug} id={`shop-${shop.slug}`}>
+              <li key={shop.slug} id={`shop-${shop.slug}`} className="motion-fade">
                 <Link
+                  transitionTypes={FORWARD}
                   href={shopHref(shop.slug, 'kesfet')}
                   className={`${styles.item} ${shop.slug === selected ? styles.itemSelected : ''}`}
                   onMouseEnter={() => setSelected(shop.slug)}
@@ -377,7 +381,7 @@ function MyShopCard({ shop }: { shop: BusinessShop }) {
       </div>
       <div className={styles.myShopActions}>
         {shop.reviewed_at && shop.visible ? (
-          <Link href={`/${shop.slug}`} className="btn btn-primary">
+          <Link transitionTypes={FORWARD} href={`/${shop.slug}`} className="btn btn-primary">
             Müşteri gözüyle gör
           </Link>
         ) : (

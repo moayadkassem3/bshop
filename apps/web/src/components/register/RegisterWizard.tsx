@@ -17,6 +17,7 @@ import { PROVINCES } from './provinces';
 import { SALON_TYPES } from './salonTypes';
 import styles from './register.module.css';
 import { BackArrow } from '@/components/BackArrow';
+import { BACK, FORWARD, TAB } from '@/lib/motion';
 
 // MapLibre only runs in the browser.
 const LocationPicker = dynamic(() => import('./LocationPicker').then((m) => m.LocationPicker), {
@@ -281,7 +282,7 @@ function Shell(props: {
       <header className={styles.top}>
         <div className={`container narrow ${styles.topRow}`}>
           {'href' in props.back ? (
-            <Link href={props.back.href} className={styles.topBack}>
+            <Link transitionTypes={BACK} href={props.back.href} className={styles.topBack}>
               <BackArrow />
               {props.back.label}
             </Link>
@@ -611,7 +612,7 @@ function PlanBox({ count, plans, quote }: { count: number; plans: Plans | null; 
           <small>/ay</small>
         </span>
       ) : (
-        <Link href={quote}>Teklif alın ›</Link>
+        <Link transitionTypes={FORWARD} href={quote}>Teklif alın ›</Link>
       )}
     </div>
   );
@@ -958,7 +959,7 @@ function Done({ slug }: { slug: string }) {
         <p className="muted">
           Sayfa adresiniz: <strong>/{slug}</strong>
         </p>
-        <Link href="/profil" className="btn btn-primary btn-block">
+        <Link transitionTypes={TAB} href="/profil" className="btn btn-primary btn-block">
           Profile dön
         </Link>
       </div>

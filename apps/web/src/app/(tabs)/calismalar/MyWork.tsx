@@ -12,6 +12,7 @@ import type { HaircutPost, HaircutStyle } from '@/lib/types';
 import styles from '../randevularim/appointments.module.css';
 import biz from '../randevularim/business.module.css';
 import own from './calismalar.module.css';
+import { FORWARD } from '@/lib/motion';
 
 /**
  * Salons share photos of their work (v1.7). Posts appear in Popüler kesimler and
@@ -188,7 +189,7 @@ export function MyWork() {
         )}
         {shop?.slug && (
           <p className={own.note}>
-            Müşterilerin gördüğü hali: <Link href="/kesimler">Popüler kesimler</Link> · <Link href={`/${shop.slug}`}>Salon sayfanız</Link>
+            Müşterilerin gördüğü hali: <Link transitionTypes={FORWARD} href="/kesimler">Popüler kesimler</Link> · <Link transitionTypes={FORWARD} href={`/${shop.slug}`}>Salon sayfanız</Link>
           </p>
         )}
       </div>

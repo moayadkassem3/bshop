@@ -9,6 +9,8 @@ import page from '../randevularim/appointments.module.css';
 import biz from '../randevularim/business.module.css';
 import styles from './stats.module.css';
 import { BackArrow } from '@/components/BackArrow';
+import { BACK } from '@/lib/motion';
+import { SkeletonList } from '@/components/Skeleton';
 
 type ShopStats = {
   month: string;
@@ -73,7 +75,7 @@ export function Stats() {
     <>
       <header className={`page-header ${page.header}`}>
         <div className="container narrow">
-          <Link href="/salonum" className={styles.back}>
+          <Link transitionTypes={BACK} href="/salonum" className={styles.back}>
             <BackArrow />
             Salonum
           </Link>
@@ -116,9 +118,10 @@ export function Stats() {
         {(shopsError || error) && <p className="alert alert-danger">{shopsError || error}</p>}
         {shops && shops.length === 0 && <p className="muted">Bu hesap henüz bir işletmeye bağlı değil.</p>}
         {shop && !owner && <p className="alert alert-info">İstatistikleri salon sahibi ve ortaklar görür.</p>}
+        {owner && !stats && !error && <SkeletonList rows={3} label="İstatistikler yükleniyor" />}
         {owner && stats && (
           // The previous month stays on screen, dimmed, while the next one loads.
-          <div className={loading ? styles.refreshing : undefined}>
+          <div className={`motion-fade ${loading ? styles.refreshing : ''}`}>
             <Overview stats={stats} />
             <Sources stats={stats} />
             <Daily stats={stats} />

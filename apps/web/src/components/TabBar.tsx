@@ -7,6 +7,7 @@ import { useBusinessMode } from '@/lib/session';
 import { useAppointmentUpdates } from '@/lib/updates';
 import { LogoMark } from './Logo';
 import styles from './TabBar.module.css';
+import { TAB } from '@/lib/motion';
 
 const TABS = [
   // Business mode starts on Salonum (v1.7); customers start on Keşfet.
@@ -82,7 +83,7 @@ export function TabBar() {
   const tabs = TABS.filter((t) => (t.href === '/favoriler' || t.customer ? !business : t.business ? business : true));
   return (
     <nav className={styles.bar} aria-label="Ana menü">
-      <Link href="/" className={styles.logo} aria-label="Ana sayfa">
+      <Link href="/" transitionTypes={TAB} className={styles.logo} aria-label="Ana sayfa">
         <LogoMark size={40} />
       </Link>
       {tabs.map((tab) => {
@@ -90,15 +91,15 @@ export function TabBar() {
         const active =
           tab.href === '/' ? pathname === '/' : tab.href === '/salonum' ? pathname.startsWith('/salonum') || pathname === '/' : pathname.startsWith(tab.href);
         return (
-          <Link key={tab.href} href={tab.href} className={`${styles.tab} ${active ? styles.active : ''}`} aria-current={active ? 'page' : undefined}>
+          <Link key={tab.href} transitionTypes={TAB} href={tab.href} className={`${styles.tab} ${active ? styles.active : ''}`} aria-current={active ? 'page' : undefined}>
             <span className={styles.icon}>
               {tab.href === '/gecmis' && cancellations > 0 && (
-                <span className={styles.badge} aria-label={`${cancellations} yeni iptal`}>
+                <span key={cancellations} className={`${styles.badge} motion-pop`} aria-label={`${cancellations} yeni iptal`}>
                   {cancellations}
                 </span>
               )}
               {tab.href === '/randevularim' && !business && updates > 0 && (
-                <span className={styles.badge} aria-label={`${updates} randevuda yenilik`}>
+                <span key={updates} className={`${styles.badge} motion-pop`} aria-label={`${updates} randevuda yenilik`}>
                   {updates}
                 </span>
               )}

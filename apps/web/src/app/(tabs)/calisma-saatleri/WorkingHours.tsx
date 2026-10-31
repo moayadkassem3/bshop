@@ -8,6 +8,8 @@ import { BackArrow } from '@/components/BackArrow';
 import page from '../randevularim/appointments.module.css';
 import biz from '../randevularim/business.module.css';
 import styles from './hours.module.css';
+import { BACK, TAB } from '@/lib/motion';
+import { SkeletonList } from '@/components/Skeleton';
 
 type Window = { weekday: number; startMinute: number; endMinute: number };
 type Member = { id: string; display_name: string; bookable: boolean; active: boolean };
@@ -193,7 +195,7 @@ export function WorkingHours() {
     <>
       <header className={`page-header ${page.header}`}>
         <div className="container narrow">
-          <Link href="/salonum" className={styles.back}>
+          <Link transitionTypes={BACK} href="/salonum" className={styles.back}>
             <BackArrow />
             Salonum
           </Link>
@@ -235,13 +237,14 @@ export function WorkingHours() {
       <div className={`container narrow ${page.body} ${styles.page}`}>
         {(shopsError || error) && <p className="alert alert-danger">{shopsError || error}</p>}
         {shops && shops.length === 0 && <p className="muted">Bu hesap henüz bir işletmeye bağlı değil.</p>}
+        {!days && !error && !shopsError && shops?.length !== 0 && <SkeletonList rows={2} label="Saatler yükleniyor" />}
         {days && (
           <>
             <p className={styles.intro}>
               {owner && person && memberId !== shop?.member_id ? `${person.display_name} bu saatlerde randevu alır.` : 'Bu saatlerde randevu alırsınız.'} Tek seferlik
-              kapatmak için <Link href="/randevularim">Randevular → Takvim → Saat kapat</Link>.
+              kapatmak için <Link transitionTypes={TAB} href="/randevularim">Randevular → Takvim → Saat kapat</Link>.
             </p>
-            <ul className={`card ${styles.days}`} role="list">
+            <ul className={`card ${styles.days} motion-fade`} role="list">
               {days.map((d, i) => {
                 const issue = problem(d);
                 const expanded = open === i;
@@ -256,7 +259,7 @@ export function WorkingHours() {
                       </span>
                     </button>
                     {expanded && (
-                      <div className={styles.editor}>
+                      <div className={`${styles.editor} motion-reveal`}>
                         <label className={styles.switch}>
                           <input type="checkbox" checked={d.open} onChange={(e) => update(i, { open: e.target.checked })} />
                           {d.open ? 'Açık' : 'Kapalı'}
@@ -336,7 +339,7 @@ export function WorkingHours() {
         <div className={styles.saveBar}>
           <div className="container narrow">
             {done && !changed && !everyone && (
-              <p className={styles.done} role="status">
+              <p key={done} className={`${styles.done} motion-pop`} role="status">
                 {done}
               </p>
             )}

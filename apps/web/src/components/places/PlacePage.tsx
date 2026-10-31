@@ -6,6 +6,7 @@ import { loadDistricts, loadListing } from '@/lib/server';
 import { AUDIENCE, photoUrl } from '@/lib/shop';
 import styles from './places.module.css';
 import { BackArrow } from '@/components/BackArrow';
+import { BACK, FORWARD, TAB } from '@/lib/motion';
 
 export type Place = { province: string; district?: string; type?: SalonType };
 
@@ -38,16 +39,16 @@ export async function PlacePage(p: Place) {
 
   return (
     <div className={`container narrow ${styles.page}`}>
-      <Link href="/" className={styles.back}>
+      <Link transitionTypes={BACK} href="/" className={styles.back}>
         <BackArrow />
         Keşfet
       </Link>
       <nav className={styles.crumbs} aria-label="Konum">
-        <Link href={provinceHref}>{p.province}</Link>
+        <Link transitionTypes={BACK} href={provinceHref}>{p.province}</Link>
         {p.district && (
           <>
             <span aria-hidden>›</span>
-            <Link href={districtHref!}>{p.district}</Link>
+            <Link transitionTypes={BACK} href={districtHref!}>{p.district}</Link>
           </>
         )}
         {p.type && (
@@ -64,11 +65,11 @@ export async function PlacePage(p: Place) {
 
       {districtHref && (
         <div className={styles.types} aria-label="Salon türü">
-          <Link href={districtHref} className={!p.type ? styles.typeOn : undefined} aria-current={!p.type ? 'page' : undefined}>
+          <Link transitionTypes={TAB} href={districtHref} className={!p.type ? styles.typeOn : undefined} aria-current={!p.type ? 'page' : undefined}>
             Tümü
           </Link>
           {(Object.keys(SALON_TYPES) as SalonType[]).map((t) => (
-            <Link key={t} href={`${districtHref}/${t}`} className={p.type === t ? styles.typeOn : undefined} aria-current={p.type === t ? 'page' : undefined}>
+            <Link transitionTypes={TAB} key={t} href={`${districtHref}/${t}`} className={p.type === t ? styles.typeOn : undefined} aria-current={p.type === t ? 'page' : undefined}>
               {capital(SALON_TYPES[t].title)}
             </Link>
           ))}
@@ -81,7 +82,7 @@ export async function PlacePage(p: Place) {
           <ul className={styles.districts} role="list">
             {districts.map((d) => (
               <li key={d.district}>
-                <Link href={`${provinceHref}/${slugify(d.district)}`}>
+                <Link transitionTypes={FORWARD} href={`${provinceHref}/${slugify(d.district)}`}>
                   <span>{d.district}</span>
                   <span className={styles.count}>{d.total}</span>
                 </Link>
@@ -96,7 +97,7 @@ export async function PlacePage(p: Place) {
         {shops.length === 0 ? (
           <div className={`card ${styles.empty}`}>
             <p>Bu bölgede henüz uygulamamıza katılan salon yok.</p>
-            <Link href="/" className="btn btn-primary">
+            <Link transitionTypes={TAB} href="/" className="btn btn-primary">
               Haritada kuaför keşfet
             </Link>
           </div>
@@ -104,7 +105,7 @@ export async function PlacePage(p: Place) {
           <ul className={styles.list} role="list">
             {shops.map((s) => (
               <li key={s.slug}>
-                <Link href={`/${s.slug}`} className={`card ${styles.item}`}>
+                <Link transitionTypes={FORWARD} href={`/${s.slug}`} className={`card ${styles.item}`}>
                   {s.cover_photo_id ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={photoUrl(s.cover_photo_id)} alt="" className={styles.thumb} width={64} height={64} loading="lazy" />

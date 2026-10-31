@@ -13,6 +13,7 @@ import { AUDIENCE, directionsUrl, formatPhone, todayHours, turkeyWeekday, WEEKDA
 import { ServiceList } from './ServiceList';
 import styles from './shop.module.css';
 import { VerifiedTick } from '@/components/VerifiedTick';
+import { BACK, FORWARD } from '@/lib/motion';
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -54,7 +55,7 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
 
   return (
     <div className={styles.profile}>
-      <Link href="/" className={styles.floatingBack} aria-label="Keşfet'e dön">
+      <Link transitionTypes={BACK} href="/" className={styles.floatingBack} aria-label="Keşfet'e dön">
         ←
       </Link>
       <ViewTracker slug={profile.slug} />
@@ -64,17 +65,17 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
         <header className={styles.profileHeader}>
           {/* Each part leads to its listing page (v1.7): this type in this district, the district, the province. */}
           <p className={styles.kicker}>
-            {typeHref || districtHref ? <Link href={(typeHref ?? districtHref)!}>{AUDIENCE[profile.audience]}</Link> : AUDIENCE[profile.audience]}
+            {typeHref || districtHref ? <Link transitionTypes={BACK} href={(typeHref ?? districtHref)!}>{AUDIENCE[profile.audience]}</Link> : AUDIENCE[profile.audience]}
             {profile.district && (
               <>
                 {' · '}
-                {districtHref && districtHref !== cityHref ? <Link href={districtHref}>{profile.district}</Link> : profile.district}
+                {districtHref && districtHref !== cityHref ? <Link transitionTypes={BACK} href={districtHref}>{profile.district}</Link> : profile.district}
               </>
             )}
             {profile.city && (
               <>
                 {profile.district ? ', ' : ' · '}
-                {cityHref ? <Link href={cityHref}>{profile.city}</Link> : profile.city}
+                {cityHref ? <Link transitionTypes={BACK} href={cityHref}>{profile.city}</Link> : profile.city}
               </>
             )}
           </p>
@@ -218,7 +219,7 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
                       .join('')}
                   </span>
                   <span className={styles.staffName}>{m.display_name}</span>
-                  <Link href={`${bookUrl}?personel=${m.id}`} className={styles.staffBook}>
+                  <Link transitionTypes={FORWARD} href={`${bookUrl}?personel=${m.id}`} className={styles.staffBook}>
                     Randevu al
                   </Link>
                 </li>
@@ -249,7 +250,7 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
               </svg>
             </a>
           )}
-          <Link href={bookUrl} className={`btn btn-primary ${styles.bookButton}`}>
+          <Link transitionTypes={FORWARD} href={bookUrl} className={`btn btn-primary ${styles.bookButton}`}>
             Randevu al
           </Link>
         </div>

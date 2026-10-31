@@ -9,6 +9,7 @@ import { qrLink } from '@/lib/views';
 import { StoryShare } from './StoryShare';
 import styles from './qr.module.css';
 import { BackArrow } from '@/components/BackArrow';
+import { BACK } from '@/lib/motion';
 
 /**
  * The salon's QR code (v1.7): it opens the salon's page. The logo sits in the
@@ -44,7 +45,7 @@ export function QrPoster() {
     <div className={styles.page}>
       <header className={styles.top}>
         <div className="container narrow">
-          <Link href="/salonum" className={styles.back}>
+          <Link transitionTypes={BACK} href="/salonum" className={styles.back}>
             <BackArrow />
             Salonum
           </Link>

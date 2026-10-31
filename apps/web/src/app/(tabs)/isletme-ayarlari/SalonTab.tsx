@@ -292,7 +292,11 @@ export function SalonTab({ shopId, slug, visible }: { shopId: string; slug: stri
       {form && visible && (
         <div className={own.saveBar}>
           <div className="container narrow">
-            {message && <p className={message.ok ? own.ok : own.bad}>{message.text}</p>}
+            {message && (
+              <p key={message.text} className={`${message.ok ? own.ok : own.bad} motion-pop`}>
+                {message.text}
+              </p>
+            )}
             {!message && changed && blocker && <p className={own.bad}>{blocker}</p>}
             <button type="button" className="btn btn-primary btn-block" disabled={busy || !changed || !!blocker} onClick={save}>
               {busy ? 'Kaydediliyor…' : changed ? 'Değişiklikleri kaydet' : 'Kaydedildi'}

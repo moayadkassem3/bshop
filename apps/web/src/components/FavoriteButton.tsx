@@ -8,6 +8,7 @@ import styles from './FavoriteButton.module.css';
 export function FavoriteButton({ slug, label = false }: { slug: string; label?: boolean }) {
   const [on, setOn] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  const [popped, setPopped] = useState(false);
 
   useEffect(() => {
     isFavorite(slug)
@@ -20,6 +21,7 @@ export function FavoriteButton({ slug, label = false }: { slug: string; label?: 
     setBusy(true);
     const next = !on;
     setOn(next);
+    setPopped(next);
     try {
       await setFavorite(slug, next);
     } catch {
@@ -39,7 +41,7 @@ export function FavoriteButton({ slug, label = false }: { slug: string; label?: 
       aria-pressed={Boolean(on)}
       aria-label={label ? undefined : text}
     >
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden className={popped && on ? styles.pop : undefined}>
         <path
           d="M12 20.5s-7.5-4.6-9.2-9.3C1.6 7.6 4 4.5 7.3 4.5c2 0 3.4 1.1 4.7 2.8 1.3-1.7 2.7-2.8 4.7-2.8 3.3 0 5.7 3.1 4.5 6.7-1.7 4.7-9.2 9.3-9.2 9.3z"
           fill={on ? 'currentColor' : 'none'}

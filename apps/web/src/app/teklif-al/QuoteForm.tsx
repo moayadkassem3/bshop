@@ -11,6 +11,7 @@ import { getToken } from '@/lib/session';
 import type { Me } from '@/lib/types';
 import styles from './quote.module.css';
 import { BackArrow } from '@/components/BackArrow';
+import { BACK as NAV_BACK } from '@/lib/motion';
 
 type Source = 'fiyatlar' | 'kayit' | 'ayarlar';
 
@@ -123,7 +124,7 @@ export function QuoteForm() {
   if (sent) {
     return (
       <div className={`container narrow ${styles.page}`}>
-        <Link href={back.href} className={styles.back}>
+        <Link transitionTypes={NAV_BACK} href={back.href} className={styles.back}>
           <BackArrow />
           {back.label}
         </Link>
@@ -137,7 +138,7 @@ export function QuoteForm() {
               E-postayla da yazmak isterseniz: <a href={mailto()}>{SALES_EMAIL}</a>
             </p>
           )}
-          <Link href={back.href} className="btn btn-primary btn-block">
+          <Link transitionTypes={NAV_BACK} href={back.href} className="btn btn-primary btn-block">
             {source === 'kayit' ? 'Kayda devam et' : 'Tamam'}
           </Link>
         </div>
@@ -147,7 +148,7 @@ export function QuoteForm() {
 
   return (
     <div className={`container narrow ${styles.page}`}>
-      <Link href={back.href} className={styles.back}>
+      <Link transitionTypes={NAV_BACK} href={back.href} className={styles.back}>
         <BackArrow />
         {back.label}
       </Link>

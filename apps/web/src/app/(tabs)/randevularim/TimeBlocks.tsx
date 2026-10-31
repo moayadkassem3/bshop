@@ -87,7 +87,7 @@ export function BlockForm(props: { shopId: string; date: string; members: Member
   }
 
   return (
-    <div className={`card ${biz.blockForm}`}>
+    <div className={`card ${biz.blockForm} motion-reveal`}>
       <p className={biz.offerTitle}>Saat kapat</p>
       {props.isOwner && props.members.length > 1 && (
         <div className="field">

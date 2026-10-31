@@ -4,6 +4,7 @@ import { SERVER_API_URL } from '@/lib/config';
 import { Pricing, type Plans } from './Pricing';
 import styles from './business.module.css';
 import { BackArrow } from '@/components/BackArrow';
+import { BACK, FORWARD } from '@/lib/motion';
 
 export const metadata: Metadata = { title: 'İşletmeler için' };
 
@@ -22,7 +23,7 @@ export default async function BusinessPage() {
   const plans = await loadPlans();
   return (
     <div className="container narrow">
-      <Link href="/profil" className={styles.back}>
+      <Link transitionTypes={BACK} href="/profil" className={styles.back}>
         <BackArrow />
         Profil
       </Link>
@@ -43,7 +44,7 @@ export default async function BusinessPage() {
           <section id="basvuru" className={styles.apply}>
             <h2>İşletmenizi kaydedin</h2>
             <p>Birkaç adımda işletmenizi, hizmetlerinizi ve ekibinizi ekleyin; ekibimiz inceledikten sonra randevu almaya başlarsınız.</p>
-            <Link className="btn btn-primary" href="/isletme-kaydi">
+            <Link transitionTypes={FORWARD} className="btn btn-primary" href="/isletme-kaydi">
               Kayda başla
             </Link>
           </section>

@@ -9,6 +9,7 @@ import { formatPrice, TZ } from '@/lib/format';
 import { getToken, useBusinessMode } from '@/lib/session';
 import type { Me } from '@/lib/types';
 import styles from './business.module.css';
+import { FORWARD } from '@/lib/motion';
 
 export type Plans = {
   plans: { id: string; name: string; maxStaff: number; monthlyPriceKurus: number }[];
@@ -61,7 +62,7 @@ export function Pricing({ plans, intro, apply }: { plans: Plans | null; intro: R
             <p className={`card ${styles.plan} ${styles.planCurrent} ${styles.planWide}`}>
               <span className={styles.planBadge}>Paketiniz</span>
               <span className={styles.planName}>{mine.seats} randevu alan personel: size özel fiyat</span>
-              <Link href={`/teklif-al?${new URLSearchParams({ personel: String(mine.seats), salon: mine.name })}`} className={styles.quoteLink}>
+              <Link transitionTypes={FORWARD} href={`/teklif-al?${new URLSearchParams({ personel: String(mine.seats), salon: mine.name })}`} className={styles.quoteLink}>
                 Teklif alın ›
               </Link>
             </p>
@@ -89,7 +90,7 @@ export function Pricing({ plans, intro, apply }: { plans: Plans | null; intro: R
           </ul>
           <p className={styles.note}>
             {plans.terms.customQuoteAboveStaff}’dan fazla personel için{' '}
-            <Link href="/teklif-al">size özel teklif alın</Link>.
+            <Link transitionTypes={FORWARD} href="/teklif-al">size özel teklif alın</Link>.
           </p>
         </section>
       )}

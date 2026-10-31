@@ -8,6 +8,8 @@ import { photoUrl, placeLabel } from '@/lib/shop';
 import type { MyShop } from '@/lib/types';
 import styles from './MyShops.module.css';
 import { VerifiedTick } from './VerifiedTick';
+import { FORWARD, TAB } from '@/lib/motion';
+import { SkeletonList } from '@/components/Skeleton';
 
 /** Favoriler tab: favourite shops, then shops booked before, each one tap from booking. */
 export function MyShops() {
@@ -22,7 +24,7 @@ export function MyShops() {
     return onFavoritesChanged(load);
   }, []);
 
-  if (!shops) return null;
+  if (!shops) return <SkeletonList rows={2} label="Favoriler yükleniyor" />;
   if (!shops.length) {
     return (
       <div className={`card ${styles.empty}`}>
@@ -33,7 +35,7 @@ export function MyShops() {
         </span>
         <h2>Henüz favori kuaförünüz yok</h2>
         <p className="muted">Bir kuaförün sayfasındaki kalbe dokunun; burada hep elinizin altında olsun.</p>
-        <Link href="/" className="btn btn-primary">
+        <Link transitionTypes={TAB} href="/" className="btn btn-primary">
           Kuaför keşfet
         </Link>
       </div>
@@ -56,8 +58,8 @@ function Group({ title, shops }: { title: string; shops: MyShop[] }) {
       <h2 className={styles.title}>{title}</h2>
       <ul className={styles.list} role="list">
         {shops.map((shop) => (
-          <li key={shop.slug} className={`card ${styles.card}`}>
-            <Link href={`/${shop.slug}`} className={styles.main}>
+          <li key={shop.slug} className={`card ${styles.card} motion-fade`}>
+            <Link transitionTypes={FORWARD} href={`/${shop.slug}`} className={styles.main}>
               {shop.cover_photo_id ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={photoUrl(shop.cover_photo_id)} alt="" className={styles.photo} width={64} height={64} />
@@ -73,7 +75,7 @@ function Group({ title, shops }: { title: string; shops: MyShop[] }) {
                 {shop.last_visit && <span className={styles.meta}>Son randevu: {formatLongDate(shop.last_visit)}</span>}
               </span>
             </Link>
-            <Link href={`/${shop.slug}/randevu`} className={`btn btn-primary ${styles.book}`}>
+            <Link transitionTypes={FORWARD} href={`/${shop.slug}/randevu`} className={`btn btn-primary ${styles.book}`}>
               Randevu al
             </Link>
           </li>

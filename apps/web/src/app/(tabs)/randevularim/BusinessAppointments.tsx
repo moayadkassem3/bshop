@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { startTransition, useCallback, useEffect, useState, ViewTransition } from 'react';
 import { api, errorMessage } from '@/lib/api';
 import { formatLongDate, formatPrice, formatTime, turkeyDate } from '@/lib/format';
 import { useBusinessShops, type ShopAppointment } from '@/lib/business';
@@ -9,6 +9,7 @@ import styles from './appointments.module.css';
 import biz from './business.module.css';
 import { BlockForm, TimeOffCard, type TimeOff } from './TimeBlocks';
 import { VerifiedTick } from '@/components/VerifiedTick';
+import { SkeletonList } from '@/components/Skeleton';
 
 type Member = { id: string; display_name: string; bookable: boolean; active: boolean };
 type Appointment = ShopAppointment;
@@ -41,7 +42,8 @@ export function BusinessAppointments() {
     try {
       const list = await api<Appointment[]>(`/staff/shops/${shopId}/appointments?from=${from.toISOString()}&to=${to.toISOString()}`);
       // Times offered instead stay here until the customer answers.
-      setRequests(list.filter((a) => a.status === 'pending' || a.status === 'offered'));
+      // In a transition, so an answered request slides out and the rest move up (v1.7).
+      startTransition(() => setRequests(list.filter((a) => a.status === 'pending' || a.status === 'offered')));
       setError(null);
     } catch (err) {
       setError(errorMessage(err));
@@ -85,7 +87,11 @@ export function BusinessAppointments() {
           <div className={styles.segmented} role="tablist" aria-label="Talepler veya takvim">
             <button type="button" role="tab" aria-selected={tab === 'requests'} className={tab === 'requests' ? styles.segOn : ''} onClick={() => setTab('requests')}>
               Talepler
-              {!!pending && <span className={styles.count}>{pending}</span>}
+              {!!pending && (
+                <span key={pending} className={`${styles.count} motion-pop`}>
+                  {pending}
+                </span>
+              )}
             </button>
             <button type="button" role="tab" aria-selected={tab === 'calendar'} className={tab === 'calendar' ? styles.segOn : ''} onClick={() => setTab('calendar')}>
               Takvim
@@ -108,7 +114,7 @@ export function BusinessAppointments() {
 }
 
 function Requests({ shopId, items, onChanged }: { shopId: string; items: Appointment[] | null; onChanged: () => void }) {
-  if (!items) return null;
+  if (!items) return <SkeletonList rows={2} label="Talepler yükleniyor" />;
   if (!items.length) {
     return (
       <div className={`card ${styles.empty}`}>
@@ -123,7 +129,11 @@ function Requests({ shopId, items, onChanged }: { shopId: string; items: Appoint
   return (
     <div className={styles.wrap}>
       {items.map((a) => (
-        <AppointmentCard key={a.id} shopId={shopId} appointment={a} showDate onChanged={onChanged} />
+        <ViewTransition key={a.id} name={`talep-${a.id}`} enter="arrive" exit="leave" update="move" default="none">
+          <div>
+            <AppointmentCard shopId={shopId} appointment={a} showDate onChanged={onChanged} />
+          </div>
+        </ViewTransition>
       ))}
     </div>
   );
@@ -232,6 +242,7 @@ function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string;
 
       {error && <p className="alert alert-danger">{error}</p>}
       <div className={styles.wrap}>
+        {!items && !error && <SkeletonList rows={2} label="Takvim yükleniyor" />}
         {closed.map((t) => (
           <TimeOffCard key={t.id} shopId={props.shopId} item={t} date={date} showStaff={props.isOwner} onChanged={load} />
         ))}
@@ -320,7 +331,7 @@ export function AppointmentCard(props: {
   }
 
   return (
-    <article className={`card ${biz.card} ${a.status === 'pending' ? biz.pending : ''}`}>
+    <article className={`card ${biz.card} ${a.status === 'pending' ? biz.pending : ''} motion-fade`}>
       <div className={biz.cardTop}>
         <div className={biz.time}>
           <strong>{formatTime(a.starts_at)}</strong>
@@ -481,7 +492,7 @@ function OfferPicker(props: { shopId: string; appointment: Appointment; onDone: 
     d === today ? 'Bugün' : d === addDays(today, 1) ? 'Yarın' : new Intl.DateTimeFormat('tr-TR', { weekday: 'short', day: 'numeric', timeZone: 'Europe/Istanbul' }).format(dayStart(d));
 
   return (
-    <div className={biz.offer}>
+    <div className={`${biz.offer} motion-reveal`}>
       <p className={biz.offerTitle}>Hangi saati önermek istersiniz?</p>
       <div className={biz.offerDays} role="radiogroup" aria-label="Gün">
         {days.map((d) => (

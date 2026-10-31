@@ -10,6 +10,8 @@ import { rememberShop, useBusinessShops, type ShopAppointment } from '@/lib/busi
 import page from '../randevularim/appointments.module.css';
 import biz from '../randevularim/business.module.css';
 import styles from './salonum.module.css';
+import { FORWARD, TAB } from '@/lib/motion';
+import { SkeletonList } from '@/components/Skeleton';
 
 const LIVE = new Set<ShopAppointment['status']>(['pending', 'offered', 'confirmed']);
 
@@ -77,23 +79,25 @@ export function Salonum() {
       <div className={`container narrow ${page.body} ${styles.page}`}>
         {(shopsError || error) && <p className="alert alert-danger">{shopsError || error}</p>}
         {shops && shops.length === 0 && <p className="muted">Bu hesap henüz bir işletmeye bağlı değil.</p>}
+        {!shops && !shopsError && <SkeletonList rows={3} />}
 
         {shop && (
           <>
             <section aria-labelledby="today-title" className={styles.section}>
               <h2 id="today-title">Bugün</h2>
               <div className={styles.tiles}>
-                <Link href="/randevularim" className={`card ${styles.tile} ${waiting.length ? styles.tileAlert : ''}`}>
+                <Link transitionTypes={TAB} href="/randevularim" className={`card ${styles.tile} ${waiting.length ? styles.tileAlert : ''}`}>
                   <span className={styles.tileValue}>{items ? waiting.length : '–'}</span>
                   <span className={styles.tileLabel}>Bekleyen talep</span>
                 </Link>
-                <Link href="/randevularim" className={`card ${styles.tile}`}>
+                <Link transitionTypes={TAB} href="/randevularim" className={`card ${styles.tile}`}>
                   <span className={styles.tileValue}>{items ? todays.length : '–'}</span>
                   <span className={styles.tileLabel}>Bugünkü randevu</span>
                 </Link>
               </div>
+              {!items && !error && <SkeletonList rows={1} label="Randevular yükleniyor" />}
               {items && (
-                <div className={`card ${styles.next}`}>
+                <div className={`card ${styles.next} motion-fade`}>
                   <p className={styles.nextTitle}>Sıradaki randevular</p>
                   {next.length === 0 ? (
                     <p className="muted">Bugün başka randevu yok.</p>
@@ -114,7 +118,7 @@ export function Salonum() {
                       ))}
                     </ul>
                   )}
-                  <Link href="/randevularim" className={styles.more}>
+                  <Link transitionTypes={TAB} href="/randevularim" className={styles.more}>
                     Talepler ve takvim ›
                   </Link>
                 </div>
@@ -125,7 +129,7 @@ export function Salonum() {
               <h2 id="salon-title">Salonunuz</h2>
               {shop.reviewed_at && shop.visible ? (
                 <div className={styles.primary}>
-                  <Link href={`/${shop.slug}`} className="btn btn-primary">
+                  <Link transitionTypes={FORWARD} href={`/${shop.slug}`} className="btn btn-primary">
                     Müşteri gözüyle gör
                   </Link>
                   <ShareShop shop={shop} onDone={setNote} />
@@ -200,7 +204,7 @@ const ICONS = {
 function ShortcutLink(props: { href: string; icon: keyof typeof ICONS; label: string; hint?: string; onClick?: () => void }) {
   return (
     <li>
-      <Link href={props.href} className={styles.link} onClick={props.onClick}>
+      <Link transitionTypes={FORWARD} href={props.href} className={styles.link} onClick={props.onClick}>
         <span className={styles.icon} aria-hidden>
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             {ICONS[props.icon]}

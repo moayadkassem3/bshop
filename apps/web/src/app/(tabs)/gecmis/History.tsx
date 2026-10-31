@@ -8,6 +8,8 @@ import { useBusinessMode } from '@/lib/session';
 import { AppointmentCard } from '../randevularim/BusinessAppointments';
 import styles from '../randevularim/appointments.module.css';
 import biz from '../randevularim/business.module.css';
+import { TAB } from '@/lib/motion';
+import { SkeletonList } from '@/components/Skeleton';
 
 const DAY = 86_400_000;
 const PAGE_DAYS = 60;
@@ -76,7 +78,7 @@ export function History() {
         </header>
         <div className={`container narrow ${styles.body}`}>
           <p className="muted">Geçmiş, işletme modunda görünür.</p>
-          <Link href="/profil" className="btn btn-primary">
+          <Link transitionTypes={TAB} href="/profil" className="btn btn-primary">
             Profil
           </Link>
         </div>
@@ -123,6 +125,7 @@ export function History() {
         </div>
         {(error ?? shopsError) && <p className="alert alert-danger">{error ?? shopsError}</p>}
         <div className={styles.wrap}>
+          {!items && !error && !shopsError && <SkeletonList rows={3} label="Geçmiş yükleniyor" />}
           {items && shown.length === 0 && (
             <div className={`card ${styles.empty}`}>
               <h2>Kayıt yok</h2>

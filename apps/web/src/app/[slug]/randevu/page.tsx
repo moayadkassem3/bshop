@@ -5,6 +5,7 @@ import { BookingFlow } from '@/components/booking/BookingFlow';
 import { loadProfile } from '@/lib/server';
 import styles from '../shop.module.css';
 import { BackArrow } from '@/components/BackArrow';
+import { BACK } from '@/lib/motion';
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ personel?: string }> };
 
@@ -24,7 +25,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
   return (
     <div className="container narrow">
       <header className={styles.bookingHeader}>
-        <Link href={`/${profile.slug}`} className={styles.backToProfile}>
+        <Link transitionTypes={BACK} href={`/${profile.slug}`} className={styles.backToProfile}>
           <BackArrow />
           {profile.name}
         </Link>

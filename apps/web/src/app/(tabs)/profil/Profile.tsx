@@ -12,6 +12,7 @@ import { getToken, rememberPortal, setToken } from '@/lib/session';
 import type { Me } from '@/lib/types';
 import styles from './profile.module.css';
 import { VerifiedTick } from '@/components/VerifiedTick';
+import { FORWARD, TAB } from '@/lib/motion';
 
 const MODE_LABEL = { customer: 'Müşteri', owner: 'İşletme sahibi', staff: 'Personel' } as const;
 
@@ -65,7 +66,7 @@ function SignIn(props: { onSignedIn: (me: Me) => void }) {
       <div className={styles.sheet}>
         <h2 className={styles.sheetTitle}>Giriş yap</h2>
         <PhoneSignIn as="customer" chooseMode onSignedIn={props.onSignedIn} />
-        <Link href="/isletmeler" className={styles.businessLink}>
+        <Link transitionTypes={FORWARD} href="/isletmeler" className={styles.businessLink}>
           <span>İşletmeyim</span> Salonumu kaydetmek istiyorum ›
         </Link>
       </div>
@@ -244,7 +245,7 @@ function MyBusinesses() {
           const label = b.role === 'staff' ? 'Personel' : b.owner_label === 'co_owner' ? 'Ortak' : 'Sahibi';
           return (
             <li key={b.id}>
-              <Link href="/salonum" className={`${styles.menuItem} ${styles.business}`} onClick={() => rememberShop(b.id)}>
+              <Link transitionTypes={TAB} href="/salonum" className={`${styles.menuItem} ${styles.business}`} onClick={() => rememberShop(b.id)}>
                 <span>
                   <strong>
                     {b.name}
@@ -268,7 +269,7 @@ function MyBusinesses() {
 function MenuLink({ href, label }: { href: string; label: string }) {
   return (
     <li>
-      <Link href={href} className={styles.menuItem}>
+      <Link transitionTypes={FORWARD} href={href} className={styles.menuItem}>
         {label} <span aria-hidden>›</span>
       </Link>
     </li>

@@ -12,6 +12,7 @@ import styles from '../randevularim/appointments.module.css';
 import { shopHref } from '@/lib/views';
 import own from './kesimler.module.css';
 import { BackArrow } from '@/components/BackArrow';
+import { BACK } from '@/lib/motion';
 
 /**
  * Popüler kesimler (v1.7): salons' work from across Türkiye, most liked and
@@ -45,7 +46,7 @@ export function PopularHaircuts() {
     <>
       <header className={`page-header ${styles.header}`}>
         <div className="container narrow">
-          <Link href="/" className={own.back}>
+          <Link transitionTypes={BACK} href="/" className={own.back}>
             <BackArrow />
             Keşfet
           </Link>

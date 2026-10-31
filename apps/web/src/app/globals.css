@@ -28,6 +28,12 @@
   --radius: 20px;
   --radius-sm: 14px;
   --shadow: 0 1px 2px rgb(14 16 19 / 0.04), 0 8px 24px rgb(14 16 19 / 0.05);
+  /* Motion (v1.7): short and calm; everything off with “reduce motion”. */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 240ms;
   --font: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
@@ -100,15 +106,15 @@ select {
   transition:
     background 0.15s,
     border-color 0.15s,
-    transform 0.05s;
+    transform var(--dur-1) var(--ease-out);
 }
 
 .btn:hover {
   border-color: var(--ink-2);
 }
 
-.btn:active {
-  transform: translateY(1px);
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .btn:disabled {
@@ -235,5 +241,212 @@ select {
   :root {
     --nav-bottom: 0px;
     --nav-left: 88px;
+  }
+}
+
+/* ---------- Motion (v1.7) ---------- */
+
+/* Page transitions, by navigation type (components/PageMotion.tsx, lib/motion.ts).
+   The rest of the screen (tab bar, banner) does not move. */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(.nav-forward) {
+  animation:
+    var(--dur-1) var(--ease-in) both motion-fade-out,
+    var(--dur-3) var(--ease-out) both motion-to-left;
+}
+
+::view-transition-new(.nav-forward) {
+  animation:
+    var(--dur-2) var(--ease-out) 60ms both motion-fade-in,
+    var(--dur-3) var(--ease-out) both motion-from-right;
+}
+
+::view-transition-old(.nav-back) {
+  animation:
+    var(--dur-1) var(--ease-in) both motion-fade-out,
+    var(--dur-3) var(--ease-out) both motion-to-right;
+}
+
+::view-transition-new(.nav-back) {
+  animation:
+    var(--dur-2) var(--ease-out) 60ms both motion-fade-in,
+    var(--dur-3) var(--ease-out) both motion-from-left;
+}
+
+::view-transition-old(.nav-tab) {
+  animation: var(--dur-1) var(--ease-in) both motion-fade-out;
+}
+
+::view-transition-new(.nav-tab) {
+  animation: var(--dur-2) var(--ease-out) both motion-fade-in;
+}
+
+/* A list item leaving (an answered request): slides right and fades. */
+::view-transition-old(.leave) {
+  animation: var(--dur-3) var(--ease-in) both motion-leave;
+}
+
+::view-transition-new(.arrive) {
+  animation: var(--dur-2) var(--ease-out) both motion-reveal;
+}
+
+::view-transition-group(.move) {
+  animation-duration: var(--dur-3);
+  animation-timing-function: var(--ease-out);
+}
+
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes motion-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes motion-from-right {
+  from {
+    translate: 32px 0;
+  }
+}
+
+@keyframes motion-from-left {
+  from {
+    translate: -32px 0;
+  }
+}
+
+@keyframes motion-to-left {
+  to {
+    translate: -24px 0;
+  }
+}
+
+@keyframes motion-to-right {
+  to {
+    translate: 24px 0;
+  }
+}
+
+@keyframes motion-leave {
+  to {
+    opacity: 0;
+    translate: 48px 0;
+  }
+}
+
+/* Something opening (a form, an editor, a panel): fades in and settles. */
+.motion-reveal,
+details[open] > :not(summary) {
+  animation: motion-reveal var(--dur-2) var(--ease-out) both;
+}
+
+@keyframes motion-reveal {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+
+/* Booking steps: in from the side they come from. */
+.motion-step-forward {
+  animation: motion-step-forward var(--dur-3) var(--ease-out) both;
+}
+
+.motion-step-back {
+  animation: motion-step-back var(--dur-3) var(--ease-out) both;
+}
+
+@keyframes motion-step-forward {
+  from {
+    opacity: 0;
+    translate: 24px 0;
+  }
+}
+
+@keyframes motion-step-back {
+  from {
+    opacity: 0;
+    translate: -24px 0;
+  }
+}
+
+/* Content that just arrived after loading. */
+.motion-fade {
+  animation: motion-fade-in var(--dur-2) var(--ease-out) both;
+}
+
+/* A small confirmation: “Kaydedildi”, a new badge. */
+.motion-pop {
+  animation: motion-pop 280ms var(--ease-out) both;
+}
+
+@keyframes motion-pop {
+  0% {
+    opacity: 0;
+    scale: 0.6;
+  }
+  60% {
+    opacity: 1;
+    scale: 1.08;
+  }
+}
+
+/* Loading placeholders in the shape of what is coming. */
+.skeleton {
+  display: block;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--line) 25%, color-mix(in srgb, var(--line) 45%, var(--surface)) 50%, var(--line) 75%);
+  background-size: 200% 100%;
+  animation: motion-shimmer 1.3s linear infinite;
+}
+
+.skeleton-list {
+  display: grid;
+  gap: 12px;
+}
+
+.skeleton-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  box-shadow: none;
+}
+
+@keyframes motion-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

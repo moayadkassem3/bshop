@@ -12,6 +12,7 @@ import styles from './booking.module.css';
 import { BackArrow } from '@/components/BackArrow';
 
 type Step = 'services' | 'staff' | 'time' | 'confirm' | 'done';
+const ORDER: Step[] = ['services', 'staff', 'time', 'confirm', 'done'];
 const STEPS: { key: Exclude<Step, 'done'>; label: string }[] = [
   { key: 'services', label: 'Hizmet' },
   { key: 'staff', label: 'Personel' },
@@ -68,6 +69,12 @@ export function BookingFlow({ profile, presetStaffId }: { profile: ShopProfile; 
     setStep('staff');
   }
 
+  // Steps slide in from the side they come from: forward from the right, back from the left (v1.7).
+  const motion = useRef<{ step: Step; dir: 'forward' | 'back' }>({ step, dir: 'forward' });
+  if (motion.current.step !== step) {
+    motion.current = { step, dir: ORDER.indexOf(step) >= ORDER.indexOf(motion.current.step) ? 'forward' : 'back' };
+  }
+
   const visibleSteps = presetStaff && staffId === presetStaff.id ? STEPS.filter((s) => s.key !== 'staff') : STEPS;
   const currentIndex = visibleSteps.findIndex((s) => s.key === step);
 
@@ -106,55 +113,57 @@ export function BookingFlow({ profile, presetStaffId }: { profile: ShopProfile; 
 
       {notice && <p className="alert alert-info">{notice}</p>}
 
-      {step === 'services' && <ServiceStep services={profile.services} selected={serviceIds} onChange={setServiceIds} />}
-      {step === 'staff' && (
-        <StaffStep
-          slug={profile.slug}
-          staff={eligibleStaff}
-          serviceIds={serviceIds}
-          value={staffId}
-          onChange={(id) => {
-            setStaffId(id);
-            setSlot(null);
-          }}
-        />
-      )}
-      {step === 'time' && (
-        <TimeStep
-          slug={profile.slug}
-          serviceIds={serviceIds}
-          staffId={staffId}
-          date={date}
-          onDateChange={(d) => {
-            setDate(d);
-            setSlot(null);
-          }}
-          value={slot}
-          onChange={setSlot}
-        />
-      )}
-      {step === 'confirm' && slot && (
-        <ConfirmStep
-          profile={profile}
-          services={selected}
-          staffId={staffId}
-          staffName={staffName ?? null}
-          slot={slot}
-          durationMinutes={duration}
-          totalKurus={totalKurus}
-          startingFrom={startingFrom}
-          onBooked={(r) => {
-            setResult(r);
-            setStep('done');
-          }}
-          onSlotTaken={() => {
-            setSlot(null);
-            setNotice('Bu saat az önce doldu. Lütfen başka bir saat seçin.');
-            setStep('time');
-          }}
-        />
-      )}
-      {step === 'done' && result && <DoneStep result={result} slug={profile.slug} />}
+      <div key={step} className={`${styles.stepMotion} ${step === 'done' ? '' : motion.current.dir === 'forward' ? 'motion-step-forward' : 'motion-step-back'}`}>
+        {step === 'services' && <ServiceStep services={profile.services} selected={serviceIds} onChange={setServiceIds} />}
+        {step === 'staff' && (
+          <StaffStep
+            slug={profile.slug}
+            staff={eligibleStaff}
+            serviceIds={serviceIds}
+            value={staffId}
+            onChange={(id) => {
+              setStaffId(id);
+              setSlot(null);
+            }}
+          />
+        )}
+        {step === 'time' && (
+          <TimeStep
+            slug={profile.slug}
+            serviceIds={serviceIds}
+            staffId={staffId}
+            date={date}
+            onDateChange={(d) => {
+              setDate(d);
+              setSlot(null);
+            }}
+            value={slot}
+            onChange={setSlot}
+          />
+        )}
+        {step === 'confirm' && slot && (
+          <ConfirmStep
+            profile={profile}
+            services={selected}
+            staffId={staffId}
+            staffName={staffName ?? null}
+            slot={slot}
+            durationMinutes={duration}
+            totalKurus={totalKurus}
+            startingFrom={startingFrom}
+            onBooked={(r) => {
+              setResult(r);
+              setStep('done');
+            }}
+            onSlotTaken={() => {
+              setSlot(null);
+              setNotice('Bu saat az önce doldu. Lütfen başka bir saat seçin.');
+              setStep('time');
+            }}
+          />
+        )}
+        {step === 'done' && result && <DoneStep result={result} slug={profile.slug} />}
+      </div>
 
       {step !== 'done' && step !== 'confirm' && (
         <div className={styles.bottomBar}>

@@ -7,6 +7,7 @@ import { haircutPhotoUrl } from '@/lib/shop';
 import type { HaircutPost, PopularPost } from '@/lib/types';
 import styles from './haircuts.module.css';
 import { VerifiedTick } from '@/components/VerifiedTick';
+import { FORWARD } from '@/lib/motion';
 
 type Props = {
   post: HaircutPost | PopularPost;
@@ -31,14 +32,14 @@ export function HaircutCard({ post, href, liked, onToggleLike }: Props) {
 
   return (
     <article className={styles.card}>
-      <Link href={href} className={styles.photoLink} aria-label={shop ? `${post.style_name}, ${shop.shop_name}` : post.style_name}>
+      <Link transitionTypes={FORWARD} href={href} className={styles.photoLink} aria-label={shop ? `${post.style_name}, ${shop.shop_name}` : post.style_name}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={haircutPhotoUrl(post.id)} alt="" loading="lazy" className={styles.photo} />
         <span className={styles.style}>{post.style_name}</span>
       </Link>
       <div className={styles.footer}>
         {shop ? (
-          <Link href={href} className={styles.shop}>
+          <Link transitionTypes={FORWARD} href={href} className={styles.shop}>
             <strong>
               {shop.shop_name}
               {shop.shop_verified && <VerifiedTick kind="salon" size={14} />}

@@ -29,7 +29,14 @@
   width: 56px;
   height: 32px;
   border-radius: 999px;
-  transition: background 0.15s;
+  transition:
+    background var(--dur-2) var(--ease-out),
+    scale var(--dur-1) var(--ease-out);
+}
+
+/* Press feedback (v1.7). */
+.tab:active .icon {
+  scale: 0.9;
 }
 
 .active {

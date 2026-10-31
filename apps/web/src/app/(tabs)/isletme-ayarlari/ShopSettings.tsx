@@ -10,6 +10,7 @@ import { ServicesTab } from './ServicesTab';
 import { StaffTab } from './StaffTab';
 import own from './settings.module.css';
 import { BackArrow } from '@/components/BackArrow';
+import { BACK } from '@/lib/motion';
 
 const TABS = [
   { key: 'salon', label: 'Salon' },
@@ -42,7 +43,7 @@ export function ShopSettings() {
     <>
       <header className={`page-header ${styles.header}`}>
         <div className="container narrow">
-          <Link href="/salonum" className={own.back}>
+          <Link transitionTypes={BACK} href="/salonum" className={own.back}>
             <BackArrow />
             Salonum
           </Link>

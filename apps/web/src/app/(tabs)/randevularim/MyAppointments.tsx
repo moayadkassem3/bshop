@@ -9,6 +9,8 @@ import { getToken, setToken } from '@/lib/session';
 import { appointmentUpdates, markUpdatesSeen, updatesSeenAt } from '@/lib/updates';
 import type { CustomerAppointment } from '@/lib/types';
 import styles from './appointments.module.css';
+import { FORWARD, TAB } from '@/lib/motion';
+import { SkeletonList } from '@/components/Skeleton';
 
 export function MyAppointments() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -62,7 +64,7 @@ export function MyAppointments() {
             </span>
             <h2>Randevularını görmek için giriş yap</h2>
             <p>Telefon numaranla giriş yaptıktan sonra randevuların ve taleplerin burada görünür.</p>
-            <Link href="/profil?devam=/randevularim" className="btn btn-primary">
+            <Link transitionTypes={TAB} href="/profil?devam=/randevularim" className="btn btn-primary">
               Giriş yap
             </Link>
           </div>
@@ -157,6 +159,7 @@ function List(props: { items: CustomerAppointment[] | null; fresh: Set<string>; 
         </div>
         <div className={styles.wrap}>
           {props.error && <p className="alert alert-danger">{props.error}</p>}
+          {!props.items && !props.error && <SkeletonList rows={2} label="Randevular yükleniyor" />}
           {props.items && shown.length === 0 && (
             <div className={`card ${styles.empty}`}>
               <span className={styles.emptyIcon} aria-hidden>
@@ -165,7 +168,7 @@ function List(props: { items: CustomerAppointment[] | null; fresh: Set<string>; 
               <h2>{empty.title}</h2>
               {empty.text && <p>{empty.text}</p>}
               {shownTab === 'appointments' && when === 'upcoming' && (
-                <Link href="/" className="btn btn-primary">
+                <Link transitionTypes={TAB} href="/" className="btn btn-primary">
                   <MapIcon /> Kuaför keşfet
                 </Link>
               )}
@@ -220,13 +223,13 @@ function AppointmentCard({ appointment: a, isNew, onChanged }: { appointment: Cu
   }
 
   return (
-    <article className={`card ${styles.card}`}>
+    <article className={`card ${styles.card} motion-fade`}>
       <div className={styles.cardTop}>
         <div>
           <p className={styles.when}>
             {formatLongDate(a.starts_at)} · {formatTime(a.starts_at)}
           </p>
-          <Link href={`/${a.shop_slug}`} className={styles.shop}>
+          <Link transitionTypes={FORWARD} href={`/${a.shop_slug}`} className={styles.shop}>
             {a.shop_name}
           </Link>
           <p className="muted">
@@ -288,7 +291,7 @@ function OfferAnswer({ appointment: a, onChanged }: { appointment: CustomerAppoi
   }
 
   return (
-    <div className={styles.offer}>
+    <div className={`${styles.offer} motion-reveal`}>
       <p>
         {a.offered_from && (
           <>

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { SERVER_API_URL } from '@/lib/config';
 import styles from './legal.module.css';
 import { BackArrow } from '@/components/BackArrow';
+import { BACK, FORWARD } from '@/lib/motion';
 
 export const metadata: Metadata = { title: 'Sözleşmeler ve yasal metinler' };
 
@@ -14,7 +15,7 @@ export default async function LegalIndex() {
     .catch(() => []);
   return (
     <div className="container narrow">
-      <Link href="/profil" className={styles.back}>
+      <Link transitionTypes={BACK} href="/profil" className={styles.back}>
         <BackArrow />
         Profil
       </Link>
@@ -22,7 +23,7 @@ export default async function LegalIndex() {
       <ul className={`card ${styles.list}`} role="list">
         {docs.map((d) => (
           <li key={d.key}>
-            <Link href={`/sozlesmeler/${d.key}`}>
+            <Link transitionTypes={FORWARD} href={`/sozlesmeler/${d.key}`}>
               <span>{d.title}</span>
               <span className="muted">Sürüm {d.version} ›</span>
             </Link>

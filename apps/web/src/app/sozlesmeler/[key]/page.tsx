@@ -5,6 +5,7 @@ import { LEGAL_KEYS, readLegal } from '@/lib/legal';
 import { Markdown } from '@/lib/markdown';
 import styles from '../legal.module.css';
 import { BackArrow } from '@/components/BackArrow';
+import { BACK } from '@/lib/motion';
 
 type Props = { params: Promise<{ key: string }> };
 
@@ -22,7 +23,7 @@ export default async function LegalPage({ params }: Props) {
   if (!source) notFound();
   return (
     <div className="container narrow">
-      <Link href="/sozlesmeler" className={styles.back}>
+      <Link transitionTypes={BACK} href="/sozlesmeler" className={styles.back}>
         <BackArrow />
         Tüm metinler
       </Link>
