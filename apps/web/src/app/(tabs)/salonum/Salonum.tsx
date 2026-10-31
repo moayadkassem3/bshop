@@ -166,10 +166,18 @@ export function Salonum() {
                 </p>
               )}
               <ul className={`card ${styles.links}`} role="list">
-                <ShortcutLink href="/?harita" label="Haritada gör" hint="Salonunuz ve çevredeki salonlar" />
-                {owner && <ShortcutLink href="/qr" label="QR kod" hint="Salonunuza asın, müşteriler okutup randevu alsın" />}
-                <ShortcutLink href="/calismalar" label="Kesim fotoğrafı paylaş" hint="Popüler kesimler’de görünür" />
-                {owner && <ShortcutLink href="/isletme-ayarlari" label="Salon bilgileri" hint="Adres, fotoğraflar, hizmetler, personel" onClick={() => rememberShop(shop.id)} />}
+                <ShortcutLink href="/?harita" icon="map" label="Haritada gör" hint="Salonunuz ve çevredeki salonlar" />
+                {owner && <ShortcutLink href="/qr" icon="qr" label="QR kod" hint="Salonunuza asın, müşteriler okutup randevu alsın" />}
+                <ShortcutLink href="/calismalar" icon="camera" label="Kesim fotoğrafı paylaş" hint="Popüler kesimler’de görünür" />
+                {owner && (
+                  <ShortcutLink
+                    href="/isletme-ayarlari"
+                    icon="settings"
+                    label="Salon bilgileri"
+                    hint="Adres, fotoğraflar, hizmetler, personel"
+                    onClick={() => rememberShop(shop.id)}
+                  />
+                )}
               </ul>
             </section>
           </>
@@ -179,11 +187,42 @@ export function Salonum() {
   );
 }
 
-function ShortcutLink(props: { href: string; label: string; hint?: string; onClick?: () => void }) {
+/** Line icons in the same style as the tab bar (24-unit grid, 1.8 stroke). */
+const ICONS = {
+  map: <path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5zM9 4v13.5M15 6.5V20" />,
+  qr: (
+    <>
+      <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" />
+      <rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2" />
+      <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2" />
+      <path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 20.5h2M20.5 14v2" />
+    </>
+  ),
+  camera: (
+    <>
+      <path d="M3.5 8.5A2 2 0 0 1 5.5 6.5h2l1.5-2h6l1.5 2h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </>
+  ),
+  settings: (
+    <>
+      <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+      <circle cx="15" cy="7" r="2" />
+      <circle cx="9" cy="17" r="2" />
+    </>
+  ),
+};
+
+function ShortcutLink(props: { href: string; icon: keyof typeof ICONS; label: string; hint?: string; onClick?: () => void }) {
   return (
     <li>
       <Link href={props.href} className={styles.link} onClick={props.onClick}>
-        <span>
+        <span className={styles.icon} aria-hidden>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            {ICONS[props.icon]}
+          </svg>
+        </span>
+        <span className={styles.linkText}>
           <strong>{props.label}</strong>
           {props.hint && <span>{props.hint}</span>}
         </span>
