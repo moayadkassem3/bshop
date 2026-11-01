@@ -56,6 +56,8 @@
 
 .plan {
   display: grid;
+  /* Name on top, price at the bottom, so prices line up when a name wraps. */
+  align-content: space-between;
   gap: 4px;
   padding: 16px;
 }

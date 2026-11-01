@@ -67,7 +67,7 @@ describe('self-service shop registration (v1.6)', () => {
     // Approval starts the 7-day trial and makes the shop public and bookable.
     await t.call('POST', `/admin/shops/${r.body.shopId}/review`, { token: await admin() });
     await t.tick();
-    expect(t.sms.to(PHONES.customer).at(-1)).toContain('onaylandı ve artık randevu alıyor. 7 günlük ücretsiz deneme');
+    expect(t.sms.to(PHONES.customer).at(-1)).toContain('onaylandı ve artık randevu alıyor. 14 günlük ücretsiz deneme');
     const profile = (await t.call('GET', `/public/shops/${r.body.slug}`)).body;
     expect(profile.services.map((s: { name: string }) => s.name)).toEqual(['Saç Kesimi', 'Ense Tıraşı']);
     expect(profile.staff.map((s: { display_name: string }) => s.display_name)).toEqual(['Çağrı Usta', 'Mert']);
@@ -81,8 +81,8 @@ describe('self-service shop registration (v1.6)', () => {
     });
     expect(booked.status).toBe(201);
 
-    // The trial ends after 7 days.
-    t.clock.advance(7 * 24 * 60 + 1);
+    // The trial ends after 14 days.
+    t.clock.advance(14 * 24 * 60 + 1);
     expect((await t.call('GET', `/public/shops/${r.body.slug}`)).status).toBe(404);
   });
 
