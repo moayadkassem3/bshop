@@ -536,7 +536,7 @@ describe('subscription plans (v1.5)', () => {
     const plans = (await t.call('GET', '/public/plans')).body;
     expect(plans.plans).toHaveLength(5);
     expect(plans.features).toContain('Sınırsız SMS bildirimi');
-    expect(plans.terms).toEqual({ vatIncluded: true, trialDays: 14, customQuoteAboveStaff: 10 });
+    expect(plans.terms).toEqual({ vatIncluded: true, trialDays: 7, customQuoteAboveStaff: 10 });
   });
 
   it("shows each shop's plan to our team", async () => {

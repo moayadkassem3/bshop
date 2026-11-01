@@ -28,7 +28,7 @@ export const PLAN_FEATURES = [
 ];
 
 /** Prices include KDV; the trial starts when our team approves the shop. */
-export const PLAN_TERMS = { vatIncluded: true, trialDays: 14, customQuoteAboveStaff: 10 };
+export const PLAN_TERMS = { vatIncluded: true, trialDays: 7, customQuoteAboveStaff: 10 };
 
 /** The smallest plan that fits the shop's staff; null above 10 staff (priced individually). */
 export function planForStaff(staffCount: number): Plan | null {

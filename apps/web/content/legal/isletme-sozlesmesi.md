@@ -16,7 +16,7 @@
 
 ## 4. Ücretsiz deneme ve abonelik
 
-- Kayıt onaylandığı gün 14 günlük ücretsiz deneme başlar.
+- Kayıt onaylandığı gün 7 günlük ücretsiz deneme başlar.
 - Deneme sonunda abonelik, randevu alan personel sayısına göre aylık ücretlendirilir: 1 personel ₺499, 2 personel ₺799, 3 personel ₺999, 5 personele kadar ₺1.299, 10 personele kadar ₺1.899. 10'dan fazla personel için fiyat teklifle belirlenir. Fiyatlara KDV dahildir.
 - Randevu alan sahip veya ortak da personel sayısına dahildir.
 - Personel sayısı değiştiğinde yeni ücret bir sonraki dönemden itibaren uygulanır.
