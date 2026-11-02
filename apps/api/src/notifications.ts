@@ -74,7 +74,13 @@ export async function dispatchNotifications(deps: Deps, limit = 50): Promise<num
             body: n.body,
             data: n.payload.data ?? {},
           });
-        await tx.query(`UPDATE notifications SET status = 'sent', sent_at = $2 WHERE id = $1`, [n.id, deps.clock.now()]);
+        // Security (v1.7): a sign-in code is not kept readable in the database once sent.
+        await tx.query(
+          `UPDATE notifications SET status = 'sent', sent_at = $2,
+             body = CASE WHEN template = 'otp' THEN 'Doğrulama kodu gönderildi.' ELSE body END
+           WHERE id = $1`,
+          [n.id, deps.clock.now()],
+        );
       } catch (err) {
         await tx.query(`UPDATE notifications SET status = 'failed', error = $2 WHERE id = $1`, [n.id, String(err)]);
       }

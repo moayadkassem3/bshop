@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Deps } from '../deps.js';
-import { switchMode, updateProfile } from '../services/auth.js';
+import { signOut, switchMode, updateProfile } from '../services/auth.js';
 import { cancelByCustomer, createBooking, listCustomerAppointments } from '../services/booking.js';
 import { addFavorite, listCustomerShops, removeFavorite } from '../services/favorites.js';
 import { listConsents, recordConsents, withdrawConsent } from '../services/consents.js';
@@ -37,6 +37,12 @@ export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     // Verified tick (v1.7): three completed visits booked through the app.
     const tick = await deps.db.query<{ verified: boolean }>('SELECT verified_at IS NOT NULL AS verified FROM users WHERE id = $1', [user.id]);
     return { ...user, owns_shop: rows.some((r) => r.role === 'owner'), has_business: rows.length > 0, verified: tick.rows[0]?.verified ?? false };
+  });
+
+  app.post('/auth/logout', async (req, reply) => {
+    const header = req.headers.authorization;
+    if (header?.startsWith('Bearer ')) await signOut(deps, header.slice(7));
+    return reply.status(204).send();
   });
 
   app.post('/me/switch', async (req) => {

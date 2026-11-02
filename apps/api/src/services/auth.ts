@@ -16,6 +16,12 @@ const OTP_RESEND_SECONDS = 30;
 const OTP_MAX_PER_HOUR = 10;
 // The test site sends no SMS, so it only stops double taps.
 const DEMO_RESEND_SECONDS = 10;
+/**
+ * Security (v1.7): the most sign-in SMS the whole platform sends in an hour, so
+ * bots cycling through many numbers cannot run up the SMS bill. Far above
+ * normal use; set OTP_HOURLY_CAP to change it.
+ */
+const OTP_HOURLY_CAP = Number(process.env.OTP_HOURLY_CAP ?? 300);
 
 /**
  * Which entrance a session was started from: the customer website, staff sign-in
@@ -67,6 +73,9 @@ async function resolvePortal(q: Queryable, phone: string, as: SignInAs): Promise
 /** Returns the code itself only in DEMO_MODE, where no SMS provider is connected. */
 export async function requestOtp(deps: Deps, rawPhone: string, as: SignInAs = 'customer'): Promise<{ demoCode?: string }> {
   const phone = normalizePhone(rawPhone);
+  // Security (v1.7): codes go only to Turkish mobile numbers. SMS to foreign and premium
+  // numbers is how "SMS pumping" fraud runs up a sender's bill.
+  if (!/^\+905\d{9}$/.test(phone)) throw badRequest('PHONE_NOT_SUPPORTED', 'Only Turkish mobile numbers can sign in');
   const now = deps.clock.now();
   // Checked before any SMS is sent, so wrong-entrance attempts cost nothing.
   await resolvePortal(deps.db, phone, as);
@@ -88,6 +97,11 @@ export async function requestOtp(deps: Deps, rawPhone: string, as: SignInAs = 'c
       // The oldest code of the hour drops out of the count first.
       const retryAfterSeconds = Math.ceil((first.getTime() + 60 * MINUTE - now.getTime()) / 1000);
       throw new AppError(429, 'OTP_LIMIT', 'Too many codes requested', { retryAfterSeconds });
+    }
+
+    const total = await tx.query<{ n: number }>("SELECT count(*)::int AS n FROM otp_codes WHERE created_at > $1", [new Date(now.getTime() - 60 * MINUTE)]);
+    if (!deps.config.demoMode && total.rows[0]!.n >= OTP_HOURLY_CAP) {
+      throw new AppError(429, 'OTP_BUSY', 'Too many sign-ins right now', { retryAfterSeconds: 300 });
     }
 
     const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
@@ -218,4 +232,9 @@ export async function upsertUserByPhone(
     [phone, firstName ?? null, lastName ?? null],
   );
   return rows[0]!.id;
+}
+
+/** "Çıkış yap" (v1.7, security): the session ends on the server too, so a copied token stops working. */
+export async function signOut(deps: Deps, token: string) {
+  await deps.db.query('DELETE FROM sessions WHERE token_hash = $1', [sha256(token)]);
 }

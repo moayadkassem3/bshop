@@ -22,6 +22,9 @@ export type QuoteRequestInput = {
 const PER_PHONE_PER_DAY = 3;
 
 /** A custom-price request (more than 10 staff): saved, and our team is told by SMS. */
+/** Admin SMS for new quote requests, per hour at most. */
+const QUOTE_SMS_PER_HOUR = 5;
+
 export async function createQuoteRequest(deps: Deps, input: QuoteRequestInput, user: User | null) {
   const now = deps.clock.now();
   const phone = normalizePhone(input.phone);
@@ -48,7 +51,15 @@ export async function createQuoteRequest(deps: Deps, input: QuoteRequestInput, u
         now,
       ],
     );
-    const admins = await tx.query<{ id: string; phone: string }>('SELECT id, phone FROM users WHERE is_platform_admin');
+    // Security (v1.7): the form is public, so the team is texted for at most a few requests an hour;
+    // the rest wait in the admin panel (Talepler).
+    const lastHour = await tx.query<{ n: number }>('SELECT count(*)::int AS n FROM quote_requests WHERE created_at > $1', [
+      new Date(now.getTime() - 3_600_000),
+    ]);
+    const admins =
+      lastHour.rows[0]!.n <= QUOTE_SMS_PER_HOUR
+        ? await tx.query<{ id: string; phone: string }>('SELECT id, phone FROM users WHERE is_platform_admin')
+        : { rows: [] };
     for (const admin of admins.rows) {
       await queueSms(tx, now, {
         shopId: null,

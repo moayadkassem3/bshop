@@ -15,8 +15,15 @@ import { PUBLIC_CONDITION } from './shops.js';
  * until online payment exists, and take down spam or misleading salons.
  */
 
-/** Our team's phone numbers (ADMIN_PHONES) become admins at start-up; a missing account is created. */
+/**
+ * Our team's phone numbers (ADMIN_PHONES) become admins at start-up; a missing
+ * account is created. When the list is set it is complete: anyone else loses
+ * admin rights (security, v1.7), such as the test admin the seed script adds.
+ */
 export async function ensureAdmins(deps: Deps) {
+  if (!deps.config.adminPhones.length) return;
+  const phones = deps.config.adminPhones.map(normalizePhone);
+  await deps.db.query('UPDATE users SET is_platform_admin = false WHERE is_platform_admin AND phone <> ALL($1::text[])', [phones]);
   for (const raw of deps.config.adminPhones) {
     const phone = normalizePhone(raw);
     await deps.db.query(

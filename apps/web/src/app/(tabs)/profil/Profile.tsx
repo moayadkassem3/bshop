@@ -37,7 +37,7 @@ export function Profile() {
   // Shortcuts such as Randevular's "Giriş yap" send people here with ?devam=/page and get them back after.
   function signedIn(m: Me) {
     const next = new URLSearchParams(window.location.search).get('devam');
-    if (next?.startsWith('/') && !next.startsWith('//')) return router.push(next);
+    if (next && isOwnPath(next)) return router.push(next);
     setMe(m);
   }
 
@@ -189,6 +189,8 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
           type="button"
           className={styles.signOut}
           onClick={() => {
+            // The session ends on the server too (v1.7, security); the screen does not wait for it.
+            api('/auth/logout', { method: 'POST' }).catch(() => undefined);
             setToken(null);
             onChange(null);
           }}
@@ -280,4 +282,17 @@ function MenuLink({ href, label }: { href: string; label: string }) {
       </Link>
     </li>
   );
+}
+
+/**
+ * Security (v1.7): only a page on this site is a valid "devam" target. "/\\evil.com"
+ * or "//evil.com" would otherwise send someone to another site right after sign-in.
+ */
+function isOwnPath(next: string): boolean {
+  if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) return false;
+  try {
+    return new URL(next, window.location.origin).origin === window.location.origin;
+  } catch {
+    return false;
+  }
 }

@@ -11,6 +11,12 @@ import { startWorker } from './worker.js';
 
 // SMS and push print to the console until the real providers are connected (milestone 4).
 const config = loadConfig();
+// Security (v1.7): outside this computer, sign-in codes must be hashed with a real secret.
+if (config.otpSecret === 'dev-only-otp-secret' && !/localhost|127\.0\.0\.1/.test(config.publicWebUrl)) {
+  console.error('OTP_SECRET is not set. Refusing to start: set a long random OTP_SECRET.');
+  process.exit(1);
+}
+if (config.demoMode) console.warn('DEMO_MODE is on: sign-in codes are shown on screen. Never use this for real customers.');
 const db = createPool(config.databaseUrl);
 const deps: Deps = {
   db,
