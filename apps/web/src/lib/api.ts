@@ -63,6 +63,8 @@ const MESSAGES: Record<string, string> = {
   HOURS_OVERLAP: 'Bir günün saatleri çakışıyor. Molaları açılış ile kapanış arasına yerleştirin.',
   OVERLAPS_APPOINTMENTS: 'Bu aralıkta randevu var. Önce randevuyu iptal edin veya başka saate alın, sonra kapatın.',
   INVALID_RANGE: 'Bitiş saati, başlangıçtan sonra olmalı.',
+  HAS_UPCOMING_WORK: 'Size atanmış yaklaşan randevular var. Önce bunları iptal edin veya başka personele aktarın.',
+  SHOP_HAS_APPOINTMENTS: 'Salonunuzun yaklaşan randevuları var. Hesabı silmeden önce bunları iptal edin.',
 };
 
 /** "45 saniye", "12 dakika": how long to wait, rounded up. */

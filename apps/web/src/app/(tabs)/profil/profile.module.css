@@ -235,3 +235,18 @@
   color: var(--ink);
   font-weight: 750;
 }
+
+/* Account deletion: a small text link under Çıkış yap (v1.7). */
+.deleteLink {
+  display: block;
+  width: fit-content;
+  margin: -12px auto 24px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.deleteLink:hover {
+  text-decoration: underline;
+}

@@ -11,8 +11,16 @@ import { registerShop } from '../services/registration.js';
 import type { AuthFn } from './app.js';
 import { id, timestamp } from './schemas.js';
 import { acceptOffer, declineOffer } from '../services/offers.js';
+import { deleteAccount, deletionPlan } from '../services/account.js';
 
 export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
+  // Account deletion (v1.7): what it would do, then doing it.
+  app.get('/me/deletion', async (req) => deletionPlan(deps, await auth(req)));
+  app.delete('/me', async (req, reply) => {
+    await deleteAccount(deps, await auth(req));
+    return reply.status(204).send();
+  });
+
   app.get('/me', async (req) => {
     const user = await auth(req);
     // Profil (v1.7): owners and co-owners do not need "İşletmenizi kaydedin"; only people

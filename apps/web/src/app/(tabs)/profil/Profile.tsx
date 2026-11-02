@@ -193,6 +193,10 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
         >
           Çıkış yap
         </button>
+        {/* Deliberately quiet (founder, v1.7): available, as the app stores require, but not a main action. */}
+        <Link transitionTypes={FORWARD} href="/hesabi-sil" className={styles.deleteLink}>
+          Hesabı sil
+        </Link>
       </div>
     </>
   );
