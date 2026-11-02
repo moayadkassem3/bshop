@@ -543,3 +543,11 @@
   font-size: 14px;
   color: var(--ink);
 }
+
+/* The listed price, shown but not editable. */
+.fixed {
+  display: flex;
+  align-items: center;
+  background: var(--surface-2);
+  font-weight: 750;
+}

@@ -269,8 +269,11 @@ function PaymentForm({ s, busy, onSave }: { s: SalonDetail; busy: boolean; onSav
 
   useEffect(() => setAmount(String((monthly * months) / 100)), [monthly, months]);
 
-  const kurus = Math.round(Number(amount.replace(',', '.')) * 100);
-  const valid = !paid || (Number.isFinite(kurus) && kurus >= 0);
+  // Listed prices are fixed: the amount is the plan's price × months. Only salons above
+  // 10 staff (priced by quote, no plan) have an amount typed in.
+  const listed = s.plan != null;
+  const kurus = listed ? monthly * months : Math.round(Number(amount.replace(',', '.')) * 100);
+  const valid = !paid || (Number.isFinite(kurus) && kurus > 0);
   const running = s.subscription_status === 'active';
   return (
     <form
@@ -298,10 +301,17 @@ function PaymentForm({ s, busy, onSave }: { s: SalonDetail; busy: boolean; onSav
       </label>
       {paid && (
         <div className={`${styles.formRow} ${styles.formRowTwo} motion-reveal`}>
-          <label>
-            Tutar (₺)
-            <input className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
-          </label>
+          {listed ? (
+            <label>
+              Tutar
+              <span className={`input ${styles.fixed}`}>{formatPrice(kurus)}</span>
+            </label>
+          ) : (
+            <label>
+              Tutar (₺, teklif fiyatı)
+              <input className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            </label>
+          )}
           <label>
             Yöntem
             <select className="input" value={method} onChange={(e) => setMethod(e.target.value)}>
