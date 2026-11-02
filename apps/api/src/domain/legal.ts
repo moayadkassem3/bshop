@@ -16,7 +16,7 @@ export const LEGAL_DOCUMENTS: LegalDocument[] = [
   { key: 'kvkk-aydinlatma', title: 'KVKK Aydınlatma Metni', version: '2026-10-25', audience: 'notice' },
   { key: 'cerez-politikasi', title: 'Çerez ve Yerel Depolama Politikası', version: '2026-10-25', audience: 'notice' },
   { key: 'ticari-ileti-izni', title: 'Ticari Elektronik İleti Onayı', version: '2026-10-25', audience: 'optional' },
-  { key: 'isletme-sozlesmesi', title: 'İşletme Hizmet ve Abonelik Sözleşmesi', version: '2026-11-01.2', audience: 'business' },
+  { key: 'isletme-sozlesmesi', title: 'İşletme Hizmet ve Abonelik Sözleşmesi', version: '2026-11-02', audience: 'business' },
   { key: 'veri-isleme-sozlesmesi', title: 'Veri İşleme Sözleşmesi', version: '2026-10-25', audience: 'business' },
 ];
 

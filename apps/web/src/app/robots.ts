@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export default function robots(): MetadataRoute.Robots {
   if (IS_TEST_SITE) return { rules: { userAgent: '*', disallow: '/' } };
   return {
-    rules: { userAgent: '*', allow: '/', disallow: ['/api/', '/profil', '/randevularim', '/gecmis', '/isletme-ayarlari', '/istatistikler', '/calisma-saatleri', '/degerlendirmeler', '/qr', '/teklif-al'] },
+    rules: { userAgent: '*', allow: '/', disallow: ['/api/', '/profil', '/randevularim', '/gecmis', '/isletme-ayarlari', '/istatistikler', '/calisma-saatleri', '/degerlendirmeler', '/yonetim', '/qr', '/teklif-al'] },
     sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

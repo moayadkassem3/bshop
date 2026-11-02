@@ -5,6 +5,7 @@ import type { Deps } from './deps.js';
 import { buildApp } from './http/app.js';
 import { consolePush, consoleSms } from './notifications.js';
 import { improveShopLinks } from './services/shops.js';
+import { ensureAdmins } from './services/admin.js';
 import { photoStorageFor } from './storage.js';
 import { startWorker } from './worker.js';
 
@@ -21,6 +22,8 @@ const deps: Deps = {
 };
 
 await migrate(db);
+// Our team (ADMIN_PHONES) can open the admin panel (/yonetim, v1.7).
+await ensureAdmins(deps);
 const app = buildApp(deps, { logger: true });
 // Links from before v1.7 such as "kuafor-mk" become "mk-avcilar"; the old ones keep redirecting.
 for (const r of await improveShopLinks(deps)) app.log.info(`Salon link ${r.from} → ${r.to}`);

@@ -43,7 +43,7 @@ export default async function BusinessPage() {
         apply={
           <section id="basvuru" className={styles.apply}>
             <h2>İşletmenizi kaydedin</h2>
-            <p>Birkaç adımda işletmenizi, hizmetlerinizi ve ekibinizi ekleyin; ekibimiz inceledikten sonra randevu almaya başlarsınız.</p>
+            <p>Birkaç adımda işletmenizi, hizmetlerinizi ve ekibinizi ekleyin; kayıt biter bitmez salonunuz yayına girer ve randevu almaya başlarsınız.</p>
             <Link transitionTypes={FORWARD} className="btn btn-primary" href="/isletme-kaydi">
               Kayda başla
             </Link>

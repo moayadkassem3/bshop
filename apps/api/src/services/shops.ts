@@ -41,8 +41,11 @@ const SHOP_COLUMNS = `s.id, s.slug, s.name, s.phone, s.address, s.district, s.ci
   s.cancellation_cutoff_minutes, s.min_lead_minutes, s.buffer_minutes, s.slot_step_minutes,
   s.booking_horizon_days, s.max_future_bookings, s.reviewed_at, s.verified_at`;
 
-/** Public = reviewed by our team and paid up (trial, active, or past due within the grace period). */
-export const PUBLIC_CONDITION = `s.reviewed_at IS NOT NULL AND (
+/**
+ * Public = published (at registration, v1.7), not taken down by our team, and
+ * paid up (trial, active, or past due within the grace period).
+ */
+export const PUBLIC_CONDITION = `s.reviewed_at IS NOT NULL AND s.suspended_at IS NULL AND (
   sub.status = 'active'
   OR (sub.status = 'trial' AND sub.current_period_end > $1)
   OR (sub.status = 'past_due' AND sub.grace_until > $1))`;
@@ -146,7 +149,7 @@ export function normalizeInstagram(input: string): string {
 /** Our team creates the shop and its owner during the face-to-face visit. */
 export async function createShop(deps: Deps, admin: User, input: CreateShopInput) {
   requirePlatformAdmin(admin);
-  return withTx(deps.db, async (tx) => {
+  const created = await withTx(deps.db, async (tx) => {
     if (!(await slugIsFree(tx, input.slug))) throw conflict('SLUG_TAKEN', 'This shop link is already used');
     const shop = (
       await tx.query<{ id: string }>(
@@ -183,15 +186,21 @@ export async function createShop(deps: Deps, admin: User, input: CreateShopInput
     ).rows[0]!;
     return { shopId: shop.id, ownerMemberId: member.id };
   });
+  // Live at once, like a self-registered salon (v1.7).
+  await approveShop(deps, created.shopId, admin.id);
+  return created;
 }
 
-/** Approval by our team. A shop without a subscription yet starts its free trial now (v1.6). */
+/** Publishes a shop that is not live yet (kept for older back-office tools; shops now go live when created). */
 export async function markReviewed(deps: Deps, admin: User, shopId: string) {
   requirePlatformAdmin(admin);
   await approveShop(deps, shopId, admin.id);
 }
 
-/** Approves a shop; reviewerId is null when a test deployment approves it automatically (DEMO_MODE). */
+/**
+ * Puts a shop live and starts its free trial (v1.7: at registration, no review
+ * first). reviewerId is the admin who created it, or null for self-registration.
+ */
 export async function approveShop(deps: Deps, shopId: string, reviewerId: string | null) {
   const now = deps.clock.now();
   await withTx(deps.db, async (tx) => {
@@ -202,7 +211,7 @@ export async function approveShop(deps: Deps, shopId: string, reviewerId: string
        WHERE shop_id = $1 AND status = 'none'`,
       [shopId, new Date(now.getTime() + PLAN_TERMS.trialDays * 86_400_000), now],
     );
-    // A self-registered shop hears about its approval by SMS (v1.6).
+    // A self-registered shop gets an SMS that it is live (v1.6).
     if (trial.rowCount) {
       const { rows } = await tx.query<{ name: string; slug: string; phone: string }>(
         'SELECT s.name, s.slug, u.phone FROM shops s JOIN users u ON u.id = s.registered_by WHERE s.id = $1',

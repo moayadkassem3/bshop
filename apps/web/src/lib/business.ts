@@ -24,6 +24,9 @@ export type BusinessShop = {
   visible: boolean;
   verified?: boolean;
   subscription_requested_at: string | null;
+  /** Taken down by our team (spam, misleading details), with the reason shown to the team (v1.7). */
+  suspended_at?: string | null;
+  suspended_reason?: string | null;
   /** Bookable staff, which sets the plan; plan_id is null above 10 (priced individually). */
   seats: number;
   plan_id: string | null;
@@ -38,6 +41,9 @@ export type SubscriptionNotice = { tone: 'warning' | 'danger'; title: string; te
  * ends, while a payment is late, and while the salon is hidden from customers.
  */
 export function subscriptionNotice(shop: BusinessShop): SubscriptionNotice | null {
+  if (shop.suspended_at) {
+    return { tone: 'danger', title: 'Salonunuz yayından kaldırıldı.', text: `${shop.suspended_reason ?? ''} Bilgi için bizimle iletişime geçin.`.trim() };
+  }
   if (!shop.reviewed_at) return null;
   if (shop.visible) {
     if (shop.subscription_status === 'trial') {

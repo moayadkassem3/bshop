@@ -51,6 +51,13 @@ export async function runTimers(deps: Deps) {
       await queueResultSms(tx, deps, r.id, 'confirmed');
     }
     const offersExpired = await expireOffers(tx, now);
-    return { reminders: reminders.rowCount ?? 0, confirmed: confirmed.rowCount ?? 0, offersExpired };
+
+    // A paid period that ended without a new payment: late, with the contract's 7-day grace (v1.7).
+    const lapsed = await tx.query(
+      `UPDATE subscriptions SET status = 'past_due', grace_until = current_period_end + interval '7 days', updated_at = $1
+       WHERE status = 'active' AND current_period_end IS NOT NULL AND current_period_end <= $1`,
+      [now],
+    );
+    return { reminders: reminders.rowCount ?? 0, confirmed: confirmed.rowCount ?? 0, offersExpired, lapsed: lapsed.rowCount ?? 0 };
   });
 }

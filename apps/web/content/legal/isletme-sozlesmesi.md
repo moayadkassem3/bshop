@@ -10,13 +10,13 @@
 
 Şirket, İşletmeye şu hizmetleri sunar: kamuya açık işletme profili ve randevu sayfası, QR kod, randevu taleplerinin alınması ve yönetimi, personel takvimleri, müşterilere SMS bildirimleri, haritada ve aramada görünürlük ve işletme uygulaması.
 
-## 3. İnceleme ve yayın
+## 3. Yayın ve denetim
 
-İşletme kaydı Şirket tarafından incelenir. Şirket, bilgileri eksik, yanıltıcı veya mevzuata aykırı bulduğu kayıtları reddedebilir veya düzeltme isteyebilir. İşletme, verdiği bilgilerin (adres, fiyatlar, fotoğraflar, çalışma saatleri) doğru ve güncel olmasından sorumludur.
+İşletme, kaydı tamamladığı anda Platformda yayına girer. Şirket kayıtları sonradan inceleyebilir; bilgileri eksik, yanıltıcı, sahte veya mevzuata aykırı bulduğu işletmeleri, nedenini bildirerek yayından kaldırabilir veya düzeltme isteyebilir. İşletme, verdiği bilgilerin (adres, fiyatlar, fotoğraflar, çalışma saatleri) doğru ve güncel olmasından sorumludur.
 
 ## 4. Ücretsiz deneme ve abonelik
 
-- Kayıt onaylandığı gün 7 günlük ücretsiz deneme başlar.
+- Kaydın tamamlandığı gün 7 günlük ücretsiz deneme başlar.
 - Deneme sonunda abonelik, randevu alan personel sayısına göre aylık ücretlendirilir: 1 personel ₺499, 2 personel ₺799, 3 personel ₺999, 5 personele kadar ₺1.299, 10 personele kadar ₺1.899. 10'dan fazla personel için fiyat teklifle belirlenir. Fiyatlara KDV dahildir.
 - Randevu alan sahip veya ortak da personel sayısına dahildir.
 - Personel sayısı değiştiğinde yeni ücret bir sonraki dönemden itibaren uygulanır.

@@ -32,7 +32,7 @@ export const sms = {
   reassignedChoice: (c: Ctx & { staff: string; previousStaff: string }) =>
     `${c.shop}: ${c.previousStaff} bu saatte müsait değil. ${c.when} randevunuz ${c.staff} ile devam edecek. Değiştirmek veya iptal etmek için: ${c.link}`,
   shopApproved: (c: { shop: string; trialDays: number; link: string }) =>
-    `${c.shop} onaylandı ve artık randevu alıyor. ${c.trialDays} günlük ücretsiz deneme süreniz başladı. Salon sayfanız: ${c.link}`,
+    `${c.shop} yayında ve randevu alıyor. ${c.trialDays} günlük ücretsiz deneme süreniz başladı. Salon sayfanız: ${c.link}`,
   // "Başka saat öner" (v1.7): the salon offers another time instead of declining.
   // Kept to one SMS: dates are left out where they repeat (see offers.ts).
   timeOffered: (c: { shop: string; from: string; when: string; deadline: string; link: string }) =>

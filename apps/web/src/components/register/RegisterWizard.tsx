@@ -813,7 +813,7 @@ function PlanStep({ draft, me, onRegistered }: { draft: Draft; me: Me; onRegiste
             </ul>
             <p className={styles.help}>Fiyatlara KDV dahildir.</p>
             <p className={styles.trial}>
-              İlk {plans.terms.trialDays} gün ücretsiz. Deneme süresi, salonunuz onaylandığında başlar; bu süre içinde ödeme alınmaz.
+              İlk {plans.terms.trialDays} gün ücretsiz. Salonunuz kaydı tamamladığınız anda yayına girer ve deneme başlar; bu süre içinde ödeme alınmaz.
             </p>
           </>
         )}
@@ -901,7 +901,7 @@ function PhotosStep({ shopId, onDone }: { shopId: string; onDone: () => void }) 
   return (
     <Shell title="Fotoğraflar" progress={1} count={`${STEPS.length + 1}/${STEPS.length + 1}`} back={{ href: '/profil', label: 'Profil' }}>
       <Heading
-        kicker="Başvurunuz alındı"
+        kicker="Salonunuz yayında"
         title="Salonunuzun fotoğraflarını ekleyin"
         lead="Fotoğraflı salonlar daha çok randevu alır. İlk fotoğraf kapak olur. Bu adımı şimdi atlayıp sonra da ekleyebilirsiniz."
       />
@@ -943,24 +943,27 @@ function PhotosStep({ shopId, onDone }: { shopId: string; onDone: () => void }) 
 
 function Done({ slug }: { slug: string }) {
   return (
-    <Shell title="İncelemede" back={{ href: '/profil', label: 'Profil' }}>
+    <Shell title="Yayında" back={{ href: '/profil', label: 'Profil' }}>
       <div className={styles.done}>
         <span className={styles.doneMark} aria-hidden>
-          ⏳
+          ✓
         </span>
-        <p className={styles.kicker}>İncelemede</p>
-        <h1 className={styles.title}>Başvurunuz bize ulaştı</h1>
-        <p className={styles.lead}>Ekibimiz bilgilerinizi kontrol ediyor. Onaylandığında size SMS göndereceğiz.</p>
+        <p className={styles.kicker}>Yayında</p>
+        <h1 className={styles.title}>Salonunuz yayında</h1>
+        <p className={styles.lead}>Müşteriler salonunuzu haritada ve kendi sayfasında görüp hemen randevu alabilir. Ücretsiz denemeniz bugün başladı.</p>
         <ol className={`card ${styles.doneSteps}`}>
-          <li>Onaydan sonra salonunuz haritada ve kendi sayfasında görünür.</li>
-          <li>Ücretsiz deneme süreniz onay gününde başlar.</li>
-          <li>Personeliniz kendi numarasıyla “İşletmeyim” girişinden girer.</li>
+          <li>Salonum → QR kod’dan kodunuzu indirip salona asın.</li>
+          <li>Personeliniz kendi numarasıyla giriş yapar.</li>
+          <li>Hizmetleri, saatleri ve fotoğrafları Salonum’dan istediğiniz zaman düzenleyin.</li>
         </ol>
         <p className="muted">
           Sayfa adresiniz: <strong>/{slug}</strong>
         </p>
-        <Link transitionTypes={TAB} href="/profil" className="btn btn-primary btn-block">
-          Profile dön
+        <Link transitionTypes={TAB} href="/salonum" className="btn btn-primary btn-block">
+          Salonum’a git
+        </Link>
+        <Link transitionTypes={FORWARD} href={`/${slug}`} className="btn btn-block">
+          Salon sayfamı gör
         </Link>
       </div>
     </Shell>

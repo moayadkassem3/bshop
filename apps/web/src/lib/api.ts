@@ -44,7 +44,7 @@ const MESSAGES: Record<string, string> = {
   UNAUTHENTICATED: 'Devam etmek için telefon numaranızı doğrulayın.',
   NOT_FOUND: 'Salon bulunamadı veya şu anda randevu almıyor.',
   NOT_BUSINESS: 'Bu numara kayıtlı bir işletmeye ait değil.',
-  REGISTRATION_PENDING: 'Önceki başvurunuz hâlâ inceleniyor. Sonuçlandığında yeni bir işletme kaydedebilirsiniz.',
+  REGISTRATION_LIMIT: 'Bugün zaten bir salon kaydettiniz. Yeni bir salonu yarın ekleyebilirsiniz.',
   DUPLICATE_MEMBER: 'Her kişinin telefon numarası farklı olmalı.',
   CONSENT_REQUIRED: 'Devam etmek için sözleşmeleri onaylayın.',
   OUTDATED_DOCUMENT: 'Sözleşme güncellendi. Lütfen sayfayı yenileyip tekrar onaylayın.',

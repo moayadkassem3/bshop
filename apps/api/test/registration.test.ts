@@ -44,14 +44,16 @@ async function admin() {
 }
 
 describe('self-service shop registration (v1.6)', () => {
-  it('creates a hidden shop the registrant owns, with staff, a co-owner, services and hours', async () => {
+  it('creates a live shop the registrant owns, with staff, a co-owner, services and hours (v1.7: no review first)', async () => {
     const me = await t.login(PHONES.customer, { names: { firstName: 'Çağrı', lastName: 'Yılmaz' } });
     const r = await t.call('POST', '/registrations', { token: me, body: registration() });
     expect(r.status).toBe(201);
     expect(r.body).toMatchObject({ slug: 'cagri-erkek-kuaforu', staffCount: 2 });
 
-    // Hidden until reviewed.
-    expect((await t.call('GET', `/public/shops/${r.body.slug}`)).status).toBe(404);
+    // Live at once, with its 7-day trial; the owner hears by SMS.
+    expect((await t.call('GET', `/public/shops/${r.body.slug}`)).status).toBe(200);
+    await t.tick();
+    expect(t.sms.to(PHONES.customer).at(-1)).toContain('yayında ve randevu alıyor. 7 günlük ücretsiz deneme');
 
     // The returned token is an owner session: the owner can add photos and see the team right away.
     const base = `/staff/shops/${r.body.shopId}`;
@@ -62,12 +64,8 @@ describe('self-service shop registration (v1.6)', () => {
       ['Mert', 'staff', null, true],
     ]);
     const shops = (await t.call('GET', '/staff/shops', { token: r.body.token })).body;
-    expect(shops[0]).toMatchObject({ reviewed_at: null, subscription_status: 'none' });
+    expect(shops[0]).toMatchObject({ subscription_status: 'trial', visible: true, suspended_at: null });
 
-    // Approval starts the 7-day trial and makes the shop public and bookable.
-    await t.call('POST', `/admin/shops/${r.body.shopId}/review`, { token: await admin() });
-    await t.tick();
-    expect(t.sms.to(PHONES.customer).at(-1)).toContain('onaylandı ve artık randevu alıyor. 7 günlük ücretsiz deneme');
     const profile = (await t.call('GET', `/public/shops/${r.body.slug}`)).body;
     expect(profile.services.map((s: { name: string }) => s.name)).toEqual(['Saç Kesimi', 'Ense Tıraşı']);
     expect(profile.staff.map((s: { display_name: string }) => s.display_name)).toEqual(['Çağrı Usta', 'Mert']);
@@ -97,7 +95,7 @@ describe('self-service shop registration (v1.6)', () => {
     ]);
   });
 
-  it('refuses missing agreements, duplicate phones, no staff, and a second pending registration', async () => {
+  it('refuses missing agreements, duplicate phones, no staff, and a second salon the same day', async () => {
     const me = await t.login(PHONES.customer, { names: { firstName: 'A', lastName: 'B' } });
     const call = (body: object) => t.call('POST', '/registrations', { token: me, body });
     expect((await call(registration({ consents: [businessConsents[0]] }))).body.error).toBe('CONSENT_REQUIRED');
@@ -110,7 +108,10 @@ describe('self-service shop registration (v1.6)', () => {
     ).toBe('OUTDATED_DOCUMENT');
 
     expect((await call(registration())).status).toBe(201);
-    expect((await call(registration({ name: 'İkinci Salon' }))).body.error).toBe('REGISTRATION_PENDING');
+    expect((await call(registration({ name: 'İkinci Salon' }))).body.error).toBe('REGISTRATION_LIMIT');
+    t.clock.advance(24 * 60 + 1);
+    const second = await call(registration({ name: 'İkinci Salon' }));
+    expect(second.body).toMatchObject({ staffCount: 2 });
   });
 
   it('gives each shop a free link from its name', async () => {

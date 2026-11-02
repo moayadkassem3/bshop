@@ -170,6 +170,8 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
           {!me.owns_shop && <MenuLink href="/isletme-kaydi" label="İşletmenizi kaydedin" />}
           <MenuLink href="/isletmeler" label="Paketler ve fiyatlar" />
           <MenuLink href="/sozlesmeler" label="Yasal metinler" />
+          {/* Our team only (v1.7). */}
+          {me.is_platform_admin && <MenuLink href="/yonetim" label="Yönetim paneli" />}
         </ul>
         {message && <p className="alert alert-info">{message}</p>}
 

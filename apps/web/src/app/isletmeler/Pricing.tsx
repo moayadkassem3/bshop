@@ -57,7 +57,7 @@ export function Pricing({ plans, intro, apply }: { plans: Plans | null; intro: R
               ))}
             </select>
           )}
-          {mine ? <Status shop={mine} trialDays={plans.terms.trialDays} /> : <p className={styles.trial}>İlk {plans.terms.trialDays} gün ücretsiz: deneme, salonunuz onaylandığında başlar.</p>}
+          {mine ? <Status shop={mine} trialDays={plans.terms.trialDays} /> : <p className={styles.trial}>İlk {plans.terms.trialDays} gün ücretsiz: salonunuz kayıtla hemen yayına girer.</p>}
           {mine && !current && (
             <p className={`card ${styles.plan} ${styles.planCurrent} ${styles.planWide}`}>
               <span className={styles.planBadge}>Paketiniz</span>
@@ -104,8 +104,17 @@ const endDate = (iso: string) => new Intl.DateTimeFormat('tr-TR', { timeZone: TZ
 
 /** The salon's subscription state: trial days left, renewal, or what is missing. */
 function Status({ shop, trialDays }: { shop: BusinessShop; trialDays: number }) {
+  if (shop.suspended_at) {
+    return (
+      <div className={`${styles.trial} ${styles.trialOver}`}>
+        <p className={styles.statusText}>
+          <strong>Salonunuz ekibimiz tarafından yayından kaldırıldı.</strong> {shop.suspended_reason} Bilgi için bizimle iletişime geçin.
+        </p>
+      </div>
+    );
+  }
   if (!shop.reviewed_at) {
-    return <p className={styles.trial}>Salonunuz incelemede. {trialDays} günlük ücretsiz deneme, onaylandığında başlar.</p>;
+    return <p className={styles.trial}>Salonunuz henüz yayında değil. {trialDays} günlük ücretsiz deneme, yayına girdiğinde başlar.</p>;
   }
   const end = shop.current_period_end;
   if (!shop.visible) {

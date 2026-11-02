@@ -76,6 +76,8 @@ export type Me = {
   /** Verified tick (v1.7): 3 completed visits booked through the app. */
   verified?: boolean;
   portal?: 'customer' | 'staff' | 'owner';
+  /** Our team: can open the admin panel (/yonetim, v1.7). */
+  is_platform_admin?: boolean;
 };
 
 export type CustomerAppointment = {

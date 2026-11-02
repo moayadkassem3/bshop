@@ -104,7 +104,7 @@ export function BusinessAppointments() {
         {(error ?? shopsError) && <p className="alert alert-danger">{error ?? shopsError}</p>}
         {shops && shops.length === 0 && <p className="muted">Bu hesap henüz bir işletmeye bağlı değil.</p>}
         {shop && !shop.reviewed_at && (
-          <p className="alert alert-info">İşletmeniz inceleniyor. Onaylandıktan sonra müşteriler randevu alabilir.</p>
+          <p className="alert alert-info">İşletmeniz henüz yayında değil.</p>
         )}
         {shopId && tab === 'requests' && <Requests shopId={shopId} items={requests} onChanged={loadRequests} />}
         {shopId && shop && tab === 'calendar' && <Calendar shopId={shopId} isOwner={shop.role === 'owner'} myMemberId={shop.member_id} onChanged={loadRequests} />}

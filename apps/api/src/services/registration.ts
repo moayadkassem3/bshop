@@ -60,10 +60,13 @@ export async function registerShop(deps: Deps, user: User, input: RegistrationIn
   const now = deps.clock.now();
 
   const result = await withTx(deps.db, async (tx) => {
-    // One registration under review at a time, per person.
+    // Salons go live at once (v1.7), so against spam: one new salon per person per day.
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`register:${user.id}`]);
-    const pending = await tx.query('SELECT 1 FROM shops WHERE registered_by = $1 AND reviewed_at IS NULL LIMIT 1', [user.id]);
-    if (pending.rowCount) throw conflict('REGISTRATION_PENDING', 'Your previous registration is still under review');
+    const recent = await tx.query('SELECT 1 FROM shops WHERE registered_by = $1 AND (reviewed_at IS NULL OR reviewed_at > $2) LIMIT 1', [
+      user.id,
+      new Date(now.getTime() - 86_400_000),
+    ]);
+    if (recent.rowCount) throw conflict('REGISTRATION_LIMIT', 'One new salon per day');
 
     const slug = await freeSlug(tx, input.name, input.district, input.city);
     const shop = (
@@ -149,7 +152,7 @@ export async function registerShop(deps: Deps, user: User, input: RegistrationIn
     const token = await createSession(tx, deps, user.id, 'owner', now);
     return { shopId: shop.id, slug, staffCount, token };
   });
-  // Test deployments skip our team's review so testers see their shop right away.
-  if (deps.config.demoMode) await approveShop(deps, result.shopId, null);
+  // Live at once with its free trial (v1.7); our team checks new salons afterwards in the admin panel.
+  await approveShop(deps, result.shopId, null);
   return result;
 }

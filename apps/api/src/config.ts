@@ -13,6 +13,8 @@ export type Config = {
    * provider yet) and new registrations are approved immediately.
    */
   demoMode: boolean;
+  /** Phone numbers of our team, made admins at start-up (ADMIN_PHONES, comma-separated). */
+  adminPhones: string[];
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -26,5 +28,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     uploadsDir: env.UPLOADS_DIR ?? 'uploads',
     photoStorage: env.PHOTO_STORAGE === 'database' ? 'database' : 'disk',
     demoMode: env.DEMO_MODE === 'true',
+    adminPhones: (env.ADMIN_PHONES ?? '').split(',').map((p) => p.trim()).filter(Boolean),
   };
 }

@@ -4,12 +4,87 @@ import type { Deps } from '../deps.js';
 import { createShop, listShopsForAdmin, markReviewed, setSubscription } from '../services/shops.js';
 import { RESERVED_SLUGS } from '../domain/slug.js';
 import { listQuoteRequests } from '../services/quotes.js';
+import {
+  adminOverview,
+  adminRatings,
+  adminRequests,
+  adminShop,
+  adminShops,
+  cancelSubscription,
+  extendTrial,
+  hideRating,
+  markChecked,
+  recordPayment,
+  setQuoteStatus,
+  suspendShop,
+} from '../services/admin.js';
 import type { AuthFn } from './app.js';
-import { shopParams, timestamp } from './schemas.js';
+import { id, shopParams, timestamp } from './schemas.js';
 
 /** Back office for our team: create shops on site, review, and manage subscriptions. */
 export function adminRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.get('/admin/shops', async (req) => listShopsForAdmin(deps, await auth(req)));
+
+  // Admin panel (/yonetim, v1.7).
+  app.get('/admin/overview', async (req) => adminOverview(deps, await auth(req)));
+  app.get('/admin/salons', async (req) => {
+    const q = z
+      .object({ filter: z.enum(['tumu', 'yeni', 'deneme', 'aktif', 'odeme', 'kapali']).catch('tumu'), q: z.string().max(80).optional() })
+      .parse(req.query);
+    return adminShops(deps, await auth(req), q);
+  });
+  app.get('/admin/salons/:shopId', async (req) => adminShop(deps, await auth(req), shopParams.parse(req.params).shopId));
+  app.post('/admin/salons/:shopId/payments', async (req, reply) => {
+    const { shopId } = shopParams.parse(req.params);
+    const body = z
+      .object({
+        amountKurus: z.number().int().min(0).max(100_000_000),
+        months: z.number().int().min(1).max(24),
+        method: z.enum(['havale', 'nakit', 'kart', 'diger']),
+        note: z.string().trim().max(300).nullish(),
+      })
+      .parse(req.body);
+    return reply.status(201).send(await recordPayment(deps, await auth(req), shopId, body));
+  });
+  app.post('/admin/salons/:shopId/extend-trial', async (req, reply) => {
+    const { shopId } = shopParams.parse(req.params);
+    const { days } = z.object({ days: z.number().int().min(1).max(60) }).parse(req.body);
+    await extendTrial(deps, await auth(req), shopId, days);
+    return reply.status(204).send();
+  });
+  app.post('/admin/salons/:shopId/cancel-subscription', async (req, reply) => {
+    await cancelSubscription(deps, await auth(req), shopParams.parse(req.params).shopId);
+    return reply.status(204).send();
+  });
+  app.put('/admin/salons/:shopId/checked', async (req, reply) => {
+    const { shopId } = shopParams.parse(req.params);
+    const { checked } = z.object({ checked: z.boolean() }).parse(req.body);
+    await markChecked(deps, await auth(req), shopId, checked);
+    return reply.status(204).send();
+  });
+  app.put('/admin/salons/:shopId/suspension', async (req, reply) => {
+    const { shopId } = shopParams.parse(req.params);
+    const { reason } = z.object({ reason: z.string().trim().min(3).max(300).nullable() }).parse(req.body);
+    await suspendShop(deps, await auth(req), shopId, reason);
+    return reply.status(204).send();
+  });
+  app.get('/admin/requests', async (req) => adminRequests(deps, await auth(req)));
+  app.put('/admin/quote-requests/:id', async (req, reply) => {
+    const p = z.object({ id }).parse(req.params);
+    const { status } = z.object({ status: z.enum(['new', 'contacted', 'closed']) }).parse(req.body);
+    await setQuoteStatus(deps, await auth(req), p.id, status);
+    return reply.status(204).send();
+  });
+  app.get('/admin/ratings', async (req) => {
+    const { low } = z.object({ low: z.enum(['1', '0']).optional() }).parse(req.query);
+    return adminRatings(deps, await auth(req), { low: low === '1' });
+  });
+  app.put('/admin/ratings/:id/hidden', async (req, reply) => {
+    const p = z.object({ id }).parse(req.params);
+    const { hidden } = z.object({ hidden: z.boolean() }).parse(req.body);
+    await hideRating(deps, await auth(req), p.id, hidden);
+    return reply.status(204).send();
+  });
 
   // Custom-price requests from salons with more than 10 staff.
   app.get('/admin/quote-requests', async (req) => listQuoteRequests(deps, await auth(req)));
