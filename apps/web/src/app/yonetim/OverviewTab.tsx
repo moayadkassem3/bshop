@@ -47,9 +47,24 @@ export function OverviewTab({ onFilter, onTab }: { onFilter: (filter: string) =>
         </section>
       )}
 
+      <button type="button" className={`card ${styles.headline}`} onClick={() => onFilter('aktif')}>
+        <span className={styles.headlineMain}>
+          <span className={styles.tileLabel}>Abone salonlar</span>
+          <span className={styles.headlineValue}>{data.subscribers.total.toLocaleString('tr-TR')}</span>
+          <span className={styles.tileNote}>{data.subscribers.late ? `${data.subscribers.late} tanesinin ödemesi gecikmiş` : 'Tümünün aboneliği güncel'}</span>
+        </span>
+        <span className={styles.planChips}>
+          {data.subscribers.byPlan.map((p) => (
+            <span key={p.name} className={p.count ? styles.planChipOn : ''}>
+              {p.name} <strong>{p.count}</strong>
+            </span>
+          ))}
+        </span>
+      </button>
+
       <h2 className={styles.h2}>Gelir</h2>
       <div className={styles.tiles}>
-        <Tile label="Aylık tekrarlayan gelir" value={formatPrice(data.mrrKurus)} note={`${s.paying} ödeyen salonun paketi`} />
+        <Tile label="Aylık tekrarlayan gelir" value={formatPrice(data.mrrKurus)} note={`${s.paying} etkin abonenin paket toplamı`} />
         <Tile label="Bu ay tahsilat" value={formatPrice(data.payments.this_month)} note={`Geçen ay ${formatPrice(data.payments.last_month)}`} />
       </div>
 
@@ -57,7 +72,6 @@ export function OverviewTab({ onFilter, onTab }: { onFilter: (filter: string) =>
       <div className={styles.tiles}>
         <Tile label="Yayında" value={s.live} note={`Toplam ${s.total} kayıt`} onClick={() => onFilter('tumu')} />
         <Tile label="Denemede" value={s.trial} onClick={() => onFilter('deneme')} />
-        <Tile label="Ödüyor" value={s.paying} onClick={() => onFilter('aktif')} />
         <Tile label="Ödeme bekleyen" value={s.late + s.hidden} note={`${s.late} gecikmiş · ${s.hidden} gizli`} tone={s.late + s.hidden ? 'warning' : undefined} onClick={() => onFilter('odeme')} />
         <Tile label="Yeni salon" value={s.new_7d} note={`Son 7 gün · 30 günde ${s.new_30d}`} />
         <Tile label="Kaldırılan" value={s.suspended} onClick={() => onFilter('kapali')} />

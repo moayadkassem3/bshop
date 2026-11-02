@@ -7,7 +7,7 @@ import { formatPhone } from '@/lib/shop';
 import { SkeletonList } from '@/components/Skeleton';
 import { RatingBadge } from '@/components/Stars';
 import { BackArrow } from '@/components/BackArrow';
-import { METHODS, salonStatus, shortDate } from './format';
+import { METHOD_LABELS, METHODS, salonStatus, shortDate } from './format';
 import type { AdminSalon, SalonDetail } from './types';
 import styles from './admin.module.css';
 
@@ -15,7 +15,7 @@ const FILTERS = [
   { key: 'tumu', label: 'Tümü' },
   { key: 'yeni', label: 'Kontrol bekleyen' },
   { key: 'deneme', label: 'Denemede' },
-  { key: 'aktif', label: 'Ödüyor' },
+  { key: 'aktif', label: 'Abone' },
   { key: 'odeme', label: 'Ödeme bekleyen' },
   { key: 'kapali', label: 'Kaldırılan' },
 ];
@@ -169,7 +169,7 @@ function SalonView({ id, onBack }: { id: string; onBack: () => void }) {
             <section className={`card ${styles.panel}`}>
               <h2>Abonelik</h2>
               <Status s={s} />
-              <PaymentForm s={s} busy={busy} onSave={(body) => act('payments', 'POST', body, 'Ödeme kaydedildi; abonelik güncellendi.')} />
+              <PaymentForm s={s} busy={busy} onSave={(body, paid) => act('payments', 'POST', body, paid ? 'Ödeme kaydedildi; abonelik etkin.' : 'Abonelik ödemesiz etkinleştirildi.')} />
               <div className={styles.panelActions}>
                 {['trial', 'none'].includes(s.subscription_status) && (
                   <button type="button" className="btn" disabled={busy} onClick={() => act('extend-trial', 'POST', { days: 7 }, 'Deneme 7 gün uzatıldı.')}>
@@ -189,11 +189,11 @@ function SalonView({ id, onBack }: { id: string; onBack: () => void }) {
               </div>
               {s.payments.length > 0 && (
                 <>
-                  <h3>Ödemeler</h3>
+                  <h3>Etkinleştirmeler ve ödemeler</h3>
                   <ul className={styles.mini} role="list">
                     {s.payments.map((p) => (
                       <li key={p.id}>
-                        <strong>{formatPrice(p.amount_kurus)}</strong> · {p.months} ay · {METHODS[p.method] ?? p.method} · {shortDate(p.created_at)}
+                        <strong>{p.method === 'yok' ? 'Ödemesiz' : formatPrice(p.amount_kurus)}</strong> · {p.months} ay{p.method === 'yok' ? '' : ` · ${METHOD_LABELS[p.method] ?? p.method}`} · {shortDate(p.created_at)}
                         {p.note ? ` · ${p.note}` : ''}
                         <span className="muted"> → {shortDate(p.period_end)}</span>
                       </li>
@@ -254,10 +254,15 @@ function Status({ s }: { s: SalonDetail }) {
   );
 }
 
-/** "Ödeme kaydet": a transfer, cash or card payment our team received; extends the paid period. */
-function PaymentForm({ s, busy, onSave }: { s: SalonDetail; busy: boolean; onSave: (body: unknown) => Promise<boolean> }) {
+/**
+ * "Aboneliği etkinleştir" (v1.7): until there is a payment gate, our team starts
+ * or extends a subscription by hand, with the payment it collected (cash, bank
+ * transfer) or without one (a free month, pay later).
+ */
+function PaymentForm({ s, busy, onSave }: { s: SalonDetail; busy: boolean; onSave: (body: unknown, paid: boolean) => Promise<boolean> }) {
   const monthly = s.plan?.monthlyPriceKurus ?? 0;
   const [months, setMonths] = useState(1);
+  const [paid, setPaid] = useState(true);
   const [amount, setAmount] = useState(String(monthly / 100));
   const [method, setMethod] = useState('havale');
   const [note, setNote] = useState('');
@@ -265,46 +270,64 @@ function PaymentForm({ s, busy, onSave }: { s: SalonDetail; busy: boolean; onSav
   useEffect(() => setAmount(String((monthly * months) / 100)), [monthly, months]);
 
   const kurus = Math.round(Number(amount.replace(',', '.')) * 100);
+  const valid = !paid || (Number.isFinite(kurus) && kurus >= 0);
+  const running = s.subscription_status === 'active';
   return (
     <form
       className={styles.form}
       onSubmit={async (e) => {
         e.preventDefault();
-        if (await onSave({ amountKurus: kurus, months, method, note: note.trim() || null })) setNote('');
+        const body = paid ? { amountKurus: kurus, months, method, note: note.trim() || null } : { amountKurus: 0, months, method: 'yok', note: note.trim() || null };
+        if (await onSave(body, paid)) setNote('');
       }}
     >
-      <h3>Ödeme kaydet</h3>
-      <div className={styles.formRow}>
-        <label>
-          Süre
-          <select className="input" value={months} onChange={(e) => setMonths(Number(e.target.value))}>
-            {[1, 3, 6, 12].map((m) => (
-              <option key={m} value={m}>
-                {m} ay
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Tutar (₺)
-          <input className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
-        </label>
-        <label>
-          Yöntem
-          <select className="input" value={method} onChange={(e) => setMethod(e.target.value)}>
-            {Object.entries(METHODS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <input className="input" placeholder="Not (isteğe bağlı), örn. dekont no" maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} />
-      <button type="submit" className="btn btn-primary" disabled={busy || !Number.isFinite(kurus) || kurus < 0}>
-        {formatPrice(Number.isFinite(kurus) ? kurus : 0)} ödemeyi kaydet
+      <h3>{running ? 'Aboneliği uzat' : 'Aboneliği etkinleştir'}</h3>
+      <label>
+        Süre
+        <select className="input" value={months} onChange={(e) => setMonths(Number(e.target.value))}>
+          {[1, 3, 6, 12].map((m) => (
+            <option key={m} value={m}>
+              {m} ay
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className={styles.check}>
+        <input type="checkbox" checked={paid} onChange={(e) => setPaid(e.target.checked)} />
+        Ödeme alındı
+      </label>
+      {paid && (
+        <div className={`${styles.formRow} ${styles.formRowTwo} motion-reveal`}>
+          <label>
+            Tutar (₺)
+            <input className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          </label>
+          <label>
+            Yöntem
+            <select className="input" value={method} onChange={(e) => setMethod(e.target.value)}>
+              {Object.entries(METHODS).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+      <input
+        className="input"
+        placeholder={paid ? 'Not (isteğe bağlı), örn. dekont no' : 'Not (isteğe bağlı), örn. ilk ay hediye, ay sonunda ödeyecek'}
+        maxLength={300}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+      />
+      <button type="submit" className="btn btn-primary" disabled={busy || !valid}>
+        {paid ? `${formatPrice(Number.isFinite(kurus) ? kurus : 0)} ödemeyle ${months} ay ${running ? 'uzat' : 'etkinleştir'}` : `Ödemesiz ${months} ay ${running ? 'uzat' : 'etkinleştir'}`}
       </button>
-      <p className={styles.hint}>Abonelik başlar veya mevcut dönemin sonundan itibaren {months} ay uzar. Açık talepler kapanır.</p>
+      <p className={styles.hint}>
+        {running ? `Mevcut dönemin sonundan itibaren ${months} ay uzar.` : `Bugünden itibaren ${months} ay abone olur ve müşterilere görünür.`}
+        {!paid && ' Gelire eklenmez; yalnızca kayıt için tutulur.'} Açık abonelik talepleri kapanır.
+      </p>
     </form>
   );
 }

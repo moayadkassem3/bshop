@@ -40,7 +40,7 @@ export function adminRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
       .object({
         amountKurus: z.number().int().min(0).max(100_000_000),
         months: z.number().int().min(1).max(24),
-        method: z.enum(['havale', 'nakit', 'kart', 'diger']),
+        method: z.enum(['havale', 'nakit', 'kart', 'diger', 'yok']),
         note: z.string().trim().max(300).nullish(),
       })
       .parse(req.body);

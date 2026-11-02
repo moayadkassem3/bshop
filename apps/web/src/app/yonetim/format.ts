@@ -7,7 +7,7 @@ export const daysUntil = (iso: string) => Math.ceil((new Date(iso).getTime() - D
 /** The salon's state in one short label, with a tone for its badge. */
 export function salonStatus(s: Pick<AdminSalon, 'suspended_at' | 'subscription_status' | 'visible' | 'current_period_end'>): { label: string; tone: 'success' | 'info' | 'warning' | 'danger' | 'muted' } {
   if (s.suspended_at) return { label: 'Kaldırıldı', tone: 'danger' };
-  if (s.subscription_status === 'active') return { label: 'Ödüyor', tone: 'success' };
+  if (s.subscription_status === 'active') return { label: 'Abone', tone: 'success' };
   if (s.subscription_status === 'past_due') return s.visible ? { label: 'Ödeme gecikti', tone: 'warning' } : { label: 'Ödemedi · gizli', tone: 'danger' };
   if (s.subscription_status === 'trial' && s.visible) {
     const d = s.current_period_end ? daysUntil(s.current_period_end) : null;
@@ -19,3 +19,5 @@ export function salonStatus(s: Pick<AdminSalon, 'suspended_at' | 'subscription_s
 }
 
 export const METHODS: Record<string, string> = { havale: 'Havale/EFT', nakit: 'Nakit', kart: 'Kart', diger: 'Diğer' };
+/** Labels for the payment list, including activations without a payment. */
+export const METHOD_LABELS: Record<string, string> = { ...METHODS, yok: 'Ödemesiz' };

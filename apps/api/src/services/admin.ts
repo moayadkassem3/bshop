@@ -56,11 +56,22 @@ export async function adminOverview(deps: Deps, admin: User) {
      FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id`,
   );
   // Monthly recurring revenue: what paying salons' plans add up to at today's staff counts.
-  const paying = await deps.db.query<{ seats: number }>(
-    `SELECT ${SEATS} AS seats FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
-     WHERE sub.status = 'active' AND s.suspended_at IS NULL`,
+  const paying = await deps.db.query<{ seats: number; status: string }>(
+    `SELECT ${SEATS} AS seats, sub.status FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
+     WHERE sub.status IN ('active', 'past_due') AND s.suspended_at IS NULL`,
   );
-  const mrrKurus = paying.rows.reduce((sum, r) => sum + (planForStaff(r.seats)?.monthlyPriceKurus ?? 0), 0);
+  const active = paying.rows.filter((r) => r.status === 'active');
+  const mrrKurus = active.reduce((sum, r) => sum + (planForStaff(r.seats)?.monthlyPriceKurus ?? 0), 0);
+  // Subscribed salons (founder, v1.7): active or late within their grace, by plan.
+  const subscribers = {
+    total: paying.rows.length,
+    late: paying.rows.length - active.length,
+    byPlan: [...PLANS.map((p) => ({ name: p.name, count: 0 })), { name: '10+ personel (teklif)', count: 0 }],
+  };
+  for (const r of paying.rows) {
+    const i = PLANS.findIndex((p) => p.id === planForStaff(r.seats)?.id);
+    subscribers.byPlan[i === -1 ? PLANS.length : i]!.count++;
+  }
   const payments = await q<{ this_month: number; last_month: number }>(
     `SELECT COALESCE(sum(amount_kurus) FILTER (WHERE created_at >= date_trunc('month', $1::timestamptz AT TIME ZONE 'Europe/Istanbul') AT TIME ZONE 'Europe/Istanbul'), 0)::int AS this_month,
        COALESCE(sum(amount_kurus) FILTER (WHERE created_at >= date_trunc('month', ($1::timestamptz AT TIME ZONE 'Europe/Istanbul') - interval '1 month') AT TIME ZONE 'Europe/Istanbul'
@@ -88,7 +99,7 @@ export async function adminOverview(deps: Deps, admin: User) {
        (SELECT count(*)::int FROM quote_requests WHERE status = 'new') AS quotes`,
     [],
   );
-  return { salons, mrrKurus, payments, bookings, customers, ratings, open };
+  return { salons, subscribers, mrrKurus, payments, bookings, customers, ratings, open };
 }
 
 export type AdminShopFilter = 'tumu' | 'yeni' | 'deneme' | 'aktif' | 'odeme' | 'kapali';
@@ -157,7 +168,8 @@ export async function adminShop(deps: Deps, admin: User, shopId: string) {
   return { ...withPlan(rows[0]), members: members.rows, payments: payments.rows, requests: requests.rows };
 }
 
-export type PaymentInput = { amountKurus: number; months: number; method: 'havale' | 'nakit' | 'kart' | 'diger'; note?: string | null };
+/** 'yok': activated without a payment (free month, pay later), recorded with amount 0 (v1.7). */
+export type PaymentInput = { amountKurus: number; months: number; method: 'havale' | 'nakit' | 'kart' | 'diger' | 'yok'; note?: string | null };
 
 /**
  * Records a payment and extends the paid period by `months`: from the current
@@ -179,7 +191,7 @@ export async function recordPayment(deps: Deps, admin: User, shopId: string, inp
     const payment = await tx.query<{ id: string }>(
       `INSERT INTO payments (shop_id, amount_kurus, months, method, note, period_end, recorded_by, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [shopId, input.amountKurus, input.months, input.method, input.note || null, end, admin.id, now],
+      [shopId, input.method === 'yok' ? 0 : input.amountKurus, input.months, input.method, input.note || null, end, admin.id, now],
     );
     await tx.query(
       `UPDATE subscriptions SET status = 'active', current_period_end = $2, grace_until = NULL, updated_at = $3 WHERE shop_id = $1`,

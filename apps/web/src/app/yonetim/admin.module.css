@@ -474,3 +474,72 @@
   font-size: 14px;
   color: var(--ink-2);
 }
+
+/* Özet headline: subscribed salons by plan (v1.7) */
+.headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 18px 20px;
+  border-color: var(--primary);
+  background: var(--surface-2);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.headlineMain {
+  display: grid;
+  gap: 2px;
+}
+
+.headlineValue {
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.planChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.planChips span {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.planChips strong {
+  margin-left: 4px;
+  color: var(--ink);
+}
+
+.planChips .planChipOn {
+  border-color: var(--primary);
+  color: var(--ink-2);
+}
+
+.formRowTwo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* A checkbox row inside a form stays on one line with its label. */
+.form label.check {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--ink);
+}

@@ -91,4 +91,24 @@ describe('admin panel (v1.7)', () => {
     await t.call('PUT', `/admin/ratings/${ratings[0].id}/hidden`, { token: admin, body: { hidden: true } });
     expect((await t.call('GET', `/public/shops/${shop.slug}/ratings`)).body.count).toBe(0);
   });
+
+  it('activates a subscription without a payment (no payment gate yet) and counts subscribed salons', async () => {
+    const shop = await setupShop(t);
+    const admin = shop.tokens.admin;
+    await t.db.query(`UPDATE subscriptions SET status = 'trial', current_period_end = $2 WHERE shop_id = $1`, [shop.shopId, t.clock.now()]);
+    expect((await t.call('GET', '/admin/overview', { token: admin })).body.subscribers).toMatchObject({ total: 0 });
+
+    // Amount is ignored for an activation without payment.
+    const res = await t.call('POST', `/admin/salons/${shop.shopId}/payments`, { token: admin, body: { amountKurus: 99900, months: 1, method: 'yok', note: 'İlk ay hediye' } });
+    expect(res.status).toBe(201);
+    const detail = (await t.call('GET', `/admin/salons/${shop.shopId}`, { token: admin })).body;
+    expect(detail).toMatchObject({ subscription_status: 'active', visible: true });
+    expect(detail.payments[0]).toMatchObject({ amount_kurus: 0, method: 'yok', note: 'İlk ay hediye' });
+
+    const overview = (await t.call('GET', '/admin/overview', { token: admin })).body;
+    expect(overview.subscribers.total).toBe(1);
+    // Salih, Cumali and Tahir take bookings: the 3-person plan.
+    expect(overview.subscribers.byPlan.find((p: { name: string }) => p.name === '3 Personel').count).toBe(1);
+    expect(overview.payments.this_month).toBe(0);
+  });
 });
