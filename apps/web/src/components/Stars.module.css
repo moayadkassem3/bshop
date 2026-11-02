@@ -1,0 +1,82 @@
+/* Stars (v1.7): one warm colour for filled stars, the line colour for empty ones. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+
+.badge svg {
+  width: 14px;
+  height: 14px;
+  fill: #f2a516;
+}
+
+.badge strong {
+  font-weight: 750;
+  color: var(--ink);
+}
+
+.badge span {
+  color: var(--muted);
+}
+
+.badgeLarge {
+  font-size: 15px;
+  gap: 4px;
+}
+
+.badgeLarge svg {
+  width: 18px;
+  height: 18px;
+}
+
+.row {
+  display: inline-flex;
+  gap: 1px;
+}
+
+.on {
+  fill: #f2a516;
+}
+
+.off {
+  fill: var(--line);
+}
+
+.input {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.input button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  transition: scale var(--dur-1) var(--ease-out);
+}
+
+.input button:active:not(:disabled) {
+  scale: 0.88;
+}
+
+.input button:disabled {
+  cursor: default;
+}
+
+.input button.on svg {
+  fill: #f2a516;
+}
+
+.input button.off svg {
+  fill: var(--line);
+}

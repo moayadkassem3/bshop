@@ -18,6 +18,8 @@ export type ListingShop = {
   audience: 'men' | 'women' | 'unisex';
   verified: boolean;
   cover_photo_id: string | null;
+  rating?: number | null;
+  rating_count?: number;
 };
 
 /** Public salons for a listing page (v1.7). */
@@ -39,4 +41,14 @@ export async function loadDistricts(city: string): Promise<{ district: string; t
 export async function loadSitemap(): Promise<{ slug: string; city: string | null; district: string | null; audience: 'men' | 'women' | 'unisex' }[]> {
   const res = await fetch(`${SERVER_API_URL}/public/sitemap`, { cache: 'no-store' });
   return res.ok ? res.json() : [];
+}
+
+/** A salon's ratings for its public page (v1.7); null when unavailable, so the page still renders. */
+export async function loadRatings(slug: string): Promise<import('./types').RatingsSummary | null> {
+  try {
+    const res = await fetch(`${SERVER_API_URL}/public/shops/${encodeURIComponent(slug)}/ratings`, { cache: 'no-store' });
+    return res.ok ? res.json() : null;
+  } catch {
+    return null;
+  }
 }

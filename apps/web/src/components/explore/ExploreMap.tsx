@@ -18,6 +18,7 @@ import { ShareShop } from '@/components/ShareShop';
 import { VerifiedTick } from '@/components/VerifiedTick';
 import { FORWARD } from '@/lib/motion';
 import { SkeletonList } from '@/components/Skeleton';
+import { RatingBadge } from '@/components/Stars';
 
 /** Before the customer shares their location, the map opens on Kadıköy, İstanbul. */
 const KADIKOY = { lat: 40.9905, lng: 29.029 };
@@ -342,6 +343,12 @@ export function ExploreMap() {
                       {shop.verified && <VerifiedTick kind="salon" />}
                     </span>
                     <span className={styles.itemMeta}>
+                      {shop.rating != null && (
+                        <>
+                          <RatingBadge rating={shop.rating} count={shop.rating_count} />
+                          {' · '}
+                        </>
+                      )}
                       {AUDIENCE[shop.audience as keyof typeof AUDIENCE] ?? 'Kuaför'}
                       {placeLabel(shop) ? ` · ${placeLabel(shop)}` : ''}
                     </span>

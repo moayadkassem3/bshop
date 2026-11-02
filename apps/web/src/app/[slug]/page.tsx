@@ -8,7 +8,9 @@ import { PhotoGallery, PhotoGrid } from '@/components/PhotoGallery';
 import { formatDuration, formatPrice } from '@/lib/format';
 import { PlacePage, placeMetadata } from '@/components/places/PlacePage';
 import { placeHref, provinceBySlug, typeForAudience } from '@/lib/places';
-import { loadProfile } from '@/lib/server';
+import { loadProfile, loadRatings } from '@/lib/server';
+import { RatingBadge } from '@/components/Stars';
+import { RatingsSection } from './Ratings';
 import { AUDIENCE, directionsUrl, formatPhone, todayHours, turkeyWeekday, WEEKDAYS, whatsappUrl } from '@/lib/shop';
 import { ServiceList } from './ServiceList';
 import styles from './shop.module.css';
@@ -52,6 +54,7 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
   const today = todayHours(profile.openingHours);
   const weekday = turkeyWeekday();
   const bookUrl = `/${profile.slug}/randevu`;
+  const ratings = await loadRatings(profile.slug);
 
   return (
     <div className={styles.profile}>
@@ -87,6 +90,12 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
             <FavoriteButton slug={profile.slug} />
           </div>
           {profile.verified && <p className={styles.verifiedNote}>Doğrulanmış salon · uygulama üzerinden en az 3 randevu tamamladı</p>}
+          {profile.rating != null && (
+            <a href="#degerlendirmeler" className={styles.ratingLink}>
+              <RatingBadge rating={profile.rating} count={profile.ratingCount} size="large" />
+              <span>değerlendirme</span>
+            </a>
+          )}
           <p className={today?.open ? styles.openNow : styles.closedNow}>
             {today?.open ? `Bugün açık · ${today.open}–${today.close}` : 'Bugün kapalı'}
           </p>
@@ -227,6 +236,8 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
             </ul>
           </section>
         )}
+
+        {ratings && <RatingsSection data={ratings} />}
       </div>
 
       <nav className={styles.actionBar} aria-label="Salonla iletişim">

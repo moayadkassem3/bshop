@@ -19,6 +19,7 @@ import {
   loadServices,
   type ServiceRow,
 } from './schedule.js';
+import { RATING_WINDOW_DAYS } from '../domain/ratings.js';
 
 export const MAX_PEOPLE_PER_GROUP = 3;
 
@@ -414,12 +415,15 @@ export async function listCustomerAppointments(deps: Deps, user: User) {
        a.price_is_starting_from, a.confirmed_via, a.cancel_reason,
        s.name AS shop_name, s.slug AS shop_slug, s.address AS shop_address, s.cancellation_cutoff_minutes,
        m.display_name AS staff_name,
+       (SELECT r.stars FROM shop_ratings r WHERE r.appointment_id = a.id) AS my_rating,
+       -- Ratings (v1.7): one's own completed visit, for RATING_WINDOW_DAYS after it.
+       (a.status = 'completed' AND a.guest_name IS NULL AND a.starts_at > $2::timestamptz - make_interval(days => ${RATING_WINDOW_DAYS})) AS rateable,
        (SELECT json_agg(json_build_object('name', x.name, 'durationMinutes', x.duration_minutes, 'priceKurus', x.price_kurus)
           ORDER BY x.position) FROM appointment_services x WHERE x.appointment_id = a.id) AS services
      FROM appointments a JOIN shops s ON s.id = a.shop_id JOIN shop_members m ON m.id = a.staff_id
      WHERE a.customer_id = $1 AND a.source = 'online'
      ORDER BY a.starts_at DESC LIMIT 100`,
-    [user.id],
+    [user.id, deps.clock.now()],
   );
   return rows;
 }

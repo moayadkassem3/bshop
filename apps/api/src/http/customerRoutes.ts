@@ -12,8 +12,16 @@ import type { AuthFn } from './app.js';
 import { id, timestamp } from './schemas.js';
 import { acceptOffer, declineOffer } from '../services/offers.js';
 import { deleteAccount, deletionPlan } from '../services/account.js';
+import { rateVisit } from '../services/ratings.js';
 
 export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
+  // Ratings (v1.7): 1–5 stars for one's own completed visit.
+  app.post('/me/appointments/:id/rating', async (req) => {
+    const { id: appointmentId } = z.object({ id }).parse(req.params);
+    const { stars } = z.object({ stars: z.number().int().min(1).max(5) }).parse(req.body);
+    return rateVisit(deps, await auth(req), appointmentId, stars);
+  });
+
   // Account deletion (v1.7): what it would do, then doing it.
   app.get('/me/deletion', async (req) => deletionPlan(deps, await auth(req)));
   app.delete('/me', async (req, reply) => {

@@ -10,6 +10,7 @@ import styles from './MyShops.module.css';
 import { VerifiedTick } from './VerifiedTick';
 import { FORWARD, TAB } from '@/lib/motion';
 import { SkeletonList } from '@/components/Skeleton';
+import { RatingBadge } from '@/components/Stars';
 
 /** Favoriler tab: favourite shops, then shops booked before, each one tap from booking. */
 export function MyShops() {
@@ -71,7 +72,13 @@ function Group({ title, shops }: { title: string; shops: MyShop[] }) {
                   {shop.name}
                   {shop.verified && <VerifiedTick kind="salon" size={14} />}
                 </span>
-                {placeLabel(shop) && <span className={styles.meta}>{placeLabel(shop)}</span>}
+                {(placeLabel(shop) || shop.rating != null) && (
+                  <span className={styles.meta}>
+                    {shop.rating != null && <RatingBadge rating={shop.rating} count={shop.rating_count} />}
+                    {shop.rating != null && placeLabel(shop) ? ' · ' : ''}
+                    {placeLabel(shop)}
+                  </span>
+                )}
                 {shop.last_visit && <span className={styles.meta}>Son randevu: {formatLongDate(shop.last_visit)}</span>}
               </span>
             </Link>

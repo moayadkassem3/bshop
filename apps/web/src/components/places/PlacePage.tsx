@@ -7,6 +7,7 @@ import { AUDIENCE, photoUrl } from '@/lib/shop';
 import styles from './places.module.css';
 import { BackArrow } from '@/components/BackArrow';
 import { BACK, FORWARD, TAB } from '@/lib/motion';
+import { RatingBadge } from '@/components/Stars';
 
 export type Place = { province: string; district?: string; type?: SalonType };
 
@@ -120,6 +121,12 @@ export async function PlacePage(p: Place) {
                       {s.verified && <VerifiedTick kind="salon" size={15} />}
                     </span>
                     <span className={styles.meta}>
+                      {s.rating != null && (
+                        <>
+                          <RatingBadge rating={s.rating} count={s.rating_count} />
+                          {' · '}
+                        </>
+                      )}
                       {AUDIENCE[s.audience]}
                       {s.district ? ` · ${s.district}` : ''}
                     </span>

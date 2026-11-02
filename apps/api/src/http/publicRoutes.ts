@@ -14,6 +14,7 @@ import { recordShopView, VIEW_SOURCES } from '../services/stats.js';
 import { createQuoteRequest } from '../services/quotes.js';
 import type { AuthFn } from './app.js';
 import { csvIds, id } from './schemas.js';
+import { publicRatings } from '../services/ratings.js';
 
 /** "Salon Sahibi Girişi" and "Çalışan Girişi" are separate entrances; the website signs customers in. */
 const portal = z.enum(['customer', 'business', 'staff', 'owner']).default('customer');
@@ -82,6 +83,11 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
       .object({ slugs: z.string().transform((s) => s.split(',').filter(Boolean)).pipe(z.array(z.string().max(60)).max(30)) })
       .parse(req.query);
     return shopSummaries(deps, slugs);
+  });
+
+  app.get('/public/shops/:slug/ratings', async (req) => {
+    const { slug } = z.object({ slug: z.string() }).parse(req.params);
+    return publicRatings(deps, slug);
   });
 
   app.get('/public/shops/:slug', async (req) => {

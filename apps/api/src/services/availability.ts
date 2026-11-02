@@ -7,6 +7,7 @@ import { listShopPosts } from './haircuts.js';
 import { listPhotos } from './photos.js';
 import { getPublicShopBySlug } from './shops.js';
 import { earliestStart, eligibleStaff, loadDaySchedules, loadServices } from './schedule.js';
+import { RATING_COLUMNS } from '../domain/ratings.js';
 
 export type Slot = {
   startsAt: string;
@@ -118,9 +119,16 @@ export async function getShopProfile(deps: Deps, slug: string) {
     return h ? { weekday, open: hhmm(h.open), close: hhmm(h.close) } : { weekday, open: null, close: null };
   });
 
+  const rated = await deps.db.query<{ rating: number | null; rating_count: number }>(
+    `SELECT ${RATING_COLUMNS} FROM shops s WHERE s.id = $1`,
+    [shop.id],
+  );
+
   return {
     slug: shop.slug,
     name: shop.name,
+    rating: rated.rows[0]!.rating,
+    ratingCount: rated.rows[0]!.rating_count,
     about: shop.about,
     address: shop.address,
     district: shop.district,

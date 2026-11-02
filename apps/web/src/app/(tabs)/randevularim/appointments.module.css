@@ -224,3 +224,34 @@
   align-items: flex-start;
   gap: 6px;
 }
+
+/* Rating a completed visit (v1.7) */
+.rate {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.rateTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.rateNote {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.rated {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}

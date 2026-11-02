@@ -37,6 +37,7 @@ import { addPost, deletePost, listShopPostsForStaff } from '../services/haircuts
 import { STYLE_KEYS } from '../domain/styles.js';
 import type { AuthFn } from './app.js';
 import { id, shopParams, timestamp, weeklyWindows } from './schemas.js';
+import { replyToRating, shopRatings } from '../services/ratings.js';
 
 const kurus = z.number().int().min(0).max(100_000_000);
 const minutes = z.number().int().min(5).max(600);
@@ -44,6 +45,18 @@ const minutes = z.number().int().min(5).max(600);
 /** Routes for the staff/owner app. Every route is scoped to a shop the caller belongs to. */
 export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.get('/staff/shops', async (req) => listMyShops(deps, await auth(req)));
+
+  // Değerlendirmeler (v1.7): the salon's ratings; owners answer each once, publicly.
+  app.get('/staff/shops/:shopId/ratings', async (req) => {
+    const { shopId } = shopParams.parse(req.params);
+    return shopRatings(deps, await auth(req), shopId);
+  });
+  app.put('/staff/shops/:shopId/ratings/:id/reply', async (req, reply) => {
+    const p = shopParams.extend({ id }).parse(req.params);
+    const { text } = z.object({ text: z.string().trim().max(300).nullable() }).parse(req.body);
+    await replyToRating(deps, await auth(req), p.shopId, p.id, text || null);
+    return reply.status(204).send();
+  });
 
   // Appointments
   app.get('/staff/shops/:shopId/appointments', async (req) => {

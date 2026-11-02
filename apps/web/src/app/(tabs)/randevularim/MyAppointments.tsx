@@ -11,6 +11,8 @@ import type { CustomerAppointment } from '@/lib/types';
 import styles from './appointments.module.css';
 import { FORWARD, TAB } from '@/lib/motion';
 import { SkeletonList } from '@/components/Skeleton';
+import { StarRow } from '@/components/Stars';
+import { StarInput } from '@/components/StarInput';
 
 export function MyAppointments() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -245,6 +247,7 @@ function AppointmentCard({ appointment: a, isNew, onChanged }: { appointment: Cu
         <AppointmentStatus appointment={a} />
       </div>
       {a.status === 'offered' && <OfferAnswer appointment={a} onChanged={onChanged} />}
+      {a.status === 'completed' && (a.rateable || a.my_rating) && <RateVisit appointment={a} />}
       {upcoming && !confirming && (
         <button type="button" className={styles.cancel} onClick={() => setConfirming(true)}>
           Randevuyu iptal et
@@ -269,6 +272,49 @@ function AppointmentCard({ appointment: a, isNew, onChanged }: { appointment: Cu
       )}
       {error && <p className="alert alert-danger">{error}</p>}
     </article>
+  );
+}
+
+/**
+ * "Nasıldı?" (v1.7): after a completed visit, one tap on a star rates the salon.
+ * It can be changed for 14 days; after that the stars stay as given.
+ */
+function RateVisit({ appointment: a }: { appointment: CustomerAppointment }) {
+  const [stars, setStars] = useState<number | null>(a.my_rating ?? null);
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function rate(value: number) {
+    const before = stars;
+    setStars(value);
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/me/appointments/${a.id}/rating`, { method: 'POST', body: { stars: value } });
+      setSaved(true);
+    } catch (err) {
+      setStars(before);
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!a.rateable) {
+    return (
+      <p className={styles.rated}>
+        Puanınız <StarRow value={stars ?? 0} size={15} />
+      </p>
+    );
+  }
+  return (
+    <div className={styles.rate}>
+      <p className={styles.rateTitle}>{stars ? (saved ? 'Teşekkürler!' : 'Puanınız') : 'Nasıldı? Salonu puanlayın'}</p>
+      <StarInput value={stars} onChange={rate} disabled={busy} />
+      {saved && <p className={`${styles.rateNote} motion-fade`}>Puanınız salon sayfasında isminizin baş harfiyle görünür. 14 gün içinde değiştirebilirsiniz.</p>}
+      {error && <p className="alert alert-danger">{error}</p>}
+    </div>
   );
 }
 

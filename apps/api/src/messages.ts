@@ -45,6 +45,10 @@ export const sms = {
 type Appt = { customer: string; services: string; when: string };
 
 export const push = {
+  newRating: (r: { stars: number }) => ({
+    title: 'Yeni değerlendirme',
+    body: `Bir müşteriniz salonunuza ${r.stars} yıldız verdi. Salonum → Değerlendirmeler’den görebilir, yanıt yazabilirsiniz.`,
+  }),
   newRequest: (a: Appt & { deadline: string }) => ({
     title: 'Yeni randevu talebi',
     body: `${a.customer} · ${a.services} · ${a.when}. Yanıt verilmezse ${a.deadline} saatinde otomatik onaylanır.`,

@@ -26,6 +26,9 @@ export type ShopProfile = {
   longitude: number | null;
   /** Verified tick (v1.7): 3 completed bookings made through the app. */
   verified?: boolean;
+  /** Average stars (v1.7); null until MIN_RATINGS customers have rated. */
+  rating?: number | null;
+  ratingCount?: number;
   audience: 'men' | 'women' | 'unisex';
   cancellationCutoffMinutes: number;
   paymentAtShop: boolean;
@@ -53,6 +56,8 @@ export type ShopSummary = {
   audience: string;
   cover_photo_id: string | null;
   verified?: boolean;
+  rating?: number | null;
+  rating_count?: number;
 };
 
 /** A shop in "Salonlarım": a favourite, or one booked before. */
@@ -92,7 +97,14 @@ export type CustomerAppointment = {
   cancellation_cutoff_minutes: number;
   staff_name: string;
   services: { name: string; durationMinutes: number; priceKurus: number }[];
+  /** Ratings (v1.7): the stars given to this visit, and whether it can still be rated. */
+  my_rating?: number | null;
+  rateable?: boolean;
 };
+
+/** A salon's ratings (v1.7): stars only, with the salon's public reply. */
+export type Rating = { id: string; stars: number; created_at: string; updated_at: string; reply: string | null; replied_at: string | null; customer: string };
+export type RatingsSummary = { count: number; rating: number | null; distribution: number[]; ratings: Rating[] };
 
 /** A shop on the Keşfet map. */
 export type NearbyShop = Omit<ShopSummary, 'address'> & { latitude: number; longitude: number; distance_m: number };

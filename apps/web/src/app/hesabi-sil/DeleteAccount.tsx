@@ -126,7 +126,7 @@ export function DeleteAccount() {
               </li>
             ))}
             <li>Adınız, telefon numaranız, favorileriniz, beğenileriniz ve bildirimleriniz silinir.</li>
-            <li>Geçmiş randevularınız salonların kayıtlarında isimsiz kalır.</li>
+            <li>Geçmiş randevularınız ve verdiğiniz puanlar salonlarda isimsiz kalır.</li>
           </ul>
 
           {plan.blockers.length > 0 ? (
@@ -166,7 +166,7 @@ function What() {
     <ul className={styles.effects}>
       <li>Adınız, telefon numaranız, favorileriniz, beğenileriniz ve bildirimleriniz silinir.</li>
       <li>Yaklaşan randevularınız iptal edilir ve salona bildirilir.</li>
-      <li>Geçmiş randevularınız salonların kayıtlarında isimsiz kalır.</li>
+      <li>Geçmiş randevularınız ve verdiğiniz puanlar salonlarda isimsiz kalır.</li>
       <li>Sözleşme onay kayıtları, yasal yükümlülükler nedeniyle saklanır.</li>
     </ul>
   );

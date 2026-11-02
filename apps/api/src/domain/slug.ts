@@ -53,6 +53,7 @@ export const RESERVED_SLUGS = new Set([
   'salonum',
   'calisma-saatleri',
   'hesabi-sil',
+  'degerlendirmeler',
 ]);
 
 const TURKISH: Record<string, string> = { ç: 'c', ğ: 'g', ı: 'i', i: 'i', ö: 'o', ş: 's', ü: 'u' };

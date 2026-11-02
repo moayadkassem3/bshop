@@ -150,6 +150,7 @@ export function Salonum() {
                 <ShortcutLink href="/calisma-saatleri" icon="clock" label="Çalışma saatleri" hint={owner ? 'Ekibin haftalık saatleri ve molaları' : 'Haftalık saatleriniz ve molalarınız'} />
                 <ShortcutLink href="/calismalar" icon="camera" label="Kesim fotoğrafı paylaş" hint="Popüler kesimler’de görünür" />
                 {owner && <ShortcutLink href="/istatistikler" icon="chart" label="İstatistikler" hint="Sayfa ziyaretleri ve randevular, ay ay" />}
+                <ShortcutLink href="/degerlendirmeler" icon="star" label="Değerlendirmeler" hint={owner ? 'Müşteri puanları ve yanıtlarınız' : 'Müşterilerin salona verdiği puanlar'} />
                 {owner && (
                   <ShortcutLink
                     href="/isletme-ayarlari"
@@ -179,6 +180,7 @@ const ICONS = {
       <path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 20.5h2M20.5 14v2" />
     </>
   ),
+  star: <path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z" />,
   clock: (
     <>
       <circle cx="12" cy="12" r="8.5" />

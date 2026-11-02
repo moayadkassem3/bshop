@@ -8,6 +8,7 @@ import { normalizePhone, normalizeShopPhone } from '../phone.js';
 import { PROVINCE_SLUGS, RESERVED_SLUGS, shopLinkCandidates, SLUG_PATTERN } from '../domain/slug.js';
 import { requireOwner, requirePlatformAdmin } from './access.js';
 import { upsertUserByPhone, type User } from './auth.js';
+import { RATING_COLUMNS } from '../domain/ratings.js';
 
 export type Shop = {
   id: string;
@@ -69,7 +70,7 @@ export async function getPublicShopBySlug(q: Queryable, now: Date, slug: string)
 /** Home-page search by shop name or address. */
 export async function searchPublicShops(deps: Deps, query: string) {
   const { rows } = await deps.db.query(
-    `SELECT s.slug, s.name, s.address, s.district, s.city, s.audience, s.verified_at IS NOT NULL AS verified,
+    `SELECT s.slug, s.name, s.address, s.district, s.city, s.audience, s.verified_at IS NOT NULL AS verified, ${RATING_COLUMNS},
        (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id
      FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
      WHERE ${PUBLIC_CONDITION} AND (s.name ILIKE $2 OR s.address ILIKE $2 OR s.district ILIKE $2 OR s.city ILIKE $2)
@@ -99,7 +100,7 @@ export async function nearbyShops(deps: Deps, q: NearbyQuery) {
   const text = q.query?.trim() ? `%${q.query.trim().replace(/[%_\\]/g, (c) => `\\${c}`)}%` : null;
   const { rows } = await deps.db.query(
     `SELECT * FROM (
-       SELECT s.slug, s.name, s.district, s.city, s.audience, s.latitude, s.longitude, s.verified_at IS NOT NULL AS verified,
+       SELECT s.slug, s.name, s.district, s.city, s.audience, s.latitude, s.longitude, s.verified_at IS NOT NULL AS verified, ${RATING_COLUMNS},
          (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id,
          round(${distance})::int AS distance_m
        FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
@@ -406,7 +407,7 @@ export async function improveShopLinks(deps: Deps) {
  */
 export async function listingShops(deps: Deps, input: { city: string; district?: string; audience?: 'men' | 'women' }) {
   const { rows } = await deps.db.query(
-    `SELECT s.slug, s.name, s.address, s.district, s.city, s.audience, s.verified_at IS NOT NULL AS verified,
+    `SELECT s.slug, s.name, s.address, s.district, s.city, s.audience, s.verified_at IS NOT NULL AS verified, ${RATING_COLUMNS},
        (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id
      FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
      WHERE ${PUBLIC_CONDITION} AND lower(s.city) = lower($2) AND ($3::text IS NULL OR lower(s.district) = lower($3))
