@@ -57,6 +57,28 @@ const ICONS = {
       <Path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
     </>
   ),
+  star: <Path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z" />,
+  card: (
+    <>
+      <Rect x="3" y="5.5" width="18" height="13" rx="2.5" />
+      <Path d="M3 10h18M7 15h4" />
+    </>
+  ),
+  share: <Path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />,
+  eye: (
+    <>
+      <Path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+      <Circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  edit: <Path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" />,
+  doc: (
+    <>
+      <Path d="M6 3.5h8l4 4v13H6z" />
+      <Path d="M14 3.5v4h4M9 12h6M9 16h6" />
+    </>
+  ),
+  swap: <Path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" />,
 };
 
 export type IconName = keyof typeof ICONS;

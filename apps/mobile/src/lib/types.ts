@@ -49,6 +49,28 @@ export type BusinessShop = {
   suspended_reason?: string | null;
   seats: number;
   plan_id: string | null;
+  owner_label?: 'owner' | 'co_owner' | null;
+  reviewed_at?: string | null;
+  verified?: boolean;
+};
+
+export type Member = { id: string; display_name: string; active: boolean; bookable: boolean };
+
+export type Rating = { id: string; stars: number; created_at: string; updated_at: string; reply: string | null; replied_at: string | null; customer: string };
+export type TeamRatings = { count: number; average: number | null; rating: number | null; minimum: number; distribution: number[]; ratings: Rating[] };
+
+/** Aboneliğim in the app: read-only, and the app never shows amounts (store rules, CLAUDE.md). */
+export type Subscription = {
+  status: 'none' | 'trial' | 'active' | 'past_due' | 'canceled';
+  current_period_end: string | null;
+  grace_until: string | null;
+  suspended_at: string | null;
+  suspended_reason: string | null;
+  visible: boolean;
+  seats: number;
+  plan: { id: string; name: string } | null;
+  terms: { customQuoteAboveStaff: number };
+  payments: { months: number; method: string; period_end: string; created_at: string }[];
 };
 
 export type ShopAppointment = {
@@ -105,7 +127,14 @@ export type ShopProfile = {
   photos: { id: string }[];
   openingHours: { weekday: number; open: string | null; close: string | null }[];
   services: { id: string; name: string; duration_minutes: number; price_kurus: number; price_is_starting_from: boolean }[];
-  staff: { id: string; display_name: string }[];
+  staff: { id: string; display_name: string; service_ids: string[] }[];
+};
+
+export type Slot = { startsAt: string; instantConfirmation: boolean; staff: { id: string; durationMinutes: number }[] };
+export type Availability = { date: string; totalPriceKurus: number; priceIsStartingFrom: boolean; slots: Slot[] };
+export type BookingResult = {
+  groupId: string;
+  appointments: { id: string; status: 'pending' | 'confirmed'; staffId: string; startsAt: string; deadlineAt: string | null }[];
 };
 
 export const AUDIENCE: Record<string, string> = { men: 'Erkek kuaförü', women: 'Kadın kuaförü', unisex: 'Kuaför' };

@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
+import { Appear, SkeletonList } from '@/components/motion';
 import { ShopAppointmentCard } from '@/components/ShopAppointmentCard';
 import { ShopPicker } from '@/components/ShopPicker';
-import { Alert, Chip, Empty, Loading, Screen } from '@/components/ui';
+import { Alert, Chip, Empty, Screen } from '@/components/ui';
 import { api, errorMessage } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
 import type { ShopAppointment } from '@/lib/types';
@@ -49,9 +50,19 @@ export default function HistoryScreen() {
         ))}
       </View>
       {shopsError || error ? <Alert text={(shopsError || error)!} /> : null}
-      {shop && !items && !error ? <Loading /> : null}
-      {items && shown.length === 0 ? <Empty title="Kayıt yok" text="Son 30 günde bu durumda randevu bulunmuyor." /> : null}
-      {shop ? shown.map((a) => <ShopAppointmentCard key={a.id} shopId={shop.id} appointment={a} showDate showStaff={shop.role === 'owner'} onChanged={load} />) : null}
+      {!items && !error && !shopsError ? <SkeletonList rows={3} /> : null}
+      {items && shown.length === 0 ? (
+        <Appear>
+          <Empty title="Kayıt yok" text="Son 30 günde bu durumda randevu bulunmuyor." />
+        </Appear>
+      ) : null}
+      {shop
+        ? shown.map((a, i) => (
+            <Appear key={`${filter}-${a.id}`} index={i}>
+              <ShopAppointmentCard shopId={shop.id} appointment={a} showDate showStaff={shop.role === 'owner'} onChanged={load} />
+            </Appear>
+          ))
+        : null}
     </Screen>
   );
 }

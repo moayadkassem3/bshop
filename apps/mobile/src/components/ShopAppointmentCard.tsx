@@ -17,6 +17,13 @@ const STATUS: Record<ShopAppointment['status'], { label: string; tone: Tone }> =
   no_show: { label: 'Gelmedi', tone: 'danger' },
 };
 
+const CANCELLED_BY: Record<string, string> = {
+  customer: 'Müşteri iptal etti',
+  customer_late: 'Müşteri geç iptal etti',
+  shop: 'Salon iptal etti',
+  staff_absence: 'Personel izni nedeniyle iptal',
+};
+
 /**
  * One appointment for the salon (as on the website): who, when, what; Onayla /
  * Reddet for a request, Geldi / Gelmedi once it has started, İptal before.
@@ -26,7 +33,9 @@ export function ShopAppointmentCard(props: { shopId: string; appointment: ShopAp
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const started = new Date(a.starts_at).getTime() <= Date.now();
-  const st = STATUS[a.status];
+  const st = a.status === 'cancelled' && a.cancel_reason && CANCELLED_BY[a.cancel_reason] ? { ...STATUS.cancelled, label: CANCELLED_BY[a.cancel_reason]! } : STATUS[a.status];
+  // Calling helps only before the visit (Geçmiş shows finished ones without it).
+  const live = ['pending', 'offered', 'confirmed'].includes(a.status) && new Date(a.ends_at).getTime() > Date.now();
 
   async function act(action: string) {
     setBusy(action);
@@ -48,11 +57,15 @@ export function ShopAppointmentCard(props: { shopId: string; appointment: ShopAp
     ]);
 
   return (
-    <Card style={[{ gap: 8 }, a.status === 'pending' && styles.pending]}>
+    <Card style={[{ gap: 8 }, a.status === 'pending' && styles.pending, !live && !started && styles.dropped]}>
       <View style={styles.top}>
         <View style={{ flex: 1, gap: 2 }}>
+          {props.showDate ? (
+            <Text size={13} weight="semibold" color={colors.muted}>
+              {formatLongDate(a.starts_at)}
+            </Text>
+          ) : null}
           <Text size={17} weight="bold">
-            {props.showDate ? `${formatLongDate(a.starts_at)} · ` : ''}
             {formatTime(a.starts_at)}–{formatTime(a.ends_at)}
           </Text>
           <Text weight="semibold">
@@ -75,7 +88,7 @@ export function ShopAppointmentCard(props: { shopId: string; appointment: ShopAp
           </Text>
         ) : null}
       </View>
-      {a.customer_phone ? (
+      {a.customer_phone && live ? (
         <Pressable onPress={() => Linking.openURL(`tel:${a.customer_phone}`)} hitSlop={8} style={{ alignSelf: 'flex-start' }}>
           <Text size={14} weight="semibold" color={colors.primary}>
             {formatPhone(a.customer_phone)} · Ara
@@ -99,7 +112,14 @@ export function ShopAppointmentCard(props: { shopId: string; appointment: ShopAp
       {a.status === 'confirmed' && started ? (
         <View style={styles.actions}>
           <Button title="Geldi" onPress={() => void act('complete')} busy={busy === 'complete'} disabled={Boolean(busy)} style={{ flex: 1 }} />
-          <Button kind="secondary" title="Gelmedi" onPress={() => confirmFirst('Gelmedi olarak işaretle', 'Müşterinin kaydına işlenir.', 'no-show', 'Gelmedi')} busy={busy === 'no-show'} disabled={Boolean(busy)} style={{ flex: 1 }} />
+          <Button
+            kind="secondary"
+            title="Gelmedi"
+            onPress={() => confirmFirst('Gelmedi olarak işaretle', 'Müşterinin kaydına işlenir.', 'no-show', 'Gelmedi')}
+            busy={busy === 'no-show'}
+            disabled={Boolean(busy)}
+            style={{ flex: 1 }}
+          />
         </View>
       ) : null}
       {(a.status === 'confirmed' || a.status === 'offered') && !started ? (
@@ -113,5 +133,6 @@ export function ShopAppointmentCard(props: { shopId: string; appointment: ShopAp
 const styles = StyleSheet.create({
   top: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   pending: { borderColor: '#f6d28a', borderWidth: 1.5 },
+  dropped: { opacity: 0.75 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 4 },
 });

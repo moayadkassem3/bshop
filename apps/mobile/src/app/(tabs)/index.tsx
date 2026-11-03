@@ -3,8 +3,9 @@ import { Redirect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Icon } from '@/components/Icon';
+import { Appear, SkeletonList } from '@/components/motion';
 import { SalonCard } from '@/components/SalonCard';
-import { Alert, Chip, Empty, Loading, Screen, Text } from '@/components/ui';
+import { Alert, Chip, Empty, Screen, Text } from '@/components/ui';
 import { api, errorMessage } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius } from '@/lib/theme';
@@ -75,14 +76,7 @@ export default function ExploreScreen() {
       header={
         <View style={styles.search}>
           <Icon name="search" size={20} color={colors.muted} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Kuaför ya da hizmet ara"
-            placeholderTextColor={colors.muted}
-            style={styles.searchInput}
-            returnKeyType="search"
-          />
+          <TextInput value={query} onChangeText={setQuery} placeholder="Kuaför ya da hizmet ara" placeholderTextColor={colors.muted} style={styles.searchInput} returnKeyType="search" />
         </View>
       }
       onRefresh={load}
@@ -101,10 +95,16 @@ export default function ExploreScreen() {
         </Pressable>
       ) : null}
       {error ? <Alert text={error} /> : null}
-      {!shops && !error ? <Loading /> : null}
-      {shops && shops.length === 0 ? <Empty title="Kuaför bulunamadı" text="Bu bölgede aramanızla eşleşen kuaför yok." /> : null}
-      {shops?.map((s) => (
-        <SalonCard key={s.slug} salon={s} />
+      {!shops && !error ? <SkeletonList rows={4} /> : null}
+      {shops && shops.length === 0 ? (
+        <Appear>
+          <Empty title="Kuaför bulunamadı" text="Bu bölgede aramanızla eşleşen kuaför yok." />
+        </Appear>
+      ) : null}
+      {shops?.map((s, i) => (
+        <Appear key={`${audience}-${s.slug}`} index={i}>
+          <SalonCard salon={s} />
+        </Appear>
       ))}
     </Screen>
   );

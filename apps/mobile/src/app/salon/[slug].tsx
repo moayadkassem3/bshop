@@ -1,14 +1,14 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { Dimensions, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
+import { Appear, PageSkeleton } from '@/components/motion';
 import { photoUrl } from '@/components/SalonCard';
-import { Alert, Button, Card, Loading, Text } from '@/components/ui';
-import { api, errorMessage, WEB_URL } from '@/lib/api';
+import { Alert, Button, Card, Text } from '@/components/ui';
+import { api, errorMessage } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
 import { formatPhone } from '@/lib/phone';
 import { useSession } from '@/lib/session';
@@ -70,7 +70,7 @@ export default function SalonScreen() {
       </View>
     );
   }
-  if (!profile) return <Loading />;
+  if (!profile) return <PageSkeleton photo />;
 
   const today = profile.openingHours.find((h) => h.weekday === turkeyWeekday());
   const place = [profile.district, profile.city].filter(Boolean).join(', ');
@@ -99,90 +99,100 @@ export default function SalonScreen() {
         </Pressable>
 
         <View style={{ padding: 16, gap: 12 }}>
-          <View style={{ gap: 4 }}>
-            <Text size={13} weight="semibold" color={colors.primary}>
-              {AUDIENCE[profile.audience]}
-              {place ? ` · ${place}` : ''}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-              <Text size={28} weight="heavy" style={{ flex: 1, letterSpacing: -0.5 }}>
-                {profile.name}
-                {profile.verified ? <Text size={24} color={colors.primary}> ✓</Text> : null}
+          <Appear>
+            <View style={{ gap: 4 }}>
+              <Text size={13} weight="semibold" color={colors.primary}>
+                {AUDIENCE[profile.audience]}
+                {place ? ` · ${place}` : ''}
               </Text>
-              <Pressable onPress={toggleFavorite} accessibilityLabel={favorite ? 'Favorilerimde' : 'Favorilere ekle'} style={[styles.heart, favorite && styles.heartOn]} hitSlop={6}>
-                <Icon name="favoriler" size={22} color={favorite ? '#d1344a' : colors.ink} />
-              </Pressable>
-            </View>
-            {profile.rating != null ? (
-              <Text size={15} color={colors.ink2}>
-                <Text color={colors.star}>★</Text> <Text weight="bold">{profile.rating.toLocaleString('tr-TR', { minimumFractionDigits: 1 })}</Text> ({profile.ratingCount} değerlendirme)
-              </Text>
-            ) : null}
-            <View style={[styles.today, { backgroundColor: today?.open ? colors.primarySoft : colors.surface2 }]}>
-              <Text size={14} weight="semibold" color={today?.open ? colors.primary : colors.muted}>
-                {today?.open ? `Bugün açık · ${today.open}–${today.close}` : 'Bugün kapalı'}
-              </Text>
-            </View>
-            {profile.about ? <Text color={colors.ink2}>{profile.about}</Text> : null}
-          </View>
-
-          <Card style={{ gap: 12 }}>
-            <Text size={17} weight="bold">
-              Salon bilgileri
-            </Text>
-            {profile.address ? (
-              <InfoRow icon="pin" text={profile.address} action={directions ? { label: 'Yol tarifi', onPress: () => Linking.openURL(directions) } : undefined} />
-            ) : null}
-            {profile.phone ? <InfoRow icon="phone" text={formatPhone(profile.phone)} action={{ label: 'Ara', onPress: () => Linking.openURL(`tel:${profile.phone}`) }} /> : null}
-            {profile.whatsapp ? (
-              <InfoRow icon="phone" text="WhatsApp" action={{ label: 'Yaz', onPress: () => Linking.openURL(`https://wa.me/${profile.whatsapp!.replace(/^\+/, '')}`) }} />
-            ) : null}
-          </Card>
-
-          <Card style={{ gap: 10 }}>
-            <Text size={17} weight="bold">
-              Hizmetler
-            </Text>
-            {profile.services.map((s) => (
-              <View key={s.id} style={styles.serviceRow}>
-                <View style={{ flex: 1 }}>
-                  <Text weight="semibold">{s.name}</Text>
-                  <Text size={13} color={colors.muted}>
-                    {s.duration_minutes} dk
-                  </Text>
-                </View>
-                <Text weight="bold">{formatPrice(s.price_kurus, s.price_is_starting_from)}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+                <Text size={28} weight="heavy" style={{ flex: 1, letterSpacing: -0.5 }}>
+                  {profile.name}
+                  {profile.verified ? (
+                    <Text size={24} color={colors.primary}>
+                      {' '}
+                      ✓
+                    </Text>
+                  ) : null}
+                </Text>
+                <Pressable onPress={toggleFavorite} accessibilityLabel={favorite ? 'Favorilerimde' : 'Favorilere ekle'} style={[styles.heart, favorite && styles.heartOn]} hitSlop={6}>
+                  <Icon name="favoriler" size={22} color={favorite ? '#d1344a' : colors.ink} />
+                </Pressable>
               </View>
-            ))}
-          </Card>
-
-          {profile.staff.length ? (
-            <Card style={{ gap: 10 }}>
-              <Text size={17} weight="bold">
-                Personel
-              </Text>
-              <Text color={colors.ink2}>{profile.staff.map((m) => m.display_name).join(' · ')}</Text>
-            </Card>
-          ) : null}
-
-          <Card style={{ gap: 6 }}>
-            <Text size={17} weight="bold">
-              Çalışma saatleri
-            </Text>
-            {profile.openingHours.map((h) => (
-              <View key={h.weekday} style={styles.hourRow}>
-                <Text weight={h.weekday === turkeyWeekday() ? 'bold' : 'regular'}>{WEEKDAYS[h.weekday - 1]}</Text>
-                <Text weight={h.weekday === turkeyWeekday() ? 'bold' : 'regular'} color={h.open ? colors.ink : colors.muted}>
-                  {h.open ? `${h.open}–${h.close}` : 'Kapalı'}
+              {profile.rating != null ? (
+                <Text size={15} color={colors.ink2}>
+                  <Text color={colors.star}>★</Text> <Text weight="bold">{profile.rating.toLocaleString('tr-TR', { minimumFractionDigits: 1 })}</Text> ({profile.ratingCount} değerlendirme)
+                </Text>
+              ) : null}
+              <View style={[styles.today, { backgroundColor: today?.open ? colors.primarySoft : colors.surface2 }]}>
+                <Text size={14} weight="semibold" color={today?.open ? colors.primary : colors.muted}>
+                  {today?.open ? `Bugün açık · ${today.open}–${today.close}` : 'Bugün kapalı'}
                 </Text>
               </View>
-            ))}
-          </Card>
+              {profile.about ? <Text color={colors.ink2}>{profile.about}</Text> : null}
+            </View>
+          </Appear>
+
+          <Appear index={1}>
+            <Card style={{ gap: 12 }}>
+              <Text size={17} weight="bold">
+                Salon bilgileri
+              </Text>
+              {profile.address ? <InfoRow icon="pin" text={profile.address} action={directions ? { label: 'Yol tarifi', onPress: () => Linking.openURL(directions) } : undefined} /> : null}
+              {profile.phone ? <InfoRow icon="phone" text={formatPhone(profile.phone)} action={{ label: 'Ara', onPress: () => Linking.openURL(`tel:${profile.phone}`) }} /> : null}
+              {profile.whatsapp ? <InfoRow icon="phone" text="WhatsApp" action={{ label: 'Yaz', onPress: () => Linking.openURL(`https://wa.me/${profile.whatsapp!.replace(/^\+/, '')}`) }} /> : null}
+            </Card>
+          </Appear>
+
+          <Appear index={2}>
+            <Card style={{ gap: 10 }}>
+              <Text size={17} weight="bold">
+                Hizmetler
+              </Text>
+              {profile.services.map((s) => (
+                <View key={s.id} style={styles.serviceRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text weight="semibold">{s.name}</Text>
+                    <Text size={13} color={colors.muted}>
+                      {s.duration_minutes} dk
+                    </Text>
+                  </View>
+                  <Text weight="bold">{formatPrice(s.price_kurus, s.price_is_starting_from)}</Text>
+                </View>
+              ))}
+            </Card>
+          </Appear>
+
+          {profile.staff.length ? (
+            <Appear index={3}>
+              <Card style={{ gap: 10 }}>
+                <Text size={17} weight="bold">
+                  Personel
+                </Text>
+                <Text color={colors.ink2}>{profile.staff.map((m) => m.display_name).join(' · ')}</Text>
+              </Card>
+            </Appear>
+          ) : null}
+
+          <Appear index={4}>
+            <Card style={{ gap: 6 }}>
+              <Text size={17} weight="bold">
+                Çalışma saatleri
+              </Text>
+              {profile.openingHours.map((h) => (
+                <View key={h.weekday} style={styles.hourRow}>
+                  <Text weight={h.weekday === turkeyWeekday() ? 'bold' : 'regular'}>{WEEKDAYS[h.weekday - 1]}</Text>
+                  <Text weight={h.weekday === turkeyWeekday() ? 'bold' : 'regular'} color={h.open ? colors.ink : colors.muted}>
+                    {h.open ? `${h.open}–${h.close}` : 'Kapalı'}
+                  </Text>
+                </View>
+              ))}
+            </Card>
+          </Appear>
         </View>
       </ScrollView>
       <View style={[styles.bookBar, { paddingBottom: insets.bottom + 12 }]}>
-        {/* Booking is native in phase 2; until then it opens the website's booking page. */}
-        <Button title="Randevu al" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/${profile.slug}/randevu`).catch(() => undefined)} />
+        <Button title="Randevu al" onPress={() => router.push(`/randevu/${profile.slug}`)} />
       </View>
     </View>
   );

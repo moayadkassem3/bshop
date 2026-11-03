@@ -6,7 +6,8 @@ import { formatLongDate, formatPrice, formatTime } from '@/lib/format';
 import { colors } from '@/lib/theme';
 import type { CustomerAppointment } from '@/lib/types';
 import { usePolling } from '@/lib/usePolling';
-import { Alert, Badge, Button, Card, Chip, Empty, Loading, Screen, Text, type Tone } from './ui';
+import { Appear, SkeletonList } from './motion';
+import { Alert, Badge, Button, Card, Chip, Empty, Screen, Text, type Tone } from './ui';
 
 type When = 'upcoming' | 'past';
 
@@ -57,14 +58,16 @@ export function MyAppointments() {
         <Chip label="Geçmiş" on={when === 'past'} onPress={() => setWhen('past')} />
       </View>
       {error ? <Alert text={error} /> : null}
-      {!items && !error ? <Loading /> : null}
+      {!items && !error ? <SkeletonList rows={3} /> : null}
       {items && shown.length === 0 ? (
         <Empty title={when === 'upcoming' ? 'Yaklaşan randevunuz yok' : 'Geçmiş randevunuz yok'} text={when === 'upcoming' ? 'Keşfet’ten size yakın bir kuaför bulun.' : undefined}>
           {when === 'upcoming' ? <Button title="Kuaför keşfet" onPress={() => router.push('/')} style={{ alignSelf: 'stretch', marginTop: 8 }} /> : null}
         </Empty>
       ) : null}
-      {shown.map((a) => (
-        <AppointmentCard key={a.id} appointment={a} onChanged={load} />
+      {shown.map((a, i) => (
+        <Appear key={`${when}-${a.id}`} index={i}>
+          <AppointmentCard appointment={a} onChanged={load} />
+        </Appear>
       ))}
     </Screen>
   );

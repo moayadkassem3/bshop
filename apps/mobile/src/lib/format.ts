@@ -39,3 +39,57 @@ export function addDays(date: string, days: number): string {
 export function formatDistance(m: number): string {
   return m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} km`;
 }
+
+export function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes} dk`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m ? `${h} sa ${m} dk` : `${h} sa`;
+}
+
+export function turkeyHour(iso: string): number {
+  return Number(new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', hourCycle: 'h23' }).format(new Date(iso)));
+}
+
+export type Day = { date: string; weekday: string; day: string; month: string; isToday: boolean };
+
+/** The next `count` days in Türkiye, for the day chips. */
+export function upcomingDays(count: number, now = new Date()): Day[] {
+  const today = turkeyDate(now);
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date(`${today}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + i);
+    return {
+      date: d.toISOString().slice(0, 10),
+      weekday: new Intl.DateTimeFormat('tr-TR', { weekday: 'short', timeZone: 'UTC' }).format(d),
+      day: String(d.getUTCDate()),
+      month: new Intl.DateTimeFormat('tr-TR', { month: 'short', timeZone: 'UTC' }).format(d),
+      isToday: i === 0,
+    };
+  });
+}
+
+/** "Bugün 14:30", "Yarın 10:00", "12 Kasım 09:30" */
+export function relativeDayTime(iso: string, now = new Date()): string {
+  const date = turkeyDate(new Date(iso));
+  const days = upcomingDays(2, now);
+  const time = formatTime(iso);
+  if (date === days[0]!.date) return `Bugün ${time}`;
+  if (date === days[1]!.date) return `Yarın ${time}`;
+  return `${new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, day: 'numeric', month: 'long' }).format(new Date(iso))} ${time}`;
+}
+
+/**
+ * Calendar days (in Türkiye) until a trial or period ends, so "4 gün" matches
+ * the end date shown beside it; at least 1 until it ends, then 0 (as on the website).
+ */
+export function daysLeft(end: string | null): number {
+  if (!end || new Date(end).getTime() <= Date.now()) return 0;
+  const days = (Date.parse(turkeyDate(new Date(end))) - Date.parse(turkeyDate(new Date()))) / 86_400_000;
+  return Math.max(1, Math.round(days));
+}
+
+/** "3 Kasım 2026". */
+export function formatFullDate(iso: string | Date): string {
+  return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ }).format(new Date(iso));
+}
