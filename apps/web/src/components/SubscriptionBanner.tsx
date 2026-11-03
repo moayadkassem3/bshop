@@ -6,6 +6,7 @@ import { subscriptionNotice, useBusinessShops } from '@/lib/business';
 import { useBusinessMode } from '@/lib/session';
 import styles from './SubscriptionBanner.module.css';
 import { FORWARD } from '@/lib/motion';
+import { useCanSell } from '@/lib/store';
 
 /**
  * On every business screen (v1.7): the trial is about to end, a payment is late,
@@ -15,7 +16,8 @@ import { FORWARD } from '@/lib/motion';
 export function SubscriptionBanner() {
   const business = useBusinessMode();
   const { shop } = useBusinessShops(business);
-  const notice = business && shop ? subscriptionNotice(shop) : null;
+  const canSell = useCanSell();
+  const notice = business && shop && canSell !== null ? subscriptionNotice(shop, canSell) : null;
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,12 +44,12 @@ export function SubscriptionBanner() {
       <p>
         <strong>{notice.title}</strong> {notice.text}
       </p>
-      {owner ? (
+      {canSell !== true ? null : owner ? (
         shop.subscription_requested_at && notice.tone === 'danger' ? (
           <span className={styles.note}>Talebiniz alındı, sizi arayacağız.</span>
         ) : (
-          <Link transitionTypes={FORWARD} href="/isletmeler" className={styles.cta}>
-            {notice.tone === 'danger' ? 'Aboneliği başlat' : 'Paketler'}
+          <Link transitionTypes={FORWARD} href="/abonelik" className={styles.cta}>
+            {notice.tone === 'danger' ? 'Aboneliği başlat' : 'Aboneliğim'}
           </Link>
         )
       ) : (

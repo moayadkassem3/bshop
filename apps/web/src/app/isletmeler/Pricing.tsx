@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { api, errorMessage } from '@/lib/api';
@@ -9,6 +10,7 @@ import { formatPrice, TZ } from '@/lib/format';
 import { getToken, useBusinessMode } from '@/lib/session';
 import type { Me } from '@/lib/types';
 import styles from './business.module.css';
+import { useCanSell } from '@/lib/store';
 import { FORWARD } from '@/lib/motion';
 
 export type Plans = {
@@ -30,13 +32,19 @@ export function Pricing({ plans, intro, apply }: { plans: Plans | null; intro: R
   const mine = business ? shop : null;
 
   const current = mine && plans ? plans.plans.find((p) => p.id === mine.plan_id) ?? null : null;
+  // Store apps never show prices (lib/store.ts): a salon there sees its own state on Aboneliğim.
+  const canSell = useCanSell();
+  const router = useRouter();
+  useEffect(() => {
+    if (canSell === false && registered) router.replace('/abonelik');
+  }, [canSell, registered, router]);
   const ordered = plans ? (current ? [current, ...plans.plans.filter((p) => p !== current)] : plans.plans) : [];
 
   return (
     <>
       {!registered && intro}
 
-      {plans && (
+      {plans && canSell === true && (
         <section className={`${styles.pricing} ${registered ? styles.pricingFirst : ''}`} aria-labelledby="pricing-title">
           {registered ? (
             <h1 id="pricing-title" className={styles.pageTitle}>
@@ -154,10 +162,12 @@ function Status({ shop, trialDays }: { shop: BusinessShop; trialDays: number }) 
  * "Aboneliği başlat": until online payment is in place, the owner asks our team,
  * who call back and start the subscription. Staff are told to ask the owner.
  */
-function StartSubscription({ shop }: { shop: BusinessShop }) {
+export function StartSubscription({ shop }: { shop: Pick<BusinessShop, 'id' | 'role' | 'subscription_requested_at'> }) {
   const [requested, setRequested] = useState(shop.subscription_requested_at);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Never inside the store apps (lib/store.ts).
+  if (useCanSell() !== true) return null;
   if (shop.role !== 'owner') return <p className={styles.statusText}>Aboneliği salon sahibi başlatabilir.</p>;
   if (requested) return <p className={styles.statusText}>Talebiniz alındı. Ekibimiz sizi arayıp aboneliğinizi başlatacak.</p>;
 

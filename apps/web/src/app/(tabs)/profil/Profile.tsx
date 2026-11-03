@@ -13,6 +13,7 @@ import type { Me } from '@/lib/types';
 import styles from './profile.module.css';
 import { VerifiedTick } from '@/components/VerifiedTick';
 import { FORWARD, TAB } from '@/lib/motion';
+import { useCanSell } from '@/lib/store';
 
 const MODE_LABEL = { customer: 'Müşteri', owner: 'İşletme sahibi', staff: 'Personel' } as const;
 
@@ -75,6 +76,7 @@ function SignIn(props: { onSignedIn: (me: Me) => void }) {
 }
 
 function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }) {
+  const canSell = useCanSell();
   const [editing, setEditing] = useState(!me.first_name);
   const [firstName, setFirstName] = useState(me.first_name ?? '');
   const [lastName, setLastName] = useState(me.last_name ?? '');
@@ -168,7 +170,8 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
           </li>
           {/* Salon owners edit their salon from its card in İşletmelerim instead (v1.7). */}
           {!me.owns_shop && <MenuLink href="/isletme-kaydi" label="İşletmenizi kaydedin" />}
-          <MenuLink href="/isletmeler" label="Paketler ve fiyatlar" />
+          {me.owns_shop && <MenuLink href="/abonelik" label="Aboneliğim" />}
+          {canSell === true && <MenuLink href="/isletmeler" label="Paketler ve fiyatlar" />}
           <MenuLink href="/sozlesmeler" label="Yasal metinler" />
           {/* Our team only (v1.7). */}
           {me.is_platform_admin && <MenuLink href="/yonetim" label="Yönetim paneli" />}

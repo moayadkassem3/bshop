@@ -451,3 +451,25 @@ export async function sitemapEntries(deps: Deps) {
   );
   return rows;
 }
+
+/**
+ * Aboneliğim (v1.7): the owner's view of the salon's subscription: state, plan,
+ * period and the payments and activations our team recorded (without our notes).
+ */
+export async function mySubscription(deps: Deps, user: User, shopId: string) {
+  await requireOwner(deps.db, user, shopId);
+  const now = deps.clock.now();
+  const { rows } = await deps.db.query<{ seats: number }>(
+    `SELECT sub.status, sub.current_period_end, sub.grace_until, s.suspended_at, s.suspended_reason, (${PUBLIC_CONDITION}) AS visible,
+       (SELECT count(*)::int FROM shop_members b WHERE b.shop_id = s.id AND b.active AND b.bookable) AS seats,
+       (SELECT max(r.created_at) FROM subscription_requests r WHERE r.shop_id = s.id AND r.handled_at IS NULL) AS open_request_at
+     FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id WHERE s.id = $2`,
+    [now, shopId],
+  );
+  if (!rows[0]) throw notFound('Shop');
+  const payments = await deps.db.query(
+    `SELECT amount_kurus, months, method, period_end, created_at FROM payments WHERE shop_id = $1 ORDER BY created_at DESC LIMIT 24`,
+    [shopId],
+  );
+  return { ...rows[0], plan: planForStaff(rows[0].seats), terms: PLAN_TERMS, payments: payments.rows };
+}

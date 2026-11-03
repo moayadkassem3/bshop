@@ -40,7 +40,7 @@ export type SubscriptionNotice = { tone: 'warning' | 'danger'; title: string; te
  * The bar shown on every business screen (v1.7): a few days before the trial
  * ends, while a payment is late, and while the salon is hidden from customers.
  */
-export function subscriptionNotice(shop: BusinessShop): SubscriptionNotice | null {
+export function subscriptionNotice(shop: BusinessShop, canSell = true): SubscriptionNotice | null {
   if (shop.suspended_at) {
     return { tone: 'danger', title: 'Salonunuz yayından kaldırıldı.', text: `${shop.suspended_reason ?? ''} Bilgi için bizimle iletişime geçin.`.trim() };
   }
@@ -49,11 +49,16 @@ export function subscriptionNotice(shop: BusinessShop): SubscriptionNotice | nul
     if (shop.subscription_status === 'trial') {
       const days = daysLeft(shop.current_period_end);
       return days <= TRIAL_WARNING_DAYS
-        ? { tone: 'warning', title: `Ücretsiz denemenizin bitmesine ${days} gün kaldı.`, text: 'Salonunuzun görünür kalması için bir paket seçin.' }
+        ? {
+            tone: 'warning',
+            title: `Ücretsiz denemenizin bitmesine ${days} gün kaldı.`,
+            // The store apps state facts only, never a call to buy (lib/store.ts).
+            text: canSell ? 'Salonunuzun görünür kalması için aboneliğinizi başlatın.' : 'Deneme bittiğinde salonunuz müşterilere gizlenir.',
+          }
         : null;
     }
     if (shop.subscription_status === 'past_due') {
-      return { tone: 'warning', title: 'Ödemeniz gecikti.', text: 'Ödeme yapılana kadar salonunuz kısa süre sonra müşterilere gizlenir.' };
+      return { tone: 'warning', title: 'Aboneliğinizin süresi doldu.', text: 'Salonunuz kısa süre sonra müşterilere gizlenir.' };
     }
     return null;
   }

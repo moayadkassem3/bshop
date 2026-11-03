@@ -151,6 +151,7 @@ export function Salonum() {
                 <ShortcutLink href="/calismalar" icon="camera" label="Kesim fotoğrafı paylaş" hint="Popüler kesimler’de görünür" />
                 {owner && <ShortcutLink href="/istatistikler" icon="chart" label="İstatistikler" hint="Sayfa ziyaretleri ve randevular, ay ay" />}
                 <ShortcutLink href="/degerlendirmeler" icon="star" label="Değerlendirmeler" hint={owner ? 'Müşteri puanları ve yanıtlarınız' : 'Müşterilerin salona verdiği puanlar'} />
+                {owner && <ShortcutLink href="/abonelik" icon="card" label="Aboneliğim" hint="Paketiniz ve abonelik durumunuz" />}
                 {owner && (
                   <ShortcutLink
                     href="/isletme-ayarlari"
@@ -178,6 +179,12 @@ const ICONS = {
       <rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2" />
       <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2" />
       <path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 20.5h2M20.5 14v2" />
+    </>
+  ),
+  card: (
+    <>
+      <rect x="3" y="5.5" width="18" height="13" rx="2.5" />
+      <path d="M3 10h18M7 15h4" />
     </>
   ),
   star: <path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z" />,

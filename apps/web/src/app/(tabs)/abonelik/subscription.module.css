@@ -1,0 +1,104 @@
+.page {
+  padding-bottom: 150px;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--primary-light);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.card {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 18px;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.card p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.ok {
+  border-color: #b9e4c5;
+  background: var(--success-soft);
+}
+
+.ok h2 {
+  color: var(--success);
+}
+
+.warn {
+  border-color: #f6d28a;
+  background: var(--warning-soft);
+}
+
+.warn h2 {
+  color: var(--warning);
+}
+
+.bad {
+  border-color: #f2c9c9;
+  background: var(--danger-soft);
+}
+
+.bad h2 {
+  color: var(--danger);
+}
+
+.plan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 17px;
+}
+
+.plan span {
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.actions {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.link {
+  justify-self: start;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.history {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.history li:first-child {
+  border-top: 0;
+}

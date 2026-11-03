@@ -20,6 +20,18 @@ export function formatTime(instant: Date, timezone: string): string {
 type Ctx = { shop: string; when: string; link: string };
 
 export const sms = {
+  // Subscription reminders to the salon owner (v1.7), with the website's Aboneliğim link.
+  trialEnding: (c: { shop: string; days: number; link: string }) =>
+    c.days <= 1
+      ? `${c.shop}: ücretsiz denemeniz yarın bitiyor. Salonunuzun görünür kalması için aboneliğinizi başlatın: ${c.link}`
+      : `${c.shop}: ücretsiz denemeniz ${c.days} gün sonra bitiyor. Salonunuzun görünür kalması için aboneliğinizi başlatın: ${c.link}`,
+  trialEnded: (c: { shop: string; link: string }) =>
+    `${c.shop}: ücretsiz deneme süreniz bitti, salonunuz müşterilere görünmüyor. Aboneliğinizi başlatmak için: ${c.link}`,
+  periodEnding: (c: { shop: string; date: string; link: string }) => `${c.shop}: aboneliğiniz ${c.date} tarihinde bitiyor. Yenilemek için: ${c.link}`,
+  paymentLate: (c: { shop: string; date: string; link: string }) =>
+    `${c.shop}: aboneliğinizin süresi doldu. Salonunuz ${c.date} tarihine kadar görünür kalacak. Yenilemek için: ${c.link}`,
+  hiddenUnpaid: (c: { shop: string; link: string }) =>
+    `${c.shop}: aboneliğiniz yenilenmediği için salonunuz müşterilere görünmüyor. Yeniden açmak için: ${c.link}`,
   otp: (code: string) => `Randevu doğrulama kodunuz: ${code}. Kod 10 dakika geçerlidir. Kimseyle paylaşmayın.`,
   confirmed: (c: Ctx & { staff: string }) =>
     `${c.shop}: ${c.when} randevunuz onaylandı (${c.staff}). Ödeme salonda. Randevularınız: ${c.link}`,

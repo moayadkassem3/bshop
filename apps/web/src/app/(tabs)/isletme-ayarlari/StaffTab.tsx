@@ -9,6 +9,7 @@ import { phoneComplete } from '@/lib/phone';
 import { formatPhone } from '@/lib/shop';
 import own from './settings.module.css';
 import { FORWARD } from '@/lib/motion';
+import { useCanSell } from '@/lib/store';
 
 type Member = {
   id: string;
@@ -32,6 +33,7 @@ const roleOf = (m: Member) => (m.owner_label === 'owner' ? 'Sahibi' : m.role ===
 export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMemberId: string; visible: boolean }) {
   const [members, setMembers] = useState<Member[] | null>(null);
   const [plans, setPlans] = useState<Plans | null>(null);
+  const canSell = useCanSell();
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,13 +77,13 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
   return (
     <div hidden={!visible}>
       {error && <p className="alert alert-danger">{error}</p>}
-      {plans && (
+      {plans && canSell !== null && (
         <div className={own.planBox}>
           <div>
             <span>{bookable} kişi randevu alıyor</span>
             <strong>{plan ? plan.name : `${plans.terms.customQuoteAboveStaff}’dan fazla personel`}</strong>
           </div>
-          {plan ? (
+          {canSell !== true ? null : plan ? (
             <span className={own.planPrice}>
               {formatPrice(plan.monthlyPriceKurus)}
               <small>/ay</small>

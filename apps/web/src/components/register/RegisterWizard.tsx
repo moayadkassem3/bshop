@@ -18,6 +18,7 @@ import { SALON_TYPES } from './salonTypes';
 import styles from './register.module.css';
 import { BackArrow } from '@/components/BackArrow';
 import { BACK, FORWARD, TAB } from '@/lib/motion';
+import { useCanSell } from '@/lib/store';
 
 // MapLibre only runs in the browser.
 const LocationPicker = dynamic(() => import('./LocationPicker').then((m) => m.LocationPicker), {
@@ -598,7 +599,8 @@ const quoteHref = (draft: Draft, count: number) =>
   `/teklif-al?${new URLSearchParams({ kaynak: 'kayit', personel: String(count), il: draft.city, salon: draft.name })}`;
 
 function PlanBox({ count, plans, quote }: { count: number; plans: Plans | null; quote: string }) {
-  if (!plans) return null;
+  const canSell = useCanSell();
+  if (!plans || canSell === null) return null;
   const plan = plans.plans.find((p) => count <= p.maxStaff);
   return (
     <div className={styles.planBox} aria-live="polite">
@@ -606,7 +608,7 @@ function PlanBox({ count, plans, quote }: { count: number; plans: Plans | null; 
         <span>{count} personel randevu alıyor</span>
         <strong>{plan ? plan.name : `${plans.terms.customQuoteAboveStaff}’dan fazla personel`}</strong>
       </div>
-      {plan ? (
+      {canSell !== true ? null : plan ? (
         <span className={styles.planPrice}>
           {formatPrice(plan.monthlyPriceKurus)}
           <small>/ay</small>

@@ -4,7 +4,7 @@ import type { Deps } from '../deps.js';
 import { applyAbsence, getAbsence, markAbsence } from '../services/absence.js';
 import { shopStats } from '../services/stats.js';
 import { offerNewTime, offerTimes } from '../services/offers.js';
-import { getShopSettings, requestSubscription, setAutoConfirmHours, updateShopSettings } from '../services/shops.js';
+import { getShopSettings, requestSubscription, setAutoConfirmHours, updateShopSettings, mySubscription } from '../services/shops.js';
 import {
   addStaffAppointment,
   blockTime,
@@ -164,6 +164,8 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   });
 
   // "Aboneliği başlat" (v1.7): asks our team to start the subscription, until online payment exists.
+  // Aboneliğim (v1.7): the subscription as the owner sees it.
+  app.get('/staff/shops/:shopId/subscription', async (req) => mySubscription(deps, await auth(req), shopParams.parse(req.params).shopId));
   app.post('/staff/shops/:shopId/subscription-request', async (req) => {
     const { shopId } = shopParams.parse(req.params);
     return requestSubscription(deps, await auth(req), shopId);

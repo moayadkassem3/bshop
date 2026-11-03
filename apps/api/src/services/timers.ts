@@ -3,6 +3,7 @@ import { withTx } from '../db.js';
 import { push } from '../messages.js';
 import { queuePush } from '../notifications.js';
 import { expireOffers } from './offers.js';
+import { sendSubscriptionReminders } from './subscriptionReminders.js';
 import { messageContext, ownerUserIds, queueResultSms } from './booking.js';
 
 /**
@@ -58,6 +59,7 @@ export async function runTimers(deps: Deps) {
        WHERE status = 'active' AND current_period_end IS NOT NULL AND current_period_end <= $1`,
       [now],
     );
-    return { reminders: reminders.rowCount ?? 0, confirmed: confirmed.rowCount ?? 0, offersExpired, lapsed: lapsed.rowCount ?? 0 };
+    const subscriptionReminders = await sendSubscriptionReminders(tx, deps, now);
+    return { reminders: reminders.rowCount ?? 0, confirmed: confirmed.rowCount ?? 0, offersExpired, lapsed: lapsed.rowCount ?? 0, subscriptionReminders };
   });
 }
