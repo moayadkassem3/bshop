@@ -25,5 +25,7 @@ function Navigation({ fontsLoaded }: { fontsLoaded: boolean }) {
     if (fontsLoaded && ready) SplashScreen.hideAsync().catch(() => undefined);
   }, [fontsLoaded, ready]);
   if (!fontsLoaded || !ready) return null;
-  return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: 'slide_from_right' }} />;
+  // iOS-style pushes on both platforms (the new page slides over, the old one drifts back), with
+  // swipe-back from anywhere on iOS: the feel of Airbnb and other polished apps.
+  return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: 'ios_from_right', fullScreenGestureEnabled: true }} />;
 }

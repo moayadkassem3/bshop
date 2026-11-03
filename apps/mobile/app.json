@@ -19,7 +19,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0e1013"
       },
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
@@ -40,6 +43,15 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Size en yakın kuaförleri göstermek için konumunuz kullanılır."
+        }
+      ],
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Salonunuzun ve kesimlerinizin fotoğraflarını eklemek için galerinize erişim gerekir.",
+          "cameraPermission": "Salonunuzun ve kesimlerinizin fotoğrafını çekmek için kamera erişimi gerekir.",
+          "microphonePermission": false
         }
       ]
     ],

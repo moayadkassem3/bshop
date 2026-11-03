@@ -13,9 +13,11 @@ export function formatPhoneInput(input: string): string {
   return [d.slice(0, 4), d.slice(4, 7), d.slice(7, 9), d.slice(9, 11)].filter(Boolean).join(' ');
 }
 
-export function phoneComplete(input: string): boolean {
+/** A complete number: a mobile (05…), or for a salon's own line also a landline (02–04…) or 0850 (as on the website). */
+export function phoneComplete(input: string, kind: 'mobile' | 'any' = 'mobile'): boolean {
   const d = phoneDigits(input);
-  return d.length === 11 && d.startsWith('05');
+  if (d.length !== 11) return false;
+  return kind === 'mobile' ? d.startsWith('05') : /^0([2-5]|850)/.test(d);
 }
 
 /** "+905346575100" → "0534 657 51 00" */

@@ -1,9 +1,12 @@
-import { router } from 'expo-router';
+import { Image } from 'expo-image';
+import { router, useFocusEffect } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
-import { LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/components/Icon';
-import { Appear } from '@/components/motion';
+import { Appear, PopIn } from '@/components/motion';
 import { GenderChoice, SignIn } from '@/components/SignIn';
 import { Alert, Badge, Button, Card, Field, Screen, Text, type Tone } from '@/components/ui';
 import { api, ApiError, errorMessage, WEB_URL } from '@/lib/api';
@@ -21,15 +24,39 @@ export default function ProfileScreen() {
 }
 
 function SignedOut() {
+  const insets = useSafeAreaInsets();
   return (
-    <Screen title="Salon Randevu" subtitle="Kuaförünü bul, randevunu hemen al.">
-      <Card style={{ gap: 14 }}>
-        <Text size={20} weight="bold">
-          Giriş yap
-        </Text>
-        <SignIn />
-      </Card>
-    </Screen>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.ink }}>
+      <StatusBar style="light" />
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        <View style={[styles.hero, { paddingTop: insets.top + 36 }]}>
+          <PopIn>
+            <Image source={require('../../../assets/icon.png')} style={styles.mark} contentFit="cover" accessibilityIgnoresInvertColors />
+          </PopIn>
+          <Text size={32} weight="heavy" color={colors.white} style={{ letterSpacing: -0.6 }}>
+            Salon Randevu
+          </Text>
+          <Text size={16} color={colors.darkMuted}>
+            Kuaförünü bul, randevunu hemen al.
+          </Text>
+        </View>
+        <Appear style={styles.sheet}>
+          <Text size={22} weight="heavy">
+            Giriş yap
+          </Text>
+          <SignIn />
+          <Pressable onPress={() => router.push('/isletme-kaydi')} style={({ pressed }) => [styles.businessLink, pressed && { opacity: 0.8 }]}>
+            <Text weight="heavy" color={colors.primary}>
+              İşletmeyim
+            </Text>
+            <Text color={colors.ink2} style={{ flex: 1 }}>
+              Salonumu kaydetmek istiyorum
+            </Text>
+            <Icon name="chevron" size={18} color={colors.primary} />
+          </Pressable>
+        </Appear>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -38,6 +65,12 @@ function Account() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  // Re-read on every visit: business mode appears as soon as the number joins a salon's team.
+  useFocusEffect(
+    useCallback(() => {
+      refresh().catch(() => undefined);
+    }, [refresh]),
+  );
   if (!me) return null;
   const name = [me.first_name, me.last_name].filter(Boolean).join(' ') || 'Hesabım';
   const mode = business ? (me.portal === 'owner' ? 'İşletme sahibi' : 'Personel') : 'Müşteri';
@@ -95,11 +128,16 @@ function Account() {
             label="Profili düzenle"
             open={editing}
             onPress={() => {
-              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
               setEditing((e) => !e);
             }}
           />
-          {editing ? <EditProfile onDone={() => setEditing(false)} /> : null}
+          {editing ? (
+            <Appear>
+              <EditProfile onDone={() => setEditing(false)} />
+            </Appear>
+          ) : null}
+          {/* Salon owners manage their salon from İşletmelerim instead (as on the website). */}
+          {!me.owns_shop ? <MenuRow icon="salonum" label="İşletmenizi kaydedin" onPress={() => router.push('/isletme-kaydi')} /> : null}
           {business && me.portal === 'owner' ? <MenuRow icon="card" label="Aboneliğim" onPress={() => router.push('/isletme/abonelik')} /> : null}
           <MenuRow icon="doc" label="Yasal metinler" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/sozlesmeler`).catch(() => undefined)} last />
         </Card>
@@ -239,6 +277,10 @@ function MenuRow({ icon, label, onPress, last, open }: { icon: IconName; label: 
 }
 
 const styles = StyleSheet.create({
+  hero: { alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingBottom: 36 },
+  mark: { width: 84, height: 84, borderRadius: 24, marginBottom: 12, borderWidth: 1.5, borderColor: colors.dark2 },
+  sheet: { flexGrow: 1, gap: 16, padding: 20, paddingBottom: 32, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colors.bg },
+  businessLink: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 16, marginTop: 4, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface },
   avatar: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   section: { letterSpacing: 1, marginTop: 4, marginBottom: 8 },
   menu: { padding: 4 },

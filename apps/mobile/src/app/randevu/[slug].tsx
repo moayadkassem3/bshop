@@ -2,10 +2,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeInLeft, FadeInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
-import { Appear, PageSkeleton, PopIn, Skeleton } from '@/components/motion';
+import { Appear, PageSkeleton, PopIn, Skeleton, SlideIn } from '@/components/motion';
 import { SignIn } from '@/components/SignIn';
 import { Alert, Button, Card, Text } from '@/components/ui';
 import { api, ApiError, errorMessage } from '@/lib/api';
@@ -132,7 +131,7 @@ export default function BookingScreen() {
 
       <ScrollView ref={scroll} contentContainerStyle={{ padding: 16, paddingBottom: 140 + insets.bottom }} keyboardShouldPersistTaps="handled">
         {notice ? <Alert tone="info" text={notice} /> : null}
-        <Animated.View key={step} entering={(dir === 'forward' ? FadeInRight : FadeInLeft).duration(240)} style={{ gap: 12, marginTop: notice ? 12 : 0 }}>
+        <SlideIn key={step} from={dir === 'forward' ? 'right' : 'left'} style={{ gap: 12, marginTop: notice ? 12 : 0 }}>
           {step === 'services' ? (
             <ServiceStep profile={profile} selected={serviceIds} onChange={setServiceIds} />
           ) : step === 'staff' ? (
@@ -162,7 +161,7 @@ export default function BookingScreen() {
           ) : step === 'done' && result ? (
             <DoneStep result={result} />
           ) : null}
-        </Animated.View>
+        </SlideIn>
       </ScrollView>
 
       {primary ? (

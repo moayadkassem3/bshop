@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, radius, shadow } from '@/lib/theme';
+import { FocusIn } from './motion';
 
 type Weight = 'regular' | 'medium' | 'semibold' | 'bold' | 'heavy';
 
@@ -67,7 +68,13 @@ export function Button(props: { title: string; onPress: () => void; kind?: Butto
         props.style,
       ]}
     >
-      {props.busy ? <ActivityIndicator color={c.fg} /> : <Text weight="bold" size={props.small ? 14 : 15} color={c.fg}>{props.title}</Text>}
+      {props.busy ? (
+        <ActivityIndicator color={c.fg} />
+      ) : (
+        <Text weight="bold" size={props.small ? 14 : 15} color={c.fg}>
+          {props.title}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -75,7 +82,7 @@ export function Button(props: { title: string; onPress: () => void; kind?: Butto
 export function Card(props: { children: ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void }) {
   if (props.onPress) {
     return (
-      <Pressable onPress={props.onPress} style={({ pressed }) => [styles.card, shadow, pressed && { opacity: 0.85 }, props.style]}>
+      <Pressable onPress={props.onPress} style={({ pressed }) => [styles.card, shadow, pressed && { opacity: 0.92, transform: [{ scale: 0.985 }] }, props.style]}>
         {props.children}
       </Pressable>
     );
@@ -123,7 +130,9 @@ export function Screen(props: { title: string; subtitle?: string; header?: React
       <StatusBar style="light" />
       <ScrollView
         contentContainerStyle={{ paddingBottom: 32 }}
-        refreshControl={props.onRefresh ? <RefreshControl refreshing={Boolean(props.refreshing)} onRefresh={() => void props.onRefresh?.()} tintColor={colors.primary} colors={[colors.primary]} /> : undefined}
+        refreshControl={
+          props.onRefresh ? <RefreshControl refreshing={Boolean(props.refreshing)} onRefresh={() => void props.onRefresh?.()} tintColor={colors.primary} colors={[colors.primary]} /> : undefined
+        }
       >
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           {props.back}
@@ -137,8 +146,10 @@ export function Screen(props: { title: string; subtitle?: string; header?: React
           ) : null}
           {props.header}
         </View>
-        <View style={styles.body}>{props.children}</View>
+        <FocusIn style={styles.body}>{props.children}</FocusIn>
       </ScrollView>
+      {/* The status bar keeps the header's dark colour while the page scrolls under it. */}
+      <View pointerEvents="none" style={[styles.statusBand, { height: insets.top }]} />
     </View>
   );
 }
@@ -231,7 +242,18 @@ const styles = StyleSheet.create({
   alert: { padding: 12, borderRadius: radius.sm },
   header: { backgroundColor: colors.ink, paddingHorizontal: 16, paddingBottom: 22, gap: 6 },
   body: { padding: 16, gap: 12 },
-  input: { minHeight: 50, paddingHorizontal: 14, borderWidth: 1.5, borderColor: colors.line, borderRadius: radius.sm, backgroundColor: colors.surface, fontFamily: fonts.regular, fontSize: 16, color: colors.ink },
+  statusBand: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: colors.ink },
+  input: {
+    minHeight: 50,
+    paddingHorizontal: 14,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    color: colors.ink,
+  },
   segmented: { flexDirection: 'row', padding: 4, gap: 4, borderRadius: radius.sm, backgroundColor: colors.surface2, marginTop: 10 },
   segment: { flex: 1, flexDirection: 'row', gap: 6, minHeight: 44, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   segBadge: { minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center' },

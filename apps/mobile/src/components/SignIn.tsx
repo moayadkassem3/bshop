@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -6,6 +7,7 @@ import { formatPhoneInput, phoneComplete } from '@/lib/phone';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius } from '@/lib/theme';
 import type { Me } from '@/lib/types';
+import { Icon, type IconName } from './Icon';
 import { Alert, Button, Field, Text } from './ui';
 
 type VerifyResult = { token: string; user: Me; needsProfile?: boolean; needsTerms?: boolean; hasBusiness?: boolean };
@@ -14,11 +16,11 @@ const openDoc = (key: string) => WebBrowser.openBrowserAsync(`${WEB_URL}/sozlesm
 
 /**
  * Sign-in with the phone only (same flow as the website): number, then the
- * 6-digit SMS code. People who work at a salon go straight to business mode; a
- * new customer creates their account once.
+ * 6-digit SMS code. People who work at a salon then choose business or
+ * customer mode; a new customer creates their account once.
  */
 export function SignIn() {
-  const { signIn, switchMode } = useSession();
+  const { signIn } = useSession();
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState(false);
@@ -27,6 +29,7 @@ export function SignIn() {
   const [error, setError] = useState<string | null>(null);
   const [demoCode, setDemoCode] = useState<string | null>(null);
   const [account, setAccount] = useState<VerifyResult | null>(null);
+  const [choice, setChoice] = useState<VerifyResult | null>(null);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -59,14 +62,38 @@ export function SignIn() {
     setError(null);
     try {
       const res = await api<VerifyResult>('/auth/otp/verify', { method: 'POST', body: { phone, code, portal: 'customer' } });
-      if (res.needsProfile && !res.hasBusiness) {
+      if (res.hasBusiness) {
+        // People who work at a salon choose how to continue (as on the website); the session is kept once they do.
+        configureApi({ token: res.token });
+        setChoice(res);
+        return;
+      }
+      if (res.needsProfile) {
         // The account step comes first; the session is kept only once it is done.
         configureApi({ token: res.token });
         setAccount(res);
         return;
       }
-      await signIn(res.token, res.user);
-      if (res.hasBusiness) await switchMode('business');
+      await signIn(res.token, res.user, false);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function choose(mode: 'business' | 'customer') {
+    if (!choice) return;
+    setBusy(true);
+    setError(null);
+    try {
+      if (mode === 'customer') {
+        if (choice.needsProfile) return setAccount(choice);
+        return await signIn(choice.token, choice.user, true);
+      }
+      const r = await api<{ token: string; user: Me }>('/me/switch', { method: 'POST', body: { to: 'business' } });
+      await signIn(r.token, r.user, true);
+      router.replace('/salonum');
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -75,6 +102,7 @@ export function SignIn() {
   }
 
   if (account) return <CreateAccount result={account} />;
+  if (choice) return <ModeChoice onChoose={choose} busy={busy} error={error} />;
   return (
     <View style={{ gap: 14 }}>
       <Field
@@ -159,7 +187,7 @@ function CreateAccount({ result }: { result: VerifyResult }) {
         ...(acceptMarketing ? [{ key: 'ticari-ileti-izni', version: versions['ticari-ileti-izni'] }] : []),
       ];
       if (consents.length) await api('/me/consents', { method: 'POST', body: consents });
-      await signIn(result.token, { ...me, ...updated });
+      await signIn(result.token, { ...me, ...updated }, Boolean(result.hasBusiness));
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -204,6 +232,48 @@ function CreateAccount({ result }: { result: VerifyResult }) {
   );
 }
 
+/** "Nasıl devam etmek istersin?": for numbers on a salon's team, right after the code. */
+function ModeChoice({ onChoose, busy, error }: { onChoose: (mode: 'business' | 'customer') => void; busy: boolean; error: string | null }) {
+  return (
+    <View style={{ gap: 12 }}>
+      <View style={{ gap: 4 }}>
+        <Text size={20} weight="bold">
+          Nasıl devam etmek istersin?
+        </Text>
+        <Text color={colors.muted}>Bu numara bir salonun ekibinde kayıtlı. İstediğin zaman Profil’den değiştirebilirsin.</Text>
+      </View>
+      <ChoiceCard icon="salonum" title="İşletme olarak" text="Salonum, talepler ve takvim" primary onPress={() => onChoose('business')} disabled={busy} />
+      <ChoiceCard icon="profil" title="Müşteri olarak" text="Kuaför bul, randevu al" onPress={() => onChoose('customer')} disabled={busy} />
+      {error ? <Alert text={error} /> : null}
+    </View>
+  );
+}
+
+function ChoiceCard(props: { icon: IconName; title: string; text: string; primary?: boolean; onPress: () => void; disabled?: boolean }) {
+  const fg = props.primary ? colors.white : colors.ink;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      disabled={props.disabled}
+      onPress={props.onPress}
+      style={({ pressed }) => [styles.choice, props.primary && styles.choicePrimary, pressed && { transform: [{ scale: 0.98 }] }, props.disabled && { opacity: 0.6 }]}
+    >
+      <View style={[styles.choiceIcon, { backgroundColor: props.primary ? colors.white : colors.ink }]}>
+        <Icon name={props.icon} size={24} color={props.primary ? colors.primary : colors.white} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text size={18} weight="heavy" color={fg}>
+          {props.title}
+        </Text>
+        <Text size={14} color={props.primary ? '#dbe4ff' : colors.muted}>
+          {props.text}
+        </Text>
+      </View>
+      <Icon name="chevron" size={20} color={fg} />
+    </Pressable>
+  );
+}
+
 export function GenderChoice(props: { value: 'male' | 'female' | null; onChange: (v: 'male' | 'female') => void }) {
   return (
     <View style={{ gap: 6 }}>
@@ -229,7 +299,13 @@ export function GenderChoice(props: { value: 'male' | 'female' | null; onChange:
 function Check(props: { on: boolean; onPress: () => void; children: React.ReactNode }) {
   return (
     <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: props.on }} onPress={props.onPress} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-      <View style={[styles.box, props.on && { backgroundColor: colors.primary, borderColor: colors.primary }]}>{props.on ? <Text color={colors.white} size={14} weight="bold">✓</Text> : null}</View>
+      <View style={[styles.box, props.on && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
+        {props.on ? (
+          <Text color={colors.white} size={14} weight="bold">
+            ✓
+          </Text>
+        ) : null}
+      </View>
       <View style={{ flex: 1 }}>{props.children}</View>
     </Pressable>
   );
@@ -239,5 +315,8 @@ const styles = StyleSheet.create({
   code: { fontFamily: fonts.bold, fontSize: 22, letterSpacing: 6 },
   gender: { flex: 1, minHeight: 48, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
   genderOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  choice: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface },
+  choicePrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
+  choiceIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   box: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
 });

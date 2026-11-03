@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api, errorMessage } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
 import { addDays, dayStart, formatLongDate, turkeyDate } from '@/lib/format';
@@ -167,7 +167,6 @@ export function BusinessAppointments() {
                 accessibilityRole="button"
                 accessibilityState={{ expanded: showDropped }}
                 onPress={() => {
-                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                   setShowDropped((v) => !v);
                 }}
                 style={styles.dropped}

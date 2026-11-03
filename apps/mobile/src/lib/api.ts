@@ -49,6 +49,24 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
   return data as T;
 }
 
+/** Sends a local image file as the request body (photo uploads: JPEG after shrinking). */
+export async function apiUpload<T>(path: string, fileUri: string, contentType = 'image/jpeg'): Promise<T> {
+  let res: Response;
+  try {
+    const blob = await (await fetch(fileUri)).blob();
+    res = await fetch(`${API_URL}${path}`, { method: 'POST', headers: { 'content-type': contentType, ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: blob });
+  } catch {
+    throw new ApiError(0, 'NETWORK');
+  }
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : undefined;
+  if (!res.ok) {
+    if (res.status === 401 && token) onUnauthorized?.();
+    throw new ApiError(res.status, data?.error ?? 'UNKNOWN');
+  }
+  return data as T;
+}
+
 /** The same Turkish messages as the website (apps/web/src/lib/api.ts). */
 const MESSAGES: Record<string, string> = {
   SLOT_TAKEN: 'Bu saat az önce doldu. Lütfen başka bir saat seçin.',
