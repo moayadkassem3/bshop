@@ -1,0 +1,63 @@
+name: Android app
+
+# The native app (apps/mobile, Expo): every push that changes it builds an APK
+# and publishes it as a GitHub pre-release, to install on a phone for testing.
+on:
+  push:
+    paths:
+      - "apps/mobile/**"
+      - ".github/workflows/android-app.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx expo prebuild --platform android --no-install
+
+      - name: Build release APK (signed with the debug key, for testing only)
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Publish APK as a pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk salon-randevu.apk
+          tag="android-app-${{ github.run_number }}"
+          gh release create "$tag" salon-randevu.apk \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Salon Randevu Android (build ${{ github.run_number }})" \
+            --notes "Native Android app, test build. Open this page on the Android phone, download salon-randevu.apk and allow installing from this source when asked. It uses the test site (salon-randevu-test.onrender.com). Testing only: not for the Play Store."
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: salon-randevu-apk
+          path: apps/mobile/salon-randevu.apk

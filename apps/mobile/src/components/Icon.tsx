@@ -1,0 +1,70 @@
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
+
+/** Line icons on a 24-unit grid with a 1.8 stroke: the same drawings as the website's tab bar. */
+const ICONS = {
+  salonum: (
+    <>
+      <Path d="M3.5 9.5 5 4.5h14l1.5 5" />
+      <Path d="M3.5 9.5c0 1.4 1.2 2.5 2.7 2.5s2.7-1.1 2.7-2.5c0 1.4 1.2 2.5 2.7 2.5s2.7-1.1 2.7-2.5c0 1.4 1.2 2.5 2.7 2.5s2.7-1.1 2.7-2.5" />
+      <Path d="M5 12v8h14v-8M10 20v-4.5h4V20" />
+    </>
+  ),
+  kesfet: <Path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5zM9 4v13.5M15 6.5V20" />,
+  randevular: (
+    <>
+      <Rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+      <Path d="M3.5 10h17M8 3v4M16 3v4" />
+    </>
+  ),
+  favoriler: <Path d="M12 20.5s-7.5-4.6-9.2-9.3C1.6 7.6 4 4.5 7.3 4.5c2 0 3.4 1.1 4.7 2.8 1.3-1.7 2.7-2.8 4.7-2.8 3.3 0 5.7 3.1 4.5 6.7-1.7 4.7-9.2 9.3-9.2 9.3z" />,
+  gecmis: (
+    <>
+      <Path d="M3.5 12a8.5 8.5 0 1 0 2.5-6" />
+      <Path d="M3.5 4v4.5H8M12 7.5V12l3 2" />
+    </>
+  ),
+  profil: (
+    <>
+      <Circle cx="12" cy="8" r="4" />
+      <Path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+    </>
+  ),
+  search: (
+    <>
+      <Circle cx="11" cy="11" r="6.5" />
+      <Path d="m16 16 4 4" />
+    </>
+  ),
+  back: <Path d="M15 5l-7 7 7 7" />,
+  chevron: <Path d="M9 5l7 7-7 7" />,
+  pin: (
+    <>
+      <Path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
+      <Circle cx="12" cy="9.5" r="2.5" />
+    </>
+  ),
+  phone: <Path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />,
+  clock: (
+    <>
+      <Circle cx="12" cy="12" r="8.5" />
+      <Path d="M12 7.5V12l3 2" />
+    </>
+  ),
+  locate: (
+    <>
+      <Circle cx="12" cy="12" r="7" />
+      <Circle cx="12" cy="12" r="2.5" />
+      <Path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+    </>
+  ),
+};
+
+export type IconName = keyof typeof ICONS;
+
+export function Icon({ name, size = 24, color, strokeWidth = 1.8 }: { name: IconName; size?: number; color: string; strokeWidth?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      {ICONS[name]}
+    </Svg>
+  );
+}

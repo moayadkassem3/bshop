@@ -1,12 +1,34 @@
 # Salon Randevu — notes for future work
 
-Turkish salon booking SaaS: `apps/api` (Fastify, PostgreSQL), `apps/web` (Next.js). The full
+Turkish salon booking SaaS: `apps/api` (Fastify, PostgreSQL), `apps/web` (Next.js), and
+`apps/mobile` — the native Android/iOS app (Expo SDK 54, Expo Router, React Native). The full
 product record is `docs/salon-app-handoff.md`; read it before changing a workflow.
+
+## Native app (`apps/mobile`) — founder decision, 3 November 2026
+
+Fully native screens (not a WebView of the website), for a stable, smooth experience. It talks to
+the same backend as the website (`extra.apiUrl` in `app.json`, the website's `/api`). Built in
+phases: 1 foundation (sign-in, Profil, Salonum, Randevular, Geçmiş, Keşfet list, salon page,
+Favoriler, Hesabı sil); 2 booking, favourites, ratings; 3 alarm and push (reuse the tested
+`apps/alert-test` full-screen alert module; needs a Firebase project); 4 business tools (map,
+Çalışma saatleri, Saat kapat, photos, QR, statistics, read-only Aboneliğim); 5 store submission.
+
+- Expo docs (docs.expo.dev) are blocked from the cloud sessions: read the installed packages'
+  type definitions instead, and take versions from `node_modules/expo/bundledNativeModules.json`.
+- Check JS with `npx tsc --noEmit` and `EXPO_OFFLINE=1 npx expo export --platform android`;
+  `npx expo prebuild --platform android --no-install` checks the native config. The Android SDK
+  cannot be downloaded here: `.github/workflows/android-app.yml` builds the APK on every push and
+  publishes it as a GitHub pre-release.
+- Same Turkish wording, colours (`src/lib/theme.ts`) and rules as the website; keep them in step.
+- The package name `com.salonrandevu.app` is a placeholder until the brand name is chosen; it
+  cannot change after the first Play Store upload.
 
 ## Store apps (iOS and Android) never sell — founder decision, 3 November 2026
 
-The native apps will wrap the website (Capacitor). To avoid Apple's and Google's 15–30% fee,
-salons pay **only on the website**; the apps use the account they paid for there.
+To avoid Apple's and Google's 15–30% fee, salons pay **only on the website**; the native app uses
+the account they paid for there. The native app simply has no selling screens: never add a
+subscription price, plan price, buy button or payment link to `apps/mobile` (a salon's own
+service prices are fine).
 
 Rules for anything shown inside the apps (Apple 3.1.3(f), Google Play payments policy):
 
@@ -19,17 +41,15 @@ Rules for anything shown inside the apps (Apple 3.1.3(f), Google Play payments p
 
 How it is built:
 
-- `apps/web/src/lib/store.ts`: `useCanSell()` is `true` on the website and `false` in the apps
-  (Capacitor's `isNativePlatform()`); `null` until known, so selling UI never flashes.
-  **Every new price, buy button or payment link must be rendered only when `useCanSell() === true`.**
-  Preview the app behaviour on the website with `?magaza=1` (`?magaza=0` ends it).
+- Native app: no selling UI at all (see above).
+- Website: `apps/web/src/lib/store.ts` `useCanSell()` hides prices and buy links if the website is
+  ever shown inside a native shell (e.g. a WebView screen); preview with `?magaza=1`.
 - Owners learn where to pay outside the app: SMS reminders from the server
   (`apps/api/src/services/subscriptionReminders.ts`: trial 3 days / 1 day / ended; paid period
   3 days before / lapsed / hidden), each linking to `PUBLIC_WEB_URL/abonelik`.
 - Treat Android the same as iOS: one behaviour for both apps.
 
-When the apps are built: the Capacitor shell must report `isNativePlatform()`; check every
-screen with `?magaza=1` before submitting to the stores.
+Before submitting to the stores: check every native screen against the rules above.
 
 ## Payments
 
