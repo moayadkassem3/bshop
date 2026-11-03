@@ -23,9 +23,9 @@ type Salon = {
 export const photoUrl = (id: string) => `${API_URL}/public/photos/${id}`;
 
 /** A salon in a list: cover photo, name, rating, type and place, distance. */
-export function SalonCard({ salon: s }: { salon: Salon }) {
+export function SalonCard({ salon: s, source = 'diger' }: { salon: Salon; source?: 'kesfet' | 'diger' }) {
   return (
-    <Card onPress={() => router.push(`/salon/${s.slug}`)} style={styles.card}>
+    <Card onPress={() => router.push(`/salon/${s.slug}?kaynak=${source}`)} style={styles.card}>
       {s.cover_photo_id ? (
         <Image source={{ uri: photoUrl(s.cover_photo_id) }} style={styles.thumb} contentFit="cover" transition={150} />
       ) : (

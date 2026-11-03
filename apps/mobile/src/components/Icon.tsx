@@ -78,6 +78,29 @@ const ICONS = {
       <Path d="M14 3.5v4h4M9 12h6M9 16h6" />
     </>
   ),
+  camera: (
+    <>
+      <Path d="M3.5 8.5A2 2 0 0 1 5.5 6.5h2l1.5-2h6l1.5 2h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z" />
+      <Circle cx="12" cy="13" r="3.5" />
+    </>
+  ),
+  map: <Path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5zM9 4v13.5M15 6.5V20" />,
+  qr: (
+    <>
+      <Rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" />
+      <Rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2" />
+      <Rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2" />
+      <Path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 20.5h2M20.5 14v2" />
+    </>
+  ),
+  chart: <Path d="M4 20h16M7.5 17v-6M12 17V5M16.5 17V9" />,
+  settings: (
+    <>
+      <Path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+      <Circle cx="15" cy="7" r="2" />
+      <Circle cx="9" cy="17" r="2" />
+    </>
+  ),
   swap: <Path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" />,
 };
 

@@ -111,15 +111,27 @@ export default function SalonumScreen() {
             </Appear>
           ) : null}
           <Appear index={3}>
+            {/* The website's list, in its order; owner-only tools only for owners. */}
             <Card style={{ padding: 4 }}>
+              <Shortcut icon="map" label="Haritada gör" hint="Salonunuz ve çevredeki salonlar" onPress={() => router.push('/isletme/harita')} />
+              {owner ? <Shortcut icon="qr" label="QR kod" hint="Salonunuza asın, müşteriler okutup randevu alsın" onPress={() => router.push('/isletme/qr')} /> : null}
+              <Shortcut
+                icon="clock"
+                label="Çalışma saatleri"
+                hint={owner ? 'Ekibin haftalık saatleri ve molaları' : 'Haftalık saatleriniz ve molalarınız'}
+                onPress={() => router.push('/isletme/calisma-saatleri')}
+              />
+              <Shortcut icon="camera" label="Kesim fotoğrafı paylaş" hint="Popüler kesimler’de görünür" onPress={() => router.push('/isletme/kesimler')} />
+              {owner ? <Shortcut icon="chart" label="İstatistikler" hint="Sayfa ziyaretleri ve randevular, ay ay" onPress={() => router.push('/isletme/istatistikler')} /> : null}
               <Shortcut
                 icon="star"
                 label="Değerlendirmeler"
                 hint={owner ? 'Müşteri puanları ve yanıtlarınız' : 'Müşterilerin salona verdiği puanlar'}
                 onPress={() => router.push('/isletme/degerlendirmeler')}
+                last={!owner}
               />
-              <Shortcut icon="gecmis" label="Geçmiş" hint="Son 30 günün randevuları" onPress={() => router.push('/gecmis')} />
-              {owner ? <Shortcut icon="card" label="Aboneliğim" hint="Paketiniz ve abonelik durumunuz" onPress={() => router.push('/isletme/abonelik')} last /> : null}
+              {owner ? <Shortcut icon="card" label="Aboneliğim" hint="Paketiniz ve abonelik durumunuz" onPress={() => router.push('/isletme/abonelik')} /> : null}
+              {owner ? <Shortcut icon="settings" label="Salon bilgileri" hint="Adres, fotoğraflar, hizmetler, personel" onPress={() => router.push('/isletme/ayarlar')} last /> : null}
             </Card>
           </Appear>
         </>

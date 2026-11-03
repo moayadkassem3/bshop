@@ -103,7 +103,7 @@ export default function ExploreScreen() {
       ) : null}
       {shops?.map((s, i) => (
         <Appear key={`${audience}-${s.slug}`} index={i}>
-          <SalonCard salon={s} />
+          <SalonCard salon={s} source="kesfet" />
         </Appear>
       ))}
     </Screen>

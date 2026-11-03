@@ -24,10 +24,12 @@ function turkeyWeekday(): number {
   return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(name) + 1;
 }
 
+const counted = new Set<string>();
+
 /** A salon's page (as on the website): photos, details, services, staff and hours. */
 export default function SalonScreen() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
-  const { me } = useSession();
+  const { slug, kaynak } = useLocalSearchParams<{ slug: string; kaynak?: string }>();
+  const { me, business } = useSession();
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<ShopProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +43,14 @@ export default function SalonScreen() {
       setError(errorMessage(err));
     }
   }, [slug]);
+
+  // A visit for the salon's statistics (as the website's ViewTracker): once per app session,
+  // and not when the salon's own people look at it in business mode.
+  useEffect(() => {
+    if (!slug || business || counted.has(slug)) return;
+    counted.add(slug);
+    api(`/public/shops/${encodeURIComponent(slug)}/views`, { method: 'POST', body: { source: kaynak === 'kesfet' ? 'kesfet' : 'diger' } }).catch(() => undefined);
+  }, [slug, kaynak, business]);
 
   useEffect(() => {
     load();

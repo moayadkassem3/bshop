@@ -123,13 +123,24 @@ export function Alert({ text, tone = 'danger' }: { text: string; tone?: Tone }) 
  * A screen: the dark header of the website (title, subtitle, extra content)
  * over a scrolling body with pull-to-refresh.
  */
-export function Screen(props: { title: string; subtitle?: string; header?: ReactNode; children: ReactNode; onRefresh?: () => Promise<unknown>; refreshing?: boolean; back?: ReactNode }) {
+export function Screen(props: {
+  title: string;
+  subtitle?: string;
+  header?: ReactNode;
+  children: ReactNode;
+  onRefresh?: () => Promise<unknown>;
+  refreshing?: boolean;
+  back?: ReactNode;
+  /** A bar fixed to the bottom (a save button); the page leaves room for it. */
+  footer?: ReactNode;
+}) {
   const insets = useSafeAreaInsets();
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style="light" />
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: props.footer ? 130 + insets.bottom : 32 }}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           props.onRefresh ? <RefreshControl refreshing={Boolean(props.refreshing)} onRefresh={() => void props.onRefresh?.()} tintColor={colors.primary} colors={[colors.primary]} /> : undefined
         }
@@ -150,6 +161,7 @@ export function Screen(props: { title: string; subtitle?: string; header?: React
       </ScrollView>
       {/* The status bar keeps the header's dark colour while the page scrolls under it. */}
       <View pointerEvents="none" style={[styles.statusBand, { height: insets.top }]} />
+      {props.footer ? <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>{props.footer}</View> : null}
     </View>
   );
 }
@@ -242,6 +254,7 @@ const styles = StyleSheet.create({
   alert: { padding: 12, borderRadius: radius.sm },
   header: { backgroundColor: colors.ink, paddingHorizontal: 16, paddingBottom: 22, gap: 6 },
   body: { padding: 16, gap: 12 },
+  footer: { position: 'absolute', left: 0, right: 0, bottom: 0, gap: 8, paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.line },
   statusBand: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: colors.ink },
   input: {
     minHeight: 50,

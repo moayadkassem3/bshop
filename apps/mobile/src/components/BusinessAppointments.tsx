@@ -9,9 +9,10 @@ import type { Member, ShopAppointment } from '@/lib/types';
 import { usePolling } from '@/lib/usePolling';
 import { Icon } from './Icon';
 import { ShopAppointmentCard } from './ShopAppointmentCard';
+import { BlockForm, TimeOffCard, type TimeOff } from './TimeBlocks';
 import { ShopPicker } from './ShopPicker';
 import { Appear, SkeletonList } from './motion';
-import { Alert, Chip, Empty, Screen, Segmented, Text } from './ui';
+import { Alert, Button, Chip, Empty, Screen, Segmented, Text } from './ui';
 
 type Tab = 'talepler' | 'takvim';
 
@@ -27,6 +28,8 @@ export function BusinessAppointments() {
   const [members, setMembers] = useState<Member[]>([]);
   const [staffId, setStaffId] = useState<string | null>(null);
   const [showDropped, setShowDropped] = useState(false);
+  const [closed, setClosed] = useState<TimeOff[]>([]);
+  const [blocking, setBlocking] = useState(false);
 
   useEffect(() => {
     if (params.tab === 'takvim') setTab('takvim');
@@ -46,10 +49,13 @@ export function BusinessAppointments() {
     if (!shop) return;
     try {
       const now = new Date();
-      const [open, list] = await Promise.all([
+      const range = `from=${dayStart(date).toISOString()}&to=${dayStart(addDays(date, 1)).toISOString()}`;
+      const [open, list, off] = await Promise.all([
         api<ShopAppointment[]>(`/staff/shops/${shop.id}/appointments?from=${now.toISOString()}&to=${new Date(now.getTime() + 365 * 86_400_000).toISOString()}`),
-        api<ShopAppointment[]>(`/staff/shops/${shop.id}/appointments?from=${dayStart(date).toISOString()}&to=${dayStart(addDays(date, 1)).toISOString()}${staffId ? `&staffId=${staffId}` : ''}`),
+        api<ShopAppointment[]>(`/staff/shops/${shop.id}/appointments?${range}${staffId ? `&staffId=${staffId}` : ''}`),
+        api<TimeOff[]>(`/staff/shops/${shop.id}/time-off?${range}`).catch(() => [] as TimeOff[]),
       ]);
+      setClosed(off.filter((t) => !staffId || t.staff_id === staffId));
       setRequests(open.filter((a) => a.status === 'pending' || a.status === 'offered'));
       setDay(list);
       setError(null);
@@ -67,6 +73,7 @@ export function BusinessAppointments() {
   const dropped = (day ?? []).filter((a) => a.status === 'declined' || a.status === 'cancelled');
   const goTo = (d: string) => {
     setDay(null);
+    setClosed([]);
     setDate(d);
   };
 
@@ -148,9 +155,32 @@ export function BusinessAppointments() {
               ))}
             </ScrollView>
           ) : null}
+          {!blocking ? (
+            <Button kind="secondary" title="Saat kapat" onPress={() => setBlocking(true)} />
+          ) : (
+            <Appear>
+              <BlockForm
+                shopId={shop.id}
+                date={date}
+                members={owner ? members : [{ id: shop.member_id, display_name: 'Siz' }]}
+                myMemberId={shop.member_id}
+                isOwner={owner}
+                onClose={() => setBlocking(false)}
+                onDone={() => {
+                  setBlocking(false);
+                  void load();
+                }}
+              />
+            </Appear>
+          )}
+          {closed.map((t) => (
+            <Appear key={t.id}>
+              <TimeOffCard shopId={shop.id} item={t} date={date} showStaff={owner} onChanged={load} />
+            </Appear>
+          ))}
           {!day ? (
             <SkeletonList rows={2} />
-          ) : active.length === 0 ? (
+          ) : active.length === 0 && closed.length === 0 ? (
             <Appear>
               <Empty title="Randevu yok" text="Bu gün için randevu bulunmuyor." />
             </Appear>
