@@ -1,5 +1,6 @@
-import { Camera, Map, ViewAnnotation, type CameraRef } from '@maplibre/maplibre-react-native';
+import { Camera, Map, Marker, type CameraRef } from '@maplibre/maplibre-react-native';
 import { Image } from 'expo-image';
+import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -49,7 +50,6 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
   const insets = useSafeAreaInsets();
   const camera = useRef<CameraRef>(null);
   const list = useRef<ScrollView>(null);
-  const rows = useRef<Record<string, number>>({});
   const homeShop = props.home && props.home.latitude != null && props.home.longitude != null ? props.home : null;
   const home: LatLng | null = homeShop ? { lat: Number(homeShop.latitude), lng: Number(homeShop.longitude) } : null;
 
@@ -161,12 +161,16 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
   const sheetStyle = useAnimatedStyle(() => ({ height: sheetH.value }));
   const locateStyle = useAnimatedStyle(() => ({ bottom: sheetH.value + 12, opacity: sheetH.value > (closedH + openH) / 2 ? 0 : 1 }));
 
-  // Tapping a pin highlights the salon in the list without covering the map.
+  // Tapping a pin shows that salon's card at the top of the sheet and highlights it in the list.
+  // The map's own tap (which clears the choice) is ignored right after a pin tap.
+  const pinTap = useRef(0);
   const select = (slug: string) => {
+    pinTap.current = Date.now();
+    Haptics.selectionAsync().catch(() => undefined);
     setSelected(slug);
-    const y = rows.current[slug];
-    if (y !== undefined) list.current?.scrollTo({ y: Math.max(0, y - 8), animated: true });
+    list.current?.scrollTo({ y: 0, animated: true });
   };
+  const picked = selected ? (sorted ?? []).find((s) => s.slug === selected) : null;
 
   const goHome = () => home && camera.current?.flyTo({ center: [home.lng, home.lat], zoom: 15, duration: 800 });
 
@@ -182,7 +186,9 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
           logo={false}
           attributionPosition={{ bottom: closedH + 8, left: 8 }}
           contentInset={{ top: topHeight, bottom: closedH }}
-          onPress={() => setSelected(null)}
+          onPress={() => {
+            if (Date.now() - pinTap.current > 400) setSelected(null);
+          }}
           onRegionDidChange={(e) => {
             const [lng, lat] = e.nativeEvent.center;
             setCenter({ lat, lng });
@@ -190,21 +196,26 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
         >
           <Camera ref={camera} initialViewState={{ center: [start.lng, start.lat], zoom: home || start !== KADIKOY ? 15 : 14 }} />
           {user && !home ? (
-            <ViewAnnotation lngLat={[user.lng, user.lat]} anchor="center">
-              <View style={styles.userHalo}>
+            <Marker lngLat={[user.lng, user.lat]} anchor="center">
+              <View style={styles.userHalo} pointerEvents="none">
                 <View style={styles.userDot} />
               </View>
-            </ViewAnnotation>
+            </Marker>
           ) : null}
+          {/* Markers (live native views) rather than ViewAnnotations, which Android draws as pictures that do not take taps or redraw. */}
           {(sorted ?? []).map((s) => (
-            <ViewAnnotation key={s.slug} lngLat={[Number(s.longitude), Number(s.latitude)]} anchor="bottom" onPress={() => select(s.slug)}>
-              <PinView label={selected === s.slug ? `${s.name} · ${formatDistance(s.distance_m)}` : null} selected={selected === s.slug} />
-            </ViewAnnotation>
+            <Marker key={s.slug} lngLat={[Number(s.longitude), Number(s.latitude)]} anchor="bottom" onPress={() => select(s.slug)}>
+              <Pressable onPress={() => (selected === s.slug ? router.push(`/salon/${s.slug}?kaynak=kesfet`) : select(s.slug))} hitSlop={8} accessibilityLabel={s.name}>
+                <PinView label={selected === s.slug ? `${s.name} · ${formatDistance(s.distance_m)}` : null} selected={selected === s.slug} />
+              </Pressable>
+            </Marker>
           ))}
           {homeShop && home ? (
-            <ViewAnnotation lngLat={[home.lng, home.lat]} anchor="bottom" onPress={() => setSelected(null)}>
-              <PinView mine label={null} selected={false} />
-            </ViewAnnotation>
+            <Marker lngLat={[home.lng, home.lat]} anchor="bottom">
+              <View pointerEvents="none">
+                <PinView mine label={null} selected={false} />
+              </View>
+            </Marker>
           ) : null}
         </Map>
       ) : null}
@@ -292,6 +303,31 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
           </View>
         </GestureDetector>
         <ScrollView ref={list} contentContainerStyle={{ paddingBottom: 24, gap: 4 }} keyboardShouldPersistTaps="handled">
+          {picked ? (
+            <Appear key={picked.slug}>
+              <Pressable onPress={() => router.push(`/salon/${picked.slug}?kaynak=kesfet`)} style={({ pressed }) => [styles.pickedCard, pressed && { transform: [{ scale: 0.985 }] }]}>
+                <Thumb photo={picked.cover_photo_id} name={picked.name} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text weight="bold" size={16} numberOfLines={1}>
+                    {picked.name}
+                    {picked.verified ? <Text color={colors.primary}> ✓</Text> : null}
+                  </Text>
+                  <Text size={13} color={colors.muted} numberOfLines={1}>
+                    {picked.rating != null ? `★ ${picked.rating.toLocaleString('tr-TR', { minimumFractionDigits: 1 })} · ` : ''}
+                    {AUDIENCE[picked.audience] ?? 'Kuaför'} · {formatDistance(picked.distance_m)}
+                  </Text>
+                  <Text size={14} weight="bold" color={colors.primary}>
+                    Salonu gör ve randevu al ›
+                  </Text>
+                </View>
+                <Pressable onPress={() => setSelected(null)} hitSlop={10} accessibilityLabel="Kapat" style={styles.close}>
+                  <Text size={18} color={colors.muted}>
+                    ×
+                  </Text>
+                </Pressable>
+              </Pressable>
+            </Appear>
+          ) : null}
           {!user && !home ? (
             <View style={styles.hint}>
               <Text size={14} color={colors.ink2} style={{ flex: 1 }}>
@@ -303,7 +339,7 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
           {locationError ? <Alert text={locationError} /> : null}
           {!sorted ? <SkeletonList rows={3} /> : null}
           {(sorted ?? []).map((s, i) => (
-            <View key={s.slug} onLayout={(e) => (rows.current[s.slug] = e.nativeEvent.layout.y)}>
+            <View key={s.slug}>
               <Appear index={i}>
                 <Pressable
                   onPress={() => router.push(`/salon/${s.slug}?kaynak=kesfet`)}
@@ -458,6 +494,18 @@ const styles = StyleSheet.create({
   itemSelected: { backgroundColor: colors.primarySoft },
   thumb: { width: 56, height: 56, borderRadius: radius.sm },
   initial: { backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  pickedCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    backgroundColor: colors.surface2,
+  },
+  close: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-start' },
   myShop: { gap: 10, padding: 12, marginBottom: 12, borderRadius: radius.md, backgroundColor: colors.surface2 },
   pin: { width: 42, height: 42, borderRadius: 21, borderWidth: 3, alignItems: 'center', justifyContent: 'center', ...shadow },
   label: { marginBottom: 6, maxWidth: 240, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: colors.ink, ...shadow },
