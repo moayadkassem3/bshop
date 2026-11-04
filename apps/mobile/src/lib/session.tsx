@@ -5,6 +5,17 @@ import { api, configureApi } from './api';
 import type { Me, Portal } from './types';
 
 const TOKEN_KEY = 'session-token';
+const LAST_MODE_KEY = 'last-mode';
+
+/**
+ * The mode used last on this phone (as the website's lastMode): kept after
+ * signing out, so someone who works at a salon but last used the app as a
+ * customer is not put back into business mode at the next sign-in.
+ */
+export async function lastMode(): Promise<'customer' | 'business' | null> {
+  const mode = await SecureStore.getItemAsync(LAST_MODE_KEY).catch(() => null);
+  return mode === 'customer' || mode === 'business' ? mode : null;
+}
 
 type Session = {
   /** null until the stored session has been read. */
@@ -52,6 +63,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (token: string, next: Me, hasBusiness?: boolean) => {
     await SecureStore.setItemAsync(TOKEN_KEY, token);
+    if (next.portal) await SecureStore.setItemAsync(LAST_MODE_KEY, next.portal === 'customer' ? 'customer' : 'business').catch(() => undefined);
     configureApi({ token });
     setMe(await api<Me>('/me').catch(() => ({ ...next, has_business: next.has_business ?? hasBusiness })));
   }, []);
