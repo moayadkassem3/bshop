@@ -1,3 +1,4 @@
+import { Redirect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Appear, SkeletonList } from '@/components/motion';
@@ -21,7 +22,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 
 /** Geçmiş (business, as on the website): the last 30 days' finished and cancelled appointments. */
 export default function HistoryScreen() {
-  const { me } = useSession();
+  const { me, business } = useSession();
   const { shops, shop, selectShop, error: shopsError } = useBusinessShops();
   const [items, setItems] = useState<ShopAppointment[] | null>(null);
   const [filter, setFilter] = useState<Filter>('all');
@@ -41,6 +42,8 @@ export default function HistoryScreen() {
   const { refreshing, refresh } = usePolling(load, 60_000);
 
   if (!me) return <SignInFirst />;
+  // A customer session never stays on a business screen (e.g. after the mode was corrected).
+  if (!business) return <Redirect href="/" />;
   const shown = (items ?? []).filter((a) => filter === 'all' || a.status === filter || (filter === 'cancelled' && a.status === 'declined'));
   return (
     <Screen title="Geçmiş" header={<ShopPicker shops={shops} shop={shop} onSelect={selectShop} />} onRefresh={refresh} refreshing={refreshing}>

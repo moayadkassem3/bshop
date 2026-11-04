@@ -26,6 +26,9 @@ export function configureApi(next: { token: string | null; onUnauthorized?: () =
   if (next.onUnauthorized) onUnauthorized = next.onUnauthorized;
 }
 
+/** The token requests are sent with now (the session compares it to drop answers from an older session). */
+export const currentToken = () => token;
+
 export async function api<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
   let res: Response;
   try {

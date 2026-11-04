@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { AppState } from 'react-native';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { api, configureApi } from './api';
+import { api, configureApi, currentToken } from './api';
 import type { Me, Portal } from './types';
 
 const TOKEN_KEY = 'session-token';
@@ -41,6 +41,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [me, setMe] = useState<Me | null>(null);
 
+  /**
+   * /me for the session in use now. An answer that arrives after the session changed
+   * (a mode switch while a slow refresh was on its way) is dropped: kept, it would put
+   * business screens on a customer session, which the server refuses (FORBIDDEN).
+   */
+  const fetchMe = useCallback(async (): Promise<Me | null> => {
+    const sentWith = currentToken();
+    const fresh = await api<Me>('/me');
+    return currentToken() === sentWith ? fresh : null;
+  }, []);
+  const applyMe = useCallback((fresh: Me | null) => {
+    if (fresh) setMe(fresh);
+  }, []);
+
   const clear = useCallback(async () => {
     configureApi({ token: null });
     setMe(null);
@@ -59,20 +73,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (cached) {
           setMe(cached);
           setReady(true);
-          api<Me>('/me')
-            .then(setMe)
+          fetchMe()
+            .then(applyMe)
             .catch(() => undefined);
           return;
         }
         try {
-          setMe(await api<Me>('/me'));
+          applyMe(await fetchMe());
         } catch {
           // Offline: keep the token; screens show their own errors and retry.
         }
       }
       setReady(true);
     })();
-  }, [clear]);
+  }, [clear, fetchMe, applyMe]);
 
   // The account is saved on the phone for the next start (and forgotten on sign-out).
   useEffect(() => {
@@ -81,24 +95,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     else SecureStore.deleteItemAsync(ME_KEY).catch(() => undefined);
   }, [me, ready]);
 
-  const signIn = useCallback(async (token: string, next: Me, hasBusiness?: boolean) => {
-    await SecureStore.setItemAsync(TOKEN_KEY, token);
-    if (next.portal) await SecureStore.setItemAsync(LAST_MODE_KEY, next.portal === 'customer' ? 'customer' : 'business').catch(() => undefined);
-    configureApi({ token });
-    setMe(await api<Me>('/me').catch(() => ({ ...next, has_business: next.has_business ?? hasBusiness })));
-  }, []);
+  const signIn = useCallback(
+    async (token: string, next: Me, hasBusiness?: boolean) => {
+      await SecureStore.setItemAsync(TOKEN_KEY, token);
+      if (next.portal) await SecureStore.setItemAsync(LAST_MODE_KEY, next.portal === 'customer' ? 'customer' : 'business').catch(() => undefined);
+      configureApi({ token });
+      setMe((await fetchMe().catch(() => null)) ?? { ...next, has_business: next.has_business ?? hasBusiness });
+    },
+    [fetchMe],
+  );
 
   // Coming back to the app re-reads the account, so a number just added to a salon's
   // team (or a salon just registered on the website) shows business mode without signing out.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active' && me)
-        api<Me>('/me')
-          .then(setMe)
+        fetchMe()
+          .then(applyMe)
           .catch(() => undefined);
     });
     return () => sub.remove();
-  }, [me]);
+  }, [me, fetchMe, applyMe]);
 
   const signOut = useCallback(async () => {
     // The session ends on the server too (security, v1.7).
@@ -115,8 +132,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const refresh = useCallback(async () => {
-    setMe(await api<Me>('/me'));
-  }, []);
+    applyMe(await fetchMe());
+  }, [fetchMe, applyMe]);
 
   const value = useMemo<Session>(() => ({ ready, me, business: isBusiness(me?.portal), signIn, signOut, switchMode, refresh }), [ready, me, signIn, signOut, switchMode, refresh]);
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, Share, StyleSheet, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
@@ -21,7 +21,7 @@ const LIVE = new Set<ShopAppointment['status']>(['pending', 'offered', 'confirme
  * (store rules, CLAUDE.md): no prices, no buy or "pay on the website" wording.
  */
 export default function SalonumScreen() {
-  const { me } = useSession();
+  const { me, business } = useSession();
   const { shops, shop, selectShop, error: shopsError } = useBusinessShops();
   const [items, setItems] = useState<ShopAppointment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +40,8 @@ export default function SalonumScreen() {
   const { refreshing, refresh } = usePolling(load);
 
   if (!me) return <SignInFirst />;
+  // A customer session never stays on a business screen (e.g. after the mode was corrected).
+  if (!business) return <Redirect href="/" />;
   const now = Date.now();
   const today = turkeyDate(new Date());
   const owner = shop?.role === 'owner';

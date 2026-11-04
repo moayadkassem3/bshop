@@ -1,6 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useState } from 'react';
-import { api, errorMessage } from './api';
+import { api, ApiError, errorMessage } from './api';
+import { useSession } from './session';
 import type { BusinessShop } from './types';
 
 const SHOP_KEY = 'business-shop';
@@ -9,6 +10,7 @@ const listeners = new Set<(id: string) => void>();
 
 /** The salons this account works at, and the one the business screens show (remembered). */
 export function useBusinessShops() {
+  const { refresh } = useSession();
   const [shops, setShops] = useState<BusinessShop[] | null>(null);
   const [shopId, setShopId] = useState<string | null>(selected);
   const [error, setError] = useState<string | null>(null);
@@ -23,9 +25,16 @@ export function useBusinessShops() {
       setShopId(id);
       setError(null);
     } catch (err) {
+      // Business screens on a session that is not a business one (FORBIDDEN): re-read the
+      // account, which puts the app back in the mode the session really has.
+      if (err instanceof ApiError && err.status === 403) {
+        refresh().catch(() => undefined);
+        setError('Hesap modu güncelleniyor…');
+        return;
+      }
       setError(errorMessage(err));
     }
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
     load();
