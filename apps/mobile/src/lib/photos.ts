@@ -15,12 +15,15 @@ export async function pickPhotos(options: { camera?: boolean; multiple?: boolean
   };
   if (options.camera) {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) return [];
+    if (!permission.granted) throw new Error('Kameraya erişim izni verilmedi. Telefon ayarlarından izin verebilirsiniz.');
   }
   const result = options.camera ? await ImagePicker.launchCameraAsync(settings) : await ImagePicker.launchImageLibraryAsync(settings);
   if (result.canceled) return [];
   const out: string[] = [];
-  for (const asset of result.assets) out.push(await shrink(asset.uri, asset.width, asset.height));
+  for (const asset of result.assets) {
+    // If shrinking fails the original goes up (the server re-encodes it; the limit is 10 MB).
+    out.push(await shrink(asset.uri, asset.width, asset.height).catch(() => asset.uri));
+  }
   return out;
 }
 

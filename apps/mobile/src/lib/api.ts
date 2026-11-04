@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { FileSystemUploadType, uploadAsync } from 'expo-file-system/legacy';
 
 /** The backend, through the website's /api (same as the browser uses). */
 export const API_URL: string = Constants.expoConfig?.extra?.apiUrl ?? 'https://salon-randevu-test.onrender.com/api';
@@ -49,18 +50,29 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
   return data as T;
 }
 
-/** Sends a local image file as the request body (photo uploads: JPEG after shrinking). */
+/**
+ * Sends a local image file as the request body (photo uploads, JPEG after
+ * shrinking). Uses the native uploader: React Native's fetch does not send a
+ * file's bytes reliably on Android.
+ */
 export async function apiUpload<T>(path: string, fileUri: string, contentType = 'image/jpeg'): Promise<T> {
-  let res: Response;
+  let res: { status: number; body: string };
   try {
-    const blob = await (await fetch(fileUri)).blob();
-    res = await fetch(`${API_URL}${path}`, { method: 'POST', headers: { 'content-type': contentType, ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: blob });
+    res = await uploadAsync(`${API_URL}${path}`, fileUri, {
+      httpMethod: 'POST',
+      uploadType: FileSystemUploadType.BINARY_CONTENT,
+      headers: { 'content-type': contentType, ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    });
   } catch {
     throw new ApiError(0, 'NETWORK');
   }
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : undefined;
-  if (!res.ok) {
+  let data: { error?: string } | undefined;
+  try {
+    data = res.body ? JSON.parse(res.body) : undefined;
+  } catch {
+    data = undefined;
+  }
+  if (res.status < 200 || res.status >= 300) {
     if (res.status === 401 && token) onUnauthorized?.();
     throw new ApiError(res.status, data?.error ?? 'UNKNOWN');
   }

@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert as NativeAlert, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
@@ -6,15 +5,14 @@ import { BackLink } from '@/components/BackLink';
 import { Icon } from '@/components/Icon';
 import { MapPickerModal, MapPreview, type MapFocus, type Point } from '@/components/MapPicker';
 import { Appear, SkeletonList } from '@/components/motion';
-import { photoUrl } from '@/components/SalonCard';
+import { PhotoManager } from '@/components/PhotoManager';
 import { SelectField } from '@/components/SelectField';
 import { ShopPicker } from '@/components/ShopPicker';
 import { Alert, Badge, Button, Card, Field, Screen, Segmented, Text } from '@/components/ui';
-import { api, apiUpload, ApiError, errorMessage } from '@/lib/api';
+import { api, ApiError, errorMessage } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
 import { formatDuration, formatPrice } from '@/lib/format';
 import { formatPhone, formatPhoneInput, phoneComplete, phoneDigits } from '@/lib/phone';
-import { pickPhotos } from '@/lib/photos';
 import { districtsOf, provinceCentre, PROVINCES } from '@/lib/provinces';
 import { colors, fonts, radius } from '@/lib/theme';
 
@@ -126,14 +124,10 @@ function focusFor(city: string, district: string): MapFocus | null {
 function SalonTab({ shopId }: { shopId: string }) {
   const [form, setForm] = useState<Form | null>(null);
   const [saved, setSaved] = useState<Form | null>(null);
-  const [photos, setPhotos] = useState<{ id: string }[]>([]);
+  const [photoCount, setPhotoCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [picking, setPicking] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
-
-  const loadPhotos = useCallback(async () => {
-    setPhotos(await api<{ id: string }[]>(`/staff/shops/${shopId}/photos`).catch(() => []));
-  }, [shopId]);
 
   useEffect(() => {
     api<Settings>(`/staff/shops/${shopId}/settings`)
@@ -142,8 +136,7 @@ function SalonTab({ shopId }: { shopId: string }) {
         setSaved(toForm(s));
       })
       .catch((err) => setMessage({ ok: false, text: errorMessage(err) }));
-    loadPhotos();
-  }, [shopId, loadPhotos]);
+  }, [shopId]);
 
   const update = (patch: Partial<Form>) => {
     setMessage(null);
@@ -179,48 +172,6 @@ function SalonTab({ shopId }: { shopId: string }) {
     } finally {
       setBusy(false);
     }
-  }
-
-  async function addPhotos(camera: boolean) {
-    const files = await pickPhotos({ camera, multiple: !camera, limit: 12 - photos.length }).catch(() => []);
-    if (!files.length) return;
-    setBusy(true);
-    setMessage(null);
-    for (const file of files) {
-      try {
-        await apiUpload(`/staff/shops/${shopId}/photos`, file);
-      } catch (err) {
-        setMessage({ ok: false, text: errorMessage(err) });
-        break;
-      }
-    }
-    await loadPhotos();
-    setBusy(false);
-  }
-
-  function photoMenu(id: string, index: number) {
-    NativeAlert.alert('Fotoğraf', undefined, [
-      ...(index > 0
-        ? [
-            {
-              text: 'Kapak yap',
-              onPress: () =>
-                void api(`/staff/shops/${shopId}/photos/order`, { method: 'PUT', body: [id, ...photos.map((p) => p.id).filter((p) => p !== id)] })
-                  .then(loadPhotos)
-                  .catch((err) => setMessage({ ok: false, text: errorMessage(err) })),
-            },
-          ]
-        : []),
-      {
-        text: 'Kaldır',
-        style: 'destructive' as const,
-        onPress: () =>
-          void api(`/staff/shops/${shopId}/photos/${id}`, { method: 'DELETE' })
-            .then(loadPhotos)
-            .catch((err) => setMessage({ ok: false, text: errorMessage(err) })),
-      },
-      { text: 'Vazgeç', style: 'cancel' as const },
-    ]);
   }
 
   if (!form) return message ? <Alert text={message.text} /> : <SkeletonList rows={3} />;
@@ -286,30 +237,8 @@ function SalonTab({ shopId }: { shopId: string }) {
         Salonunuzun bağlantısı ve QR kodu ad değişse de aynı kalır.
       </Text>
 
-      <Section title={`Fotoğraflar (${photos.length}/12)`} />
-      <Text size={13} color={colors.muted}>
-        İlk fotoğraf kapak olur. Bir fotoğrafa dokunarak kapak yapın veya kaldırın.
-      </Text>
-      <View style={styles.photos}>
-        {photos.map((p, i) => (
-          <Pressable key={p.id} onPress={() => photoMenu(p.id, i)} style={styles.photo}>
-            <Image source={{ uri: photoUrl(p.id) }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} />
-            {i === 0 ? (
-              <View style={styles.cover}>
-                <Text size={12} weight="bold" color={colors.white}>
-                  Kapak
-                </Text>
-              </View>
-            ) : null}
-          </Pressable>
-        ))}
-      </View>
-      {photos.length < 12 ? (
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Button kind="secondary" title={busy ? 'Yükleniyor…' : 'Galeriden ekle'} onPress={() => void addPhotos(false)} disabled={busy} style={{ flex: 1 }} />
-          <Button kind="secondary" title="Fotoğraf çek" onPress={() => void addPhotos(true)} disabled={busy} style={{ flex: 1 }} />
-        </View>
-      ) : null}
+      <Section title={`Fotoğraflar (${photoCount}/12)`} />
+      <PhotoManager shopId={shopId} onCountChange={setPhotoCount} />
     </>
   );
 }

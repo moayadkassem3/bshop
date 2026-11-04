@@ -35,7 +35,8 @@ export function SelectField(props: {
         onPress={() => setOpen(true)}
         style={[styles.field, props.compact && styles.compact, props.disabled && { opacity: 0.5 }]}
       >
-        <Text weight={props.compact ? 'bold' : 'regular'} color={props.value ? colors.ink : colors.muted} style={{ flex: 1 }} numberOfLines={1}>
+        {/* Compact boxes size to their text: a stretching text inside a box with no width shrinks to nothing on Android. */}
+        <Text weight={props.compact ? 'bold' : 'regular'} color={props.value ? colors.ink : colors.muted} style={props.compact ? { minWidth: 46, textAlign: 'center' } : { flex: 1 }} numberOfLines={1}>
           {props.value || props.placeholder || 'Seçin'}
         </Text>
         {props.compact ? null : (
@@ -124,7 +125,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: colors.surface,
   },
-  compact: { minHeight: 42, paddingHorizontal: 12, justifyContent: 'center' },
+  compact: { minHeight: 42, paddingHorizontal: 10, justifyContent: 'center', alignItems: 'center' },
   backdrop: { flex: 1, backgroundColor: 'rgba(14,16,19,0.45)' },
   sheet: { maxHeight: '75%', gap: 10, paddingTop: 8, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.surface },
   grab: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: colors.line, marginBottom: 4 },

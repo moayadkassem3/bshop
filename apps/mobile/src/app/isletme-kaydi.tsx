@@ -2,23 +2,22 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { BackHandler, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { MapPickerModal, MapPreview, type MapFocus, type Point } from '@/components/MapPicker';
+import { PhotoManager } from '@/components/PhotoManager';
 import { Appear, PopIn, SlideIn } from '@/components/motion';
 import { SelectField } from '@/components/SelectField';
 import { SignIn } from '@/components/SignIn';
 import { Alert, Button, Card, Field, Text } from '@/components/ui';
-import { api, apiUpload, ApiError, errorMessage, WEB_URL } from '@/lib/api';
+import { api, ApiError, errorMessage, WEB_URL } from '@/lib/api';
 import { formatDuration } from '@/lib/format';
 import { formatPhone, formatPhoneInput, phoneComplete, phoneDigits } from '@/lib/phone';
-import { pickPhotos } from '@/lib/photos';
 import { districtsOf, provinceCentre, PROVINCES } from '@/lib/provinces';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius } from '@/lib/theme';
 import { AUDIENCE, type Me } from '@/lib/types';
-import { photoUrl } from '@/components/SalonCard';
 
 /**
  * İşletmenizi kaydedin (as the website's RegisterWizard, v1.6–1.7): salon type,
@@ -814,27 +813,7 @@ function Consent(props: { on: boolean; onPress: () => void; doc: string; title: 
 
 function PhotosScreen({ shopId, onDone }: { shopId: string; onDone: () => void }) {
   const insets = useSafeAreaInsets();
-  const [photos, setPhotos] = useState<{ id: string }[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function add(camera: boolean) {
-    setError(null);
-    const files = await pickPhotos({ camera, multiple: !camera, limit: 12 - photos.length }).catch(() => []);
-    if (!files.length) return;
-    setBusy(true);
-    for (const file of files) {
-      try {
-        const p = await apiUpload<{ id: string }>(`/staff/shops/${shopId}/photos`, file);
-        setPhotos((list) => [...list, { id: p.id }]);
-      } catch (err) {
-        setError(errorMessage(err));
-        break;
-      }
-    }
-    setBusy(false);
-  }
-
+  const [count, setCount] = useState(0);
   return (
     <Shell
       title="Fotoğraflar"
@@ -845,7 +824,7 @@ function PhotosScreen({ shopId, onDone }: { shopId: string; onDone: () => void }
       footer={
         <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
           <View style={{ flex: 1 }} />
-          <Button kind={photos.length ? 'primary' : 'secondary'} title={photos.length ? 'Bitir' : 'Şimdilik atla'} onPress={onDone} disabled={busy} style={{ minWidth: 150 }} />
+          <Button kind={count ? 'primary' : 'secondary'} title={count ? 'Bitir' : 'Şimdilik atla'} onPress={onDone} style={{ minWidth: 150 }} />
         </View>
       }
     >
@@ -854,27 +833,7 @@ function PhotosScreen({ shopId, onDone }: { shopId: string; onDone: () => void }
         title="Salonunuzun fotoğraflarını ekleyin"
         lead="Fotoğraflı salonlar daha çok randevu alır. İlk fotoğraf kapak olur. Bu adımı şimdi atlayıp sonra da ekleyebilirsiniz."
       />
-      <View style={styles.photos}>
-        {photos.map((p, i) => (
-          <Appear key={p.id} style={styles.photo}>
-            <Image source={{ uri: photoUrl(p.id) }} style={StyleSheet.absoluteFill} />
-            {i === 0 ? (
-              <View style={styles.coverBadge}>
-                <Text size={12} weight="bold" color={colors.white}>
-                  Kapak
-                </Text>
-              </View>
-            ) : null}
-          </Appear>
-        ))}
-      </View>
-      {photos.length < 12 ? (
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Button kind="secondary" title={busy ? 'Yükleniyor…' : 'Galeriden seç'} onPress={() => void add(false)} disabled={busy} style={{ flex: 1 }} />
-          <Button kind="secondary" title="Fotoğraf çek" onPress={() => void add(true)} disabled={busy} style={{ flex: 1 }} />
-        </View>
-      ) : null}
-      {error ? <Alert text={error} /> : null}
+      <PhotoManager shopId={shopId} onCountChange={setCount} />
     </Shell>
   );
 }
