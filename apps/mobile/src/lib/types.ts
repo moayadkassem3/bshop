@@ -136,7 +136,11 @@ export type ShopProfile = {
   openingHours: { weekday: number; open: string | null; close: string | null }[];
   services: { id: string; name: string; duration_minutes: number; price_kurus: number; price_is_starting_from: boolean }[];
   staff: { id: string; display_name: string; service_ids: string[] }[];
+  posts?: HaircutPost[];
+  paymentAtShop?: boolean;
 };
+
+export type RatingsSummary = { count: number; rating: number | null; distribution: number[]; ratings: Rating[] };
 
 export type Slot = { startsAt: string; instantConfirmation: boolean; staff: { id: string; durationMinutes: number }[] };
 export type Availability = { date: string; totalPriceKurus: number; priceIsStartingFrom: boolean; slots: Slot[] };

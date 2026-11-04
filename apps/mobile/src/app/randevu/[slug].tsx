@@ -28,7 +28,8 @@ const STEPS: { key: Exclude<Step, 'done'>; label: string }[] = [
  * the side it comes from; Android's back button steps back.
  */
 export default function BookingScreen() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+  // A staff member's "Randevu al" on the salon page adds ?personel=<id> (as on the website).
+  const { slug, personel } = useLocalSearchParams<{ slug: string; personel?: string }>();
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<ShopProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,9 +45,15 @@ export default function BookingScreen() {
 
   useEffect(() => {
     api<ShopProfile>(`/public/shops/${slug}`)
-      .then(setProfile)
+      .then((p) => {
+        setProfile(p);
+        if (personel && p.staff.some((m) => m.id === personel)) setStaffId(personel);
+      })
       .catch((err) => setError(errorMessage(err)));
-  }, [slug]);
+  }, [slug, personel]);
+
+  const presetStaff = profile?.staff.find((m) => m.id === personel) ?? null;
+  const skipStaff = Boolean(presetStaff && staffId === presetStaff.id);
 
   const go = useCallback(
     (next: Step) => {
@@ -60,10 +67,10 @@ export default function BookingScreen() {
   const back = useCallback(() => {
     setNotice(null);
     if (step === 'staff') go('services');
-    else if (step === 'time') go('staff');
+    else if (step === 'time') go(skipStaff ? 'services' : 'staff');
     else if (step === 'confirm') go('time');
     else router.back();
-  }, [step, go]);
+  }, [step, go, skipStaff]);
 
   // Android's back button steps back through the flow; after booking it leaves.
   useEffect(() => {
@@ -92,10 +99,24 @@ export default function BookingScreen() {
   }
   if (!profile) return <PageSkeleton />;
 
-  const currentIndex = STEPS.findIndex((s) => s.key === step);
+  // With a chosen staff member who offers every picked service, the Personel step is skipped (as on the website).
+  const goToStaffOrTime = () => {
+    setSlot(null);
+    if (presetStaff && serviceIds.every((id) => presetStaff.service_ids.includes(id))) {
+      setStaffId(presetStaff.id);
+      return go('time');
+    }
+    if (presetStaff) {
+      setNotice(`${presetStaff.display_name} seçtiğiniz hizmetlerin hepsini vermiyor. Başka bir personel seçin.`);
+      setStaffId(null);
+    }
+    go('staff');
+  };
+  const visibleSteps = skipStaff ? STEPS.filter((s) => s.key !== 'staff') : STEPS;
+  const currentIndex = visibleSteps.findIndex((s) => s.key === step);
   const primary =
     step === 'services'
-      ? { label: 'Devam et', disabled: selected.length === 0, onPress: () => (setSlot(null), go('staff')) }
+      ? { label: 'Devam et', disabled: selected.length === 0, onPress: goToStaffOrTime }
       : step === 'staff'
         ? { label: 'Saat seç', disabled: false, onPress: () => (setSlot(null), go('time')) }
         : step === 'time'
@@ -117,7 +138,7 @@ export default function BookingScreen() {
         </Text>
         {step !== 'done' ? (
           <View style={styles.progress}>
-            {STEPS.map((s, i) => (
+            {visibleSteps.map((s, i) => (
               <View key={s.key} style={{ flex: 1, gap: 6 }}>
                 <View style={[styles.progressBar, i <= currentIndex && { backgroundColor: colors.primaryLight }]} />
                 <Text size={12} weight={i === currentIndex ? 'bold' : 'medium'} color={i <= currentIndex ? colors.white : colors.darkMuted}>
