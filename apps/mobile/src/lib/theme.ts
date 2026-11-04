@@ -37,6 +37,8 @@ export const fonts = {
 export const radius = { sm: 14, md: 20, pill: 999 };
 
 export const shadow = Platform.select({
-  android: { elevation: 2 },
+  // No elevation on Android: while a page fades in, Android draws elevation shadows as solid grey
+  // boxes behind the cards (founder's screen recording, 4 November 2026). Cards keep their border.
+  android: {},
   default: { shadowColor: '#0e1013', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
 });

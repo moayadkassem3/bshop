@@ -24,7 +24,12 @@ export function Appear({ index = 0, children, style }: { index?: number; childre
     progress.value = withDelay(Math.min(index, 6) * 50, withTiming(1, { duration: 320, easing: EASE }));
   }, [index, progress, reduced]);
   const animated = useAnimatedStyle(() => ({ opacity: progress.value, transform: [{ translateY: (1 - progress.value) * 16 }] }));
-  return <Animated.View style={[style, animated]}>{children}</Animated.View>;
+  // One layer while it fades (Android): its parts fade together instead of showing through each other.
+  return (
+    <Animated.View renderToHardwareTextureAndroid style={[style, animated]}>
+      {children}
+    </Animated.View>
+  );
 }
 
 /** A small celebration: the booking tick, a saved state. */
@@ -57,10 +62,11 @@ export function FocusIn({ children, style }: { children: ReactNode; style?: Styl
         return;
       }
       progress.value = 0;
-      progress.value = withTiming(1, { duration: 260, easing: EASE });
+      progress.value = withTiming(1, { duration: 200, easing: EASE });
     }, [progress, reduced]),
   );
-  const animated = useAnimatedStyle(() => ({ opacity: 0.35 + progress.value * 0.65, transform: [{ translateY: (1 - progress.value) * 18 }] }));
+  // Light and quick, as in Airbnb's tabs: a slight rise and fade-in, never a blank page.
+  const animated = useAnimatedStyle(() => ({ opacity: 0.6 + progress.value * 0.4, transform: [{ translateY: (1 - progress.value) * 10 }] }));
   return <Animated.View style={[style, animated]}>{children}</Animated.View>;
 }
 
