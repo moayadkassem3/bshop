@@ -24,12 +24,10 @@ export function Appear({ index = 0, children, style }: { index?: number; childre
     progress.value = withDelay(Math.min(index, 6) * 50, withTiming(1, { duration: 320, easing: EASE }));
   }, [index, progress, reduced]);
   const animated = useAnimatedStyle(() => ({ opacity: progress.value, transform: [{ translateY: (1 - progress.value) * 16 }] }));
-  // One layer while it fades (Android): its parts fade together instead of showing through each other.
-  return (
-    <Animated.View renderToHardwareTextureAndroid style={[style, animated]}>
-      {children}
-    </Animated.View>
-  );
+  // No renderToHardwareTextureAndroid here: Android caches that layer and does not redraw it when a
+  // photo inside finishes loading, so photos stayed blank (founder, 4 November 2026). The grey boxes it
+  // was meant to stop came from card elevation, which Android cards no longer use (lib/theme.ts).
+  return <Animated.View style={[style, animated]}>{children}</Animated.View>;
 }
 
 /** A small celebration: the booking tick, a saved state. */
