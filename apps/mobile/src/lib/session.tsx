@@ -6,6 +6,7 @@ import type { Me, Portal } from './types';
 
 const TOKEN_KEY = 'session-token';
 const LAST_MODE_KEY = 'last-mode';
+const ME_KEY = 'me-cache';
 
 /**
  * The mode used last on this phone (as the website's lastMode): kept after
@@ -51,6 +52,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const token = await SecureStore.getItemAsync(TOKEN_KEY).catch(() => null);
       configureApi({ token, onUnauthorized: () => void clear() });
       if (token) {
+        // Open at once with the account saved last time and refresh it in the background,
+        // instead of holding the splash screen until the server answers (founder: 4.2 s).
+        const saved = await SecureStore.getItemAsync(ME_KEY).catch(() => null);
+        const cached = saved ? (JSON.parse(saved) as Me) : null;
+        if (cached) {
+          setMe(cached);
+          setReady(true);
+          api<Me>('/me')
+            .then(setMe)
+            .catch(() => undefined);
+          return;
+        }
         try {
           setMe(await api<Me>('/me'));
         } catch {
@@ -60,6 +73,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setReady(true);
     })();
   }, [clear]);
+
+  // The account is saved on the phone for the next start (and forgotten on sign-out).
+  useEffect(() => {
+    if (!ready) return;
+    if (me) SecureStore.setItemAsync(ME_KEY, JSON.stringify(me)).catch(() => undefined);
+    else SecureStore.deleteItemAsync(ME_KEY).catch(() => undefined);
+  }, [me, ready]);
 
   const signIn = useCallback(async (token: string, next: Me, hasBusiness?: boolean) => {
     await SecureStore.setItemAsync(TOKEN_KEY, token);

@@ -1,15 +1,20 @@
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, useFonts } from '@expo-google-fonts/inter';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SessionProvider, useSession } from '@/lib/session';
 import { colors } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
+// On Android the Inter files are built into the app (expo-font plugin in app.json), so nothing
+// loads at start; iOS still loads them here until its build embeds them too.
+const RUNTIME_FONTS = Platform.OS === 'android' ? {} : { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold };
+
 /** The app: fonts and the stored session load behind the splash screen, then the tabs open. */
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold });
+  const [fontsLoaded] = useFonts(RUNTIME_FONTS);
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SessionProvider>
