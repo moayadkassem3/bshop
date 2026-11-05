@@ -27,7 +27,8 @@ try {
   // A mistyped secret must not keep the website down: notifications print until it is fixed.
   console.error(`FCM_SERVICE_ACCOUNT_JSON could not be read (${String(err)}).`);
 }
-if (!fcmAccount) console.warn('FCM_SERVICE_ACCOUNT_JSON is not set: push notifications are printed, not sent.');
+if (fcmAccount) console.log(`Push notifications: Firebase project ${fcmAccount.project_id}.`);
+else console.warn('FCM_SERVICE_ACCOUNT_JSON is not set: push notifications are printed, not sent.');
 const deps: Deps = {
   db,
   clock: systemClock,

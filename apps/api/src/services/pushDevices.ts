@@ -29,3 +29,24 @@ export async function pushTokensFor(q: Queryable, userId: string) {
 export async function forgetPushToken(q: Queryable, token: string) {
   await q.query('DELETE FROM push_devices WHERE token = $1', [token]);
 }
+
+/**
+ * "Bildirimleri test et" (Profil): an alarm sent straight to the person's own
+ * phones, with what went wrong if it could not be sent, so a phone that does not
+ * ring can be diagnosed without the server logs.
+ */
+export async function sendTestPush(deps: Deps, user: User) {
+  const phones = (await pushTokensFor(deps.db, user.id)).length;
+  if (deps.push.name === 'console') return { sent: false, reason: 'NOT_CONFIGURED' as const, phones };
+  if (!phones) return { sent: false, reason: 'NO_PHONE' as const, phones };
+  try {
+    await deps.push.send(user.id, {
+      title: 'Test alarmı',
+      body: 'Bildirimler bu telefonda çalışıyor. Yeni randevular böyle çalar.',
+      data: { kind: 'confirmed', template: 'test' },
+    });
+    return { sent: true, phones: (await pushTokensFor(deps.db, user.id)).length };
+  } catch (err) {
+    return { sent: false, reason: 'SEND_FAILED' as const, phones, error: String(err).slice(0, 500) };
+  }
+}

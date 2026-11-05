@@ -58,6 +58,14 @@ describe('push notifications (phase 3)', () => {
     expect(reminders[0]!.data).toMatchObject({ kind: 'customer', appointmentId: id });
   });
 
+  it('"Bildirimleri test et" sends an alarm to the person\'s own phones, or says why it cannot', async () => {
+    const me = await t.login(PHONES.customer, { names: { firstName: 'Ayşe', lastName: 'Kaya' } });
+    expect((await t.call('POST', '/me/push-test', { token: me })).body).toEqual({ sent: false, reason: 'NO_PHONE', phones: 0 });
+    await t.call('POST', '/me/push-device', { token: me, body: { token: TOKEN_A } });
+    expect((await t.call('POST', '/me/push-test', { token: me })).body).toEqual({ sent: true, phones: 1 });
+    expect(t.push.to(await userIdOf(PHONES.customer)).at(-1)).toMatchObject({ title: 'Test alarmı', data: { kind: 'confirmed' } });
+  });
+
   it('the SMS link is left out of the app notification', () => {
     expect(withoutLink('Salon: 26 Ekim Pazartesi 15:00 randevunuz onaylandı (Cumali). Ödeme salonda. Randevularınız: https://x.test/randevularim')).toBe(
       'Salon: 26 Ekim Pazartesi 15:00 randevunuz onaylandı (Cumali). Ödeme salonda.',

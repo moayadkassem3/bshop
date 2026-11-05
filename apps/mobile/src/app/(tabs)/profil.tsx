@@ -14,6 +14,7 @@ import { useBusinessShops } from '@/lib/business';
 import { daysLeft } from '@/lib/format';
 import { formatPhone } from '@/lib/phone';
 import type { BusinessShop } from '@/lib/types';
+import { testPush } from '@/lib/push';
 import { useSession } from '@/lib/session';
 import { colors, radius } from '@/lib/theme';
 
@@ -139,6 +140,7 @@ function Account() {
           {/* Salon owners manage their salon from İşletmelerim instead (as on the website). */}
           {!me.owns_shop ? <MenuRow icon="salonum" label="İşletmenizi kaydedin" onPress={() => router.push('/isletme-kaydi')} /> : null}
           {business && me.portal === 'owner' ? <MenuRow icon="card" label="Aboneliğim" onPress={() => router.push('/isletme/abonelik')} /> : null}
+          <PushTestRow />
           <MenuRow icon="doc" label="Yasal metinler" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/sozlesmeler`).catch(() => undefined)} last />
         </Card>
       </Appear>
@@ -257,6 +259,33 @@ function Section({ title }: { title: string }) {
     <Text size={13} weight="bold" color={colors.muted} style={styles.section}>
       {title.toLocaleUpperCase('tr-TR')}
     </Text>
+  );
+}
+
+/** Bildirimleri test et (phase 3): a test alarm to this phone, or what stops it. */
+function PushTestRow() {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+  if (Platform.OS !== 'android') return null;
+  return (
+    <>
+      <MenuRow
+        icon="clock"
+        label={busy ? 'Test ediliyor…' : 'Bildirimleri test et'}
+        onPress={async () => {
+          if (busy) return;
+          setBusy(true);
+          setResult(null);
+          setResult(await testPush());
+          setBusy(false);
+        }}
+      />
+      {result ? (
+        <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+          <Alert text={result.message} tone={result.ok ? 'success' : 'danger'} />
+        </View>
+      ) : null}
+    </>
   );
 }
 

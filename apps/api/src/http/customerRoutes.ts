@@ -13,7 +13,7 @@ import { id, timestamp } from './schemas.js';
 import { acceptOffer, declineOffer } from '../services/offers.js';
 import { deleteAccount, deletionPlan } from '../services/account.js';
 import { rateVisit } from '../services/ratings.js';
-import { registerPushDevice, removePushDevice } from '../services/pushDevices.js';
+import { registerPushDevice, removePushDevice, sendTestPush } from '../services/pushDevices.js';
 
 export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   // Ratings (v1.7): 1–5 stars for one's own completed visit.
@@ -52,6 +52,7 @@ export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     await registerPushDevice(deps, await auth(req), pushDevice.parse(req.body));
     return reply.status(204).send();
   });
+  app.post('/me/push-test', async (req) => sendTestPush(deps, await auth(req)));
   app.delete('/me/push-device', async (req, reply) => {
     await removePushDevice(deps, await auth(req), pushDevice.pick({ token: true }).parse(req.body).token);
     return reply.status(204).send();

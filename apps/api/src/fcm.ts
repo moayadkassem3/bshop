@@ -58,9 +58,13 @@ export function fcmPush(db: Db, account: ServiceAccount, fetchFn: typeof fetch =
   }
 
   return {
+    name: 'fcm',
     async send(userId: string, message: PushMessage) {
       const tokens = await pushTokensFor(db, userId);
-      if (!tokens.length) return;
+      if (!tokens.length) {
+        console.log(`[push] ${message.title}: no phone signed in for user ${userId}`);
+        return;
+      }
       // FCM data values must be strings.
       const data: Record<string, string> = { title: message.title, body: message.body };
       for (const [key, value] of Object.entries(message.data)) {
@@ -86,6 +90,7 @@ export function fcmPush(db: Db, account: ServiceAccount, fetchFn: typeof fetch =
       }
       // Failed on every phone: the notification is marked failed with the reason.
       if (failures.length && failures.length === tokens.length) throw new Error(`FCM: ${failures.join('; ')}`);
+      console.log(`[push] ${message.title}: sent to ${tokens.length - failures.length} of ${tokens.length} phone(s) of user ${userId}`);
     },
   };
 }

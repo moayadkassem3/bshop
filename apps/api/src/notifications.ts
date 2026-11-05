@@ -8,6 +8,8 @@ export interface SmsProvider {
 export type PushMessage = { title: string; body: string; data: Record<string, unknown> };
 
 export interface PushProvider {
+  /** 'fcm' when phones really get the messages; 'console' while they only print. */
+  readonly name?: 'fcm' | 'console';
   send(userId: string, message: PushMessage): Promise<void>;
 }
 
@@ -19,6 +21,7 @@ export const consoleSms: SmsProvider = {
 };
 
 export const consolePush: PushProvider = {
+  name: 'console',
   async send(userId, message) {
     console.log(`[push] ${userId}: ${message.title} — ${message.body}`);
   },
