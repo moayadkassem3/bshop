@@ -1,10 +1,10 @@
-import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert as NativeAlert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { BackLink } from '@/components/BackLink';
 import { Icon } from '@/components/Icon';
 import { Appear, SkeletonList } from '@/components/motion';
 import { SelectField } from '@/components/SelectField';
+import { PhotoTile } from '@/components/PhotoTile';
 import { ShopPicker } from '@/components/ShopPicker';
 import { Alert, Button, Card, Empty, Screen, Text } from '@/components/ui';
 import { api, API_URL, apiUpload, errorMessage } from '@/lib/api';
@@ -107,7 +107,7 @@ export default function MyWorkScreen() {
           <Card style={{ gap: 12 }}>
             {file ? (
               <Pressable onPress={() => void choose(false)} style={styles.preview}>
-                <Image source={{ uri: file }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} />
+                <PhotoTile uri={file} ratio={0.8} radius={radius.md} />
                 <View style={styles.change}>
                   <Text size={13} weight="bold" color={colors.white}>
                     Değiştir
@@ -159,7 +159,7 @@ export default function MyWorkScreen() {
             {posts.map((p, i) => (
               <Appear key={p.id} index={i} style={styles.cell}>
                 <View style={styles.photoWrap}>
-                  <Image source={{ uri: haircutPhotoUrl(p.id) }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} />
+                  <PhotoTile uri={haircutPhotoUrl(p.id)} ratio={5 / 4} />
                   <View style={styles.styleTag}>
                     <Text size={12} weight="bold" color={colors.white} numberOfLines={1}>
                       {p.style_name}
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primaryLight,
     backgroundColor: colors.surface2,
   },
-  preview: { height: 260, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surface2 },
+  preview: { borderRadius: radius.md, overflow: 'hidden' },
   change: { position: 'absolute', right: 10, bottom: 10, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: 'rgba(14,16,19,0.7)' },
   input: {
     minHeight: 48,
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   cell: { width: '48.5%', borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
-  photoWrap: { aspectRatio: 4 / 5, backgroundColor: colors.surface2 },
+  photoWrap: {},
   styleTag: { position: 'absolute', left: 8, bottom: 8, maxWidth: '85%', paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(14,16,19,0.7)' },
   cellFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 8 },
 });

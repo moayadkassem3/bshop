@@ -6,6 +6,7 @@ import { api, apiUpload, errorMessage } from '@/lib/api';
 import { pickPhotos } from '@/lib/photos';
 import { colors, radius } from '@/lib/theme';
 import { Appear, PopIn } from './motion';
+import { PhotoTile } from './PhotoTile';
 import { photoUrl } from './SalonCard';
 import { Alert, Button, Text } from './ui';
 
@@ -101,7 +102,7 @@ export function PhotoManager({ shopId, onCountChange }: { shopId: string; onCoun
         {(photos ?? []).map((p, i) => (
           <Appear key={p.id} index={i} style={styles.cell}>
             <Pressable onPress={() => setViewing(i)} style={({ pressed }) => [styles.photo, pressed && { opacity: 0.85 }]} accessibilityLabel={`Fotoğraf ${i + 1}`}>
-              <Image source={{ uri: photoUrl(p.id) }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} />
+              <PhotoTile uri={photoUrl(p.id)} radius={radius.sm} />
               {i === 0 ? (
                 <View style={styles.cover}>
                   <Text size={12} weight="bold" color={colors.white}>
@@ -193,7 +194,7 @@ function Viewer(props: { id: string; index: number; count: number; onClose: () =
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   cell: { width: '31.5%' },
-  photo: { aspectRatio: 1, borderRadius: radius.sm, overflow: 'hidden', backgroundColor: colors.surface2 },
+  photo: {},
   cover: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: 'rgba(14,16,19,0.75)' },
   viewer: { flex: 1, justifyContent: 'space-between', backgroundColor: '#08090b' },
   viewerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },

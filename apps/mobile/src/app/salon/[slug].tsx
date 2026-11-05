@@ -7,6 +7,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { Appear, PageSkeleton } from '@/components/motion';
+import { PhotoTile } from '@/components/PhotoTile';
 import { photoUrl } from '@/components/SalonCard';
 import { formatRating, StarRow } from '@/components/Stars';
 import { Alert, Button, Card, Text } from '@/components/ui';
@@ -174,7 +175,7 @@ export default function SalonScreen() {
                 <View style={styles.grid}>
                   {profile.photos.map((p, i) => (
                     <Pressable key={p.id} onPress={() => setViewer(i)} style={({ pressed }) => [styles.gridCell, pressed && { opacity: 0.85 }]} accessibilityLabel={`Fotoğraf ${i + 1}`}>
-                      <Image source={{ uri: photoUrl(p.id) }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} />
+                      <PhotoTile uri={photoUrl(p.id)} radius={10} />
                     </Pressable>
                   ))}
                 </View>
@@ -189,14 +190,13 @@ export default function SalonScreen() {
                 <View style={styles.posts}>
                   {profile.posts.map((p) => (
                     <Pressable key={p.id} onPress={() => router.push(`/randevu/${profile.slug}`)} style={({ pressed }) => [styles.post, pressed && { transform: [{ scale: 0.98 }] }]}>
-                      <View style={styles.postPhoto}>
-                        <Image source={{ uri: haircutPhotoUrl(p.id) }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} />
+                      <PhotoTile uri={haircutPhotoUrl(p.id)} ratio={5 / 4}>
                         <View style={styles.postTag}>
                           <Text size={12} weight="bold" color={colors.white} numberOfLines={1}>
                             {p.style_name}
                           </Text>
                         </View>
-                      </View>
+                      </PhotoTile>
                       <View style={styles.postFooter}>
                         <Text size={13} color={colors.ink2} numberOfLines={1} style={{ flex: 1 }}>
                           {p.caption ?? ''}
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
   staffAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   staffBook: { paddingHorizontal: 16, minHeight: 40, justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.primarySoft },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  gridCell: { width: '31.5%', aspectRatio: 1, borderRadius: 10, overflow: 'hidden', backgroundColor: colors.surface2 },
+  gridCell: { width: '31.5%' },
   posts: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   post: { width: '47.5%', borderRadius: radius.sm, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
   postPhoto: { aspectRatio: 4 / 5, backgroundColor: colors.surface2 },
