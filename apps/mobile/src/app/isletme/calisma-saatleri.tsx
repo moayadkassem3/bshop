@@ -182,7 +182,7 @@ export default function WorkingHoursScreen() {
           {owner && members.length > 1 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 8 }}>
               {members.map((m) => (
-                <Chip key={m.id} label={`${m.display_name}${m.id === shop?.member_id ? ' (siz)' : ''}`} on={m.id === memberId} onPress={() => choosePerson(m.id)} />
+                <Chip dark key={m.id} label={`${m.display_name}${m.id === shop?.member_id ? ' (siz)' : ''}`} on={m.id === memberId} onPress={() => choosePerson(m.id)} />
               ))}
             </ScrollView>
           ) : null}

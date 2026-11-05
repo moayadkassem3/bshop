@@ -212,10 +212,26 @@ export function Segmented<T extends string>(props: { options: { value: T; label:
   );
 }
 
-export function Chip(props: { label: string; on: boolean; onPress: () => void }) {
+/**
+ * A choice chip. On light pages the chosen one is ink; on the dark header (`dark`) the chosen one is
+ * the brand blue and the others dark grey, so the choice stands out (founder, 5 November 2026).
+ */
+export function Chip(props: { label: string; on: boolean; onPress: () => void; dark?: boolean }) {
+  const bg = props.dark ? (props.on ? colors.primary : colors.dark2) : props.on ? colors.ink : colors.surface;
+  const border = props.dark ? (props.on ? colors.primary : '#2c323c') : props.on ? colors.ink : colors.line;
+  const fg = props.dark ? (props.on ? colors.white : colors.darkMuted) : props.on ? colors.white : colors.ink;
   return (
-    <Pressable onPress={props.onPress} style={[styles.chip, props.on && { backgroundColor: colors.ink, borderColor: colors.ink }]}>
-      <Text size={14} weight="semibold" color={props.on ? colors.white : colors.ink}>
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ checked: props.on }}
+      onPress={() => {
+        if (!props.on) Haptics.selectionAsync().catch(() => undefined);
+        props.onPress();
+      }}
+      style={({ pressed }) => [styles.chip, { backgroundColor: bg, borderColor: border }, pressed && { transform: [{ scale: 0.97 }] }]}
+    >
+      <Text size={14} weight={props.on ? 'bold' : 'semibold'} color={fg}>
+        {props.on && props.dark ? '✓ ' : ''}
         {props.label}
       </Text>
     </Pressable>

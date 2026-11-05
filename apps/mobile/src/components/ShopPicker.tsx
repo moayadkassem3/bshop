@@ -15,7 +15,7 @@ export function ShopPicker({ shops, shop, onSelect }: { shops: BusinessShop[] | 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 6 }}>
       {shops.map((s) => (
-        <Chip key={s.id} label={s.name} on={s.id === shop?.id} onPress={() => onSelect(s.id)} />
+        <Chip dark key={s.id} label={s.name} on={s.id === shop?.id} onPress={() => onSelect(s.id)} />
       ))}
     </ScrollView>
   );
