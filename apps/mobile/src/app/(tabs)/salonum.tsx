@@ -1,6 +1,7 @@
 import { Redirect, router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, Share, StyleSheet, View } from 'react-native';
+import { AlarmSetup } from '@/components/AlarmSetup';
 import { Icon, type IconName } from '@/components/Icon';
 import { Appear, SkeletonList } from '@/components/motion';
 import { ShopPicker } from '@/components/ShopPicker';
@@ -57,6 +58,7 @@ export default function SalonumScreen() {
       {shop ? (
         <>
           <Notice shop={shop} />
+          <AlarmSetup />
           <Text size={20} weight="heavy">
             Bugün
           </Text>

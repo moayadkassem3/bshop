@@ -43,13 +43,40 @@ export async function queuePush(
     await q.query(
       `INSERT INTO notifications (shop_id, appointment_id, channel, recipient_user_id, template, body, payload, created_at)
        VALUES ($1, $2, 'push', $3, $4, $5, $6, $7)`,
-      [n.shopId, n.appointmentId ?? null, userId, n.template, n.body, { title: n.title, data: n.data ?? {} }, now],
+      // The salon goes with it, so the app's alarm can answer the request (phase 3).
+      [n.shopId, n.appointmentId ?? null, userId, n.template, n.body, { title: n.title, data: { ...(n.shopId ? { shopId: n.shopId } : {}), ...n.data } }, now],
     );
   }
 }
 
+/**
+ * Customer SMS about an appointment that also go to the app as a push (phase 3):
+ * the same words without the website link, under a short title.
+ */
+const CUSTOMER_PUSH: Record<string, string> = {
+  confirmed: 'Randevunuz onaylandı',
+  declined: 'Randevu talebiniz kabul edilemedi',
+  cancelledByShop: 'Randevunuz iptal edildi',
+  cancelled_staff_absence: 'Randevunuz iptal edildi',
+  time_offered: 'Salon başka bir saat önerdi',
+  reassigned_info: 'Randevunuzda değişiklik',
+  reassigned_choice: 'Randevunuzda değişiklik',
+};
+
+/** "… onaylandı (Ali). Ödeme salonda. Randevularınız: https://…" → "… onaylandı (Ali). Ödeme salonda." */
+export function withoutLink(body: string): string {
+  const text = body
+    .replace(/\s*(Randevularınız|[^.?!]*\biçin):\s*https?:\/\/\S+$/u, '')
+    .replace(/:\s*https?:\/\/\S+$/u, '')
+    .trim();
+  return /[.?!]$/.test(text) ? text : `${text}.`;
+}
+
 type Row = {
   id: string;
+  shop_id: string | null;
+  template: string;
+  appointment_id: string | null;
   channel: 'sms' | 'push';
   recipient_user_id: string | null;
   recipient_phone: string | null;
@@ -61,14 +88,22 @@ type Row = {
 export async function dispatchNotifications(deps: Deps, limit = 50): Promise<number> {
   return withTx(deps.db, async (tx) => {
     const { rows } = await tx.query<Row>(
-      `SELECT id, channel, recipient_user_id, recipient_phone, body, payload FROM notifications
+      `SELECT id, shop_id, template, appointment_id, channel, recipient_user_id, recipient_phone, body, payload FROM notifications
        WHERE status = 'queued' ORDER BY created_at LIMIT $1 FOR UPDATE SKIP LOCKED`,
       [limit],
     );
     for (const n of rows) {
       try {
-        if (n.channel === 'sms') await deps.sms.send(n.recipient_phone!, n.body);
-        else
+        if (n.channel === 'sms') {
+          await deps.sms.send(n.recipient_phone!, n.body);
+          const title = CUSTOMER_PUSH[n.template];
+          if (title && n.recipient_user_id) {
+            // The SMS is what counts; a push that fails does not fail it.
+            await deps.push
+              .send(n.recipient_user_id, { title, body: withoutLink(n.body), data: { kind: 'customer', shopId: n.shop_id, appointmentId: n.appointment_id, template: n.template } })
+              .catch((err) => console.error(`[push] ${n.template}: ${String(err)}`));
+          }
+        } else
           await deps.push.send(n.recipient_user_id!, {
             title: n.payload.title ?? '',
             body: n.body,

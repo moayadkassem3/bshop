@@ -51,6 +51,26 @@ export async function runTimers(deps: Deps) {
       });
       await queueResultSms(tx, deps, r.id, 'confirmed');
     }
+    // The customer's reminder in the app (phase 3): two hours before, once, and not for
+    // appointments booked less than two hours ahead.
+    const upcoming = await tx.query<{ id: string; shop_id: string; customer_id: string }>(
+      `UPDATE appointments SET customer_reminded_at = $1
+       WHERE status = 'confirmed' AND customer_id IS NOT NULL AND customer_reminded_at IS NULL
+         AND starts_at > $1 AND starts_at <= $1 + interval '2 hours' AND created_at < starts_at - interval '2 hours'
+       RETURNING id, shop_id, customer_id`,
+      [now],
+    );
+    for (const r of upcoming.rows) {
+      const c = await messageContext(tx, r.id);
+      await queuePush(tx, now, {
+        shopId: r.shop_id,
+        appointmentId: r.id,
+        userIds: [r.customer_id],
+        template: 'customer_reminder',
+        ...push.customerReminder({ shop: c.shop_name, when: c.when, staff: c.staff_name }),
+        data: { appointmentId: r.id, kind: 'customer' },
+      });
+    }
     const offersExpired = await expireOffers(tx, now);
 
     // A paid period that ended without a new payment: late, with the contract's 7-day grace (v1.7).

@@ -2,6 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import { AppState } from 'react-native';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api, configureApi, currentToken } from './api';
+import { unregisterPush } from './push';
 import type { Me, Portal } from './types';
 
 const TOKEN_KEY = 'session-token';
@@ -118,7 +119,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [me, fetchMe, applyMe]);
 
   const signOut = useCallback(async () => {
-    // The session ends on the server too (security, v1.7).
+    // This phone stops getting the account's notifications, and the session ends on the server too (security, v1.7).
+    await unregisterPush();
     await api('/auth/logout', { method: 'POST' }).catch(() => undefined);
     await clear();
   }, [clear]);

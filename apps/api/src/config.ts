@@ -15,6 +15,8 @@ export type Config = {
   demoMode: boolean;
   /** Phone numbers of our team, made admins at start-up (ADMIN_PHONES, comma-separated). */
   adminPhones: string[];
+  /** Firebase service account for push notifications (FCM_SERVICE_ACCOUNT_JSON); without it they print to the log. */
+  fcmServiceAccount: string | undefined;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -28,6 +30,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     uploadsDir: env.UPLOADS_DIR ?? 'uploads',
     photoStorage: env.PHOTO_STORAGE === 'database' ? 'database' : 'disk',
     demoMode: env.DEMO_MODE === 'true',
+    fcmServiceAccount: env.FCM_SERVICE_ACCOUNT_JSON,
     adminPhones: (env.ADMIN_PHONES ?? '').split(',').map((p) => p.trim()).filter(Boolean),
   };
 }

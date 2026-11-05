@@ -3,13 +3,15 @@ import { loadConfig } from './config.js';
 import { createPool, migrate } from './db.js';
 import type { Deps } from './deps.js';
 import { buildApp } from './http/app.js';
+import { fcmPush, parseServiceAccount } from './fcm.js';
 import { consolePush, consoleSms } from './notifications.js';
 import { improveShopLinks } from './services/shops.js';
 import { ensureAdmins } from './services/admin.js';
 import { photoStorageFor } from './storage.js';
 import { startWorker } from './worker.js';
 
-// SMS and push print to the console until the real providers are connected (milestone 4).
+// SMS prints to the console until the SMS provider is connected; push goes through Firebase
+// once FCM_SERVICE_ACCOUNT_JSON is set (phase 3), and prints too until then.
 const config = loadConfig();
 // Security (v1.7): outside this computer, sign-in codes must be hashed with a real secret.
 if (config.otpSecret === 'dev-only-otp-secret' && !/localhost|127\.0\.0\.1/.test(config.publicWebUrl)) {
@@ -18,11 +20,19 @@ if (config.otpSecret === 'dev-only-otp-secret' && !/localhost|127\.0\.0\.1/.test
 }
 if (config.demoMode) console.warn('DEMO_MODE is on: sign-in codes are shown on screen. Never use this for real customers.');
 const db = createPool(config.databaseUrl);
+let fcmAccount: ReturnType<typeof parseServiceAccount> = null;
+try {
+  fcmAccount = parseServiceAccount(config.fcmServiceAccount);
+} catch (err) {
+  // A mistyped secret must not keep the website down: notifications print until it is fixed.
+  console.error(`FCM_SERVICE_ACCOUNT_JSON could not be read (${String(err)}).`);
+}
+if (!fcmAccount) console.warn('FCM_SERVICE_ACCOUNT_JSON is not set: push notifications are printed, not sent.');
 const deps: Deps = {
   db,
   clock: systemClock,
   sms: consoleSms,
-  push: consolePush,
+  push: fcmAccount ? fcmPush(db, fcmAccount) : consolePush,
   photos: photoStorageFor(config, db),
   config,
 };

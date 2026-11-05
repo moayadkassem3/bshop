@@ -97,6 +97,11 @@ export const push = {
     title: 'Öneri yanıtsız kaldı',
     body: `${a.customer} · ${a.when}. Saat yeniden boş.`,
   }),
+  // To the customer in the app (phase 3), two hours before a confirmed appointment.
+  customerReminder: (a: { shop: string; when: string; staff: string }) => ({
+    title: 'Randevunuz yaklaşıyor',
+    body: `${a.shop} · ${a.when} (${a.staff}).`,
+  }),
   absenceNeedsReview: (a: { staff: string; count: number }) => ({
     title: `${a.staff} yok olarak işaretlendi`,
     body: `${a.count} randevu etkileniyor. İnceleyip uygulayın.`,

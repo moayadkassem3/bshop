@@ -145,7 +145,8 @@ export async function deleteAccount(deps: Deps, user: User) {
          is_platform_admin = false, deleted_at = $2 WHERE id = $1`,
       [user.id, now],
     );
-    // Signed out everywhere.
+    // Signed out everywhere, and no more notifications on any phone.
     await tx.query('DELETE FROM sessions WHERE user_id = $1', [user.id]);
+    await tx.query('DELETE FROM push_devices WHERE user_id = $1', [user.id]);
   });
 }
