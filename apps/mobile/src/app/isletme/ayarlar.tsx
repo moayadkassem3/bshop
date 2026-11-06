@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert as NativeAlert, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { BackLink } from '@/components/BackLink';
 import { Icon } from '@/components/Icon';
 import { MapPickerModal, MapPreview, type MapFocus, type Point } from '@/components/MapPicker';
 import { Appear, SkeletonList } from '@/components/motion';
 import { PhotoManager } from '@/components/PhotoManager';
+import { SAVE_BAR_SPACE, SaveBar, type SaveBarState } from '@/components/SaveBar';
 import { SelectField } from '@/components/SelectField';
 import { ShopPicker } from '@/components/ShopPicker';
 import { Alert, Badge, Button, Card, Field, Screen, Segmented, Text } from '@/components/ui';
@@ -27,43 +28,48 @@ type Audience = 'men' | 'women' | 'unisex';
 export default function ShopSettingsScreen() {
   const { shops, shop, selectShop, error } = useBusinessShops();
   const [tab, setTab] = useState<Tab>('salon');
+  const [bar, setBar] = useState<SaveBarState | null>(null);
   return (
-    <Screen
-      title="Salon bilgileri"
-      back={<BackLink label="Salonum" />}
-      header={
-        <>
-          <ShopPicker shops={shops} shop={shop} onSelect={selectShop} />
-          <Segmented
-            dark
-            value={tab}
-            onChange={setTab}
-            options={[
-              { value: 'salon', label: 'Salon' },
-              { value: 'hizmetler', label: 'Hizmetler' },
-              { value: 'personel', label: 'Personel' },
-            ]}
-          />
-        </>
-      }
-    >
-      {error ? <Alert text={error} /> : null}
-      {shop && shop.role !== 'owner' ? <Alert tone="info" text="Salon bilgilerini yalnızca salon sahibi ve ortaklar değiştirebilir." /> : null}
-      {shop && shop.role === 'owner' ? (
-        // Remounted per salon; tabs stay mounted so unsaved changes survive switching.
-        <View key={shop.id}>
-          <View style={{ display: tab === 'salon' ? 'flex' : 'none', gap: 14 }}>
-            <SalonTab shopId={shop.id} />
+    <View style={{ flex: 1 }}>
+      <Screen
+        title="Salon bilgileri"
+        back={<BackLink label="Salonum" />}
+        header={
+          <>
+            <ShopPicker shops={shops} shop={shop} onSelect={selectShop} />
+            <Segmented
+              dark
+              value={tab}
+              onChange={setTab}
+              options={[
+                { value: 'salon', label: 'Salon' },
+                { value: 'hizmetler', label: 'Hizmetler' },
+                { value: 'personel', label: 'Personel' },
+              ]}
+            />
+          </>
+        }
+      >
+        {error ? <Alert text={error} /> : null}
+        {shop && shop.role !== 'owner' ? <Alert tone="info" text="Salon bilgilerini yalnızca salon sahibi ve ortaklar değiştirebilir." /> : null}
+        {shop && shop.role === 'owner' ? (
+          // Remounted per salon; tabs stay mounted so unsaved changes survive switching.
+          <View key={shop.id}>
+            <View style={{ display: tab === 'salon' ? 'flex' : 'none', gap: 14 }}>
+              <SalonTab shopId={shop.id} onBar={setBar} />
+            </View>
+            <View style={{ display: tab === 'hizmetler' ? 'flex' : 'none', gap: 12 }}>
+              <ServicesTab shopId={shop.id} />
+            </View>
+            <View style={{ display: tab === 'personel' ? 'flex' : 'none', gap: 12 }}>
+              <StaffTab shopId={shop.id} myMemberId={shop.member_id} />
+            </View>
           </View>
-          <View style={{ display: tab === 'hizmetler' ? 'flex' : 'none', gap: 12 }}>
-            <ServicesTab shopId={shop.id} />
-          </View>
-          <View style={{ display: tab === 'personel' ? 'flex' : 'none', gap: 12 }}>
-            <StaffTab shopId={shop.id} myMemberId={shop.member_id} />
-          </View>
-        </View>
-      ) : null}
-    </Screen>
+        ) : null}
+      </Screen>
+      {/* Salon tab: Kaydet stays at the bottom while scrolling, only when something changed. */}
+      <SaveBar state={bar} active={tab === 'salon'} />
+    </View>
   );
 }
 
@@ -121,13 +127,14 @@ function focusFor(city: string, district: string): MapFocus | null {
   return c ? { lat: c.lat, lng: c.lng, zoom: 10 } : null;
 }
 
-function SalonTab({ shopId }: { shopId: string }) {
+function SalonTab({ shopId, onBar }: { shopId: string; onBar: (bar: SaveBarState | null) => void }) {
   const [form, setForm] = useState<Form | null>(null);
   const [saved, setSaved] = useState<Form | null>(null);
   const [photoCount, setPhotoCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [picking, setPicking] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [justSaved, setJustSaved] = useState(false);
 
   useEffect(() => {
     api<Settings>(`/staff/shops/${shopId}/settings`)
@@ -140,6 +147,7 @@ function SalonTab({ shopId }: { shopId: string }) {
 
   const update = (patch: Partial<Form>) => {
     setMessage(null);
+    setJustSaved(false);
     setForm((f) => (f ? { ...f, ...patch } : f));
   };
 
@@ -166,7 +174,7 @@ function SalonTab({ shopId }: { shopId: string }) {
       });
       setForm(toForm(s));
       setSaved(toForm(s));
-      setMessage({ ok: true, text: 'Değişiklikler kaydedildi.' });
+      setJustSaved(true);
     } catch (err) {
       setMessage({ ok: false, text: err instanceof ApiError && err.code === 'VALIDATION' ? 'Bazı bilgiler eksik veya hatalı görünüyor.' : errorMessage(err) });
     } finally {
@@ -174,9 +182,40 @@ function SalonTab({ shopId }: { shopId: string }) {
     }
   }
 
+  const blocker = form ? formProblem(form) : null;
+  const changed = Boolean(form) && JSON.stringify(form) !== JSON.stringify(saved);
+
+  // “Değişiklikler kaydedildi” shows for a moment, then the bar leaves.
+  useEffect(() => {
+    if (!justSaved) return;
+    const timer = setTimeout(() => setJustSaved(false), 2200);
+    return () => clearTimeout(timer);
+  }, [justSaved]);
+
+  // The screen's save bar follows this form (latest save/reset through refs, so the bar never goes stale).
+  const actions = useRef({ save, reset: () => {} });
+  actions.current = {
+    save,
+    reset: () => {
+      setMessage(null);
+      setForm(saved);
+    },
+  };
+  const error = message && !message.ok && form ? message.text : null;
+  useEffect(() => {
+    onBar({
+      changed,
+      busy,
+      problem: changed ? blocker : null,
+      error,
+      saved: justSaved,
+      save: () => void actions.current.save(),
+      reset: () => actions.current.reset(),
+    });
+  }, [changed, busy, blocker, error, justSaved, onBar]);
+  useEffect(() => () => onBar(null), [onBar]);
+
   if (!form) return message ? <Alert text={message.text} /> : <SkeletonList rows={3} />;
-  const blocker = formProblem(form);
-  const changed = JSON.stringify(form) !== JSON.stringify(saved);
   const focus = focusFor(form.city, form.district);
 
   return (
@@ -230,15 +269,14 @@ function SalonTab({ shopId }: { shopId: string }) {
         />
       ) : null}
 
-      {blocker && changed ? <Alert tone="warning" text={blocker} /> : null}
-      {message ? <Alert tone={message.ok ? 'success' : 'danger'} text={message.text} /> : null}
-      <Button title={busy ? 'Kaydediliyor…' : changed ? 'Değişiklikleri kaydet' : 'Kaydedildi'} onPress={save} disabled={busy || !changed || Boolean(blocker)} />
       <Text size={13} color={colors.muted}>
         Salonunuzun bağlantısı ve QR kodu ad değişse de aynı kalır.
       </Text>
 
       <Section title={`Fotoğraflar (${photoCount}/12)`} />
       <PhotoManager shopId={shopId} onCountChange={setPhotoCount} />
+      {/* Room for the save bar, so it never covers the last photos. */}
+      {changed || justSaved ? <View style={{ height: SAVE_BAR_SPACE }} /> : null}
     </>
   );
 }

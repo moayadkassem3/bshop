@@ -531,7 +531,7 @@ describe('Keşfet map: nearby shops (v1.5)', () => {
 describe('subscription plans (v1.5)', () => {
   it('prices by number of staff', async () => {
     const { planForStaff } = await import('../src/domain/plans.js');
-    expect([1, 2, 3, 5, 6, 10].map((n) => planForStaff(n)?.monthlyPriceKurus)).toEqual([49900, 79900, 99900, 129900, 189900, 189900]);
+    expect([1, 2, 3, 5, 6, 10].map((n) => planForStaff(n)?.monthlyPriceKurus)).toEqual([50000, 80000, 100000, 130000, 190000, 190000]);
     expect(planForStaff(11)).toBeNull();
     const plans = (await t.call('GET', '/public/plans')).body;
     expect(plans.plans).toHaveLength(5);
@@ -542,7 +542,7 @@ describe('subscription plans (v1.5)', () => {
   it("shows each shop's plan to our team", async () => {
     const shop = await setupShop(t);
     const list = (await t.call('GET', '/admin/shops', { token: shop.tokens.admin })).body;
-    expect(list[0]).toMatchObject({ seats: 3, plan: { id: 'staff-3', monthlyPriceKurus: 99900 } });
+    expect(list[0]).toMatchObject({ seats: 3, plan: { id: 'staff-3', monthlyPriceKurus: 100000 } });
   });
 });
 
