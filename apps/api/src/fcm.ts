@@ -1,4 +1,4 @@
-import { createSign } from 'node:crypto';
+import { createPrivateKey, createSign } from 'node:crypto';
 import type { Db } from './db.js';
 import type { PushMessage, PushProvider } from './notifications.js';
 import { forgetPushToken, pushTokensFor } from './services/pushDevices.js';
@@ -6,19 +6,79 @@ import { forgetPushToken, pushTokensFor } from './services/pushDevices.js';
 /** The Firebase service account (FCM_SERVICE_ACCOUNT_JSON): only these fields are used. */
 export type ServiceAccount = { project_id: string; client_email: string; private_key: string; token_uri?: string };
 
+/** Why the Firebase key cannot be used; never includes any part of the key. */
+export type FcmKeyProblem = 'missing' | 'not_json' | 'google_services_file' | 'missing_fields' | 'bad_private_key';
+
+export class FcmKeyError extends Error {
+  constructor(readonly problem: FcmKeyProblem) {
+    super(`FCM_SERVICE_ACCOUNT_JSON: ${problem}`);
+  }
+}
+
+/** Real line breaks inside JSON strings (a pasted key whose "\\n" became new lines) made valid again. */
+function escapeNewlinesInStrings(text: string): string {
+  let out = '';
+  let inString = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i]!;
+    if (inString && c === '\\') {
+      out += c + (text[i + 1] ?? '');
+      i++;
+      continue;
+    }
+    if (c === '"') inString = !inString;
+    if (inString && (c === '\n' || c === '\r')) {
+      if (c === '\n') out += '\\n';
+      continue;
+    }
+    out += c;
+  }
+  return out;
+}
+
+function parseLenient(text: string): unknown {
+  const attempts = [text, escapeNewlinesInStrings(text)];
+  for (const attempt of attempts) {
+    try {
+      const value = JSON.parse(attempt) as unknown;
+      // Pasted as a JSON string ("{\"type\": ...}"): read it once more.
+      return typeof value === 'string' ? parseLenient(value) : value;
+    } catch {
+      // try the next form
+    }
+  }
+  throw new FcmKeyError('not_json');
+}
+
 /**
  * Reads FCM_SERVICE_ACCOUNT_JSON: the JSON file from Firebase (Project settings →
  * Service accounts → Generate new private key), pasted as it is or base64-encoded.
+ * Forgives the usual copy-and-paste damage: surrounding quotes, line breaks that
+ * replaced "\\n", the whole file pasted as a string. Throws FcmKeyError with the
+ * reason, never with the key's text.
  */
 export function parseServiceAccount(raw: string | undefined): ServiceAccount | null {
-  const text = raw?.trim();
+  let text = raw?.replace(/^\uFEFF/, '').trim();
   if (!text) return null;
-  const json = text.startsWith('{') ? text : Buffer.from(text, 'base64').toString('utf8');
-  const account = JSON.parse(json) as ServiceAccount;
-  if (!account.project_id || !account.client_email || !account.private_key) {
-    throw new Error('FCM_SERVICE_ACCOUNT_JSON is missing project_id, client_email or private_key');
+  if (/^(['`])[\s\S]*\1$/.test(text)) text = text.slice(1, -1).trim();
+  if (!text.startsWith('{') && !text.startsWith('"')) {
+    const decoded = Buffer.from(text, 'base64').toString('utf8').trim();
+    if (!decoded.startsWith('{')) throw new FcmKeyError('not_json');
+    text = decoded;
   }
-  return account;
+  const value = parseLenient(text);
+  if (!value || typeof value !== 'object') throw new FcmKeyError('not_json');
+  const account = value as Partial<ServiceAccount> & { project_info?: unknown };
+  // The app's google-services.json is a different file from the service account key.
+  if (account.project_info) throw new FcmKeyError('google_services_file');
+  if (!account.project_id || !account.client_email || !account.private_key) throw new FcmKeyError('missing_fields');
+  const privateKey = account.private_key.replace(/\\n/g, '\n');
+  try {
+    createPrivateKey(privateKey);
+  } catch {
+    throw new FcmKeyError('bad_private_key');
+  }
+  return { project_id: account.project_id, client_email: account.client_email, private_key: privateKey, token_uri: account.token_uri };
 }
 
 const SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';

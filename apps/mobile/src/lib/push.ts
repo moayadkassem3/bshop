@@ -47,7 +47,7 @@ export async function registerPush(): Promise<string | null> {
   }
 }
 
-type TestResult = { sent: boolean; phones: number; reason?: 'NOT_CONFIGURED' | 'NO_PHONE' | 'SEND_FAILED'; error?: string };
+type TestResult = { sent: boolean; phones: number; reason?: 'NOT_CONFIGURED' | 'NO_PHONE' | 'SEND_FAILED'; error?: string; message?: string };
 
 /** "Bildirimleri test et": registers this phone again, then asks the server for a test alarm. */
 export async function testPush(): Promise<{ ok: boolean; message: string }> {
@@ -61,7 +61,7 @@ export async function testPush(): Promise<{ ok: boolean; message: string }> {
     return { ok: false, message: `Sunucuya ulaşılamadı: ${errorMessage(err)}` };
   }
   if (result.sent) return { ok: true, message: 'Test alarmı gönderildi; birkaç saniye içinde bu telefon çalmalı. Çalmazsa telefonun bildirim ve pil ayarlarına bakın.' };
-  if (result.reason === 'NOT_CONFIGURED') return { ok: false, message: 'Sunucu bildirim gönderemiyor: Firebase anahtarı (FCM_SERVICE_ACCOUNT_JSON) okunamadı.' };
+  if (result.reason === 'NOT_CONFIGURED') return { ok: false, message: `Sunucu bildirim gönderemiyor. ${result.message ?? 'Firebase anahtarı (FCM_SERVICE_ACCOUNT_JSON) okunamadı.'}` };
   if (result.reason === 'NO_PHONE') return { ok: false, message: 'Bu telefon sunucuda kayıtlı görünmüyor.' };
   return { ok: false, message: `Firebase gönderemedi: ${result.error ?? 'bilinmeyen hata'}` };
 }

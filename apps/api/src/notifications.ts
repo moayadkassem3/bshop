@@ -10,6 +10,8 @@ export type PushMessage = { title: string; body: string; data: Record<string, un
 export interface PushProvider {
   /** 'fcm' when phones really get the messages; 'console' while they only print. */
   readonly name?: 'fcm' | 'console';
+  /** Why Firebase is not used (console only): see fcm.ts FcmKeyProblem. */
+  readonly problem?: string;
   send(userId: string, message: PushMessage): Promise<void>;
 }
 

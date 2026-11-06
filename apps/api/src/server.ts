@@ -3,7 +3,7 @@ import { loadConfig } from './config.js';
 import { createPool, migrate } from './db.js';
 import type { Deps } from './deps.js';
 import { buildApp } from './http/app.js';
-import { fcmPush, parseServiceAccount } from './fcm.js';
+import { FcmKeyError, fcmPush, parseServiceAccount, type FcmKeyProblem } from './fcm.js';
 import { consolePush, consoleSms } from './notifications.js';
 import { improveShopLinks } from './services/shops.js';
 import { ensureAdmins } from './services/admin.js';
@@ -21,19 +21,21 @@ if (config.otpSecret === 'dev-only-otp-secret' && !/localhost|127\.0\.0\.1/.test
 if (config.demoMode) console.warn('DEMO_MODE is on: sign-in codes are shown on screen. Never use this for real customers.');
 const db = createPool(config.databaseUrl);
 let fcmAccount: ReturnType<typeof parseServiceAccount> = null;
+let fcmProblem: FcmKeyProblem | null = null;
 try {
   fcmAccount = parseServiceAccount(config.fcmServiceAccount);
+  if (!fcmAccount) fcmProblem = 'missing';
 } catch (err) {
   // A mistyped secret must not keep the website down: notifications print until it is fixed.
-  console.error(`FCM_SERVICE_ACCOUNT_JSON could not be read (${String(err)}).`);
+  fcmProblem = err instanceof FcmKeyError ? err.problem : 'not_json';
 }
 if (fcmAccount) console.log(`Push notifications: Firebase project ${fcmAccount.project_id}.`);
-else console.warn('FCM_SERVICE_ACCOUNT_JSON is not set: push notifications are printed, not sent.');
+else console.warn(`Push notifications are printed, not sent: FCM_SERVICE_ACCOUNT_JSON ${fcmProblem === 'missing' ? 'is not set' : `cannot be used (${fcmProblem})`}.`);
 const deps: Deps = {
   db,
   clock: systemClock,
   sms: consoleSms,
-  push: fcmAccount ? fcmPush(db, fcmAccount) : consolePush,
+  push: fcmAccount ? fcmPush(db, fcmAccount) : { ...consolePush, problem: fcmProblem ?? 'missing' },
   photos: photoStorageFor(config, db),
   config,
 };

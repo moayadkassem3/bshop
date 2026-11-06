@@ -30,6 +30,16 @@ export async function forgetPushToken(q: Queryable, token: string) {
   await q.query('DELETE FROM push_devices WHERE token = $1', [token]);
 }
 
+/** Shown by "Bildirimleri test et" when the server's Firebase key cannot be used (fcm.ts FcmKeyProblem). */
+const KEY_PROBLEMS: Record<string, string> = {
+  missing: 'Sunucuda FCM_SERVICE_ACCOUNT_JSON yok. Render’da bu adla, salon-randevu-test servisine eklenmiş olmalı.',
+  not_json: 'FCM_SERVICE_ACCOUNT_JSON okunamadı: değer, Firebase’den indirilen JSON dosyasının tamamı olmalı ({ ile başlayıp } ile biter).',
+  google_services_file:
+    'FCM_SERVICE_ACCOUNT_JSON’a google-services.json yapıştırılmış. Firebase → Proje ayarları → Hizmet hesapları → “Yeni özel anahtar oluştur” ile inen dosya gerekiyor.',
+  missing_fields: 'FCM_SERVICE_ACCOUNT_JSON eksik: project_id, client_email veya private_key yok. Hizmet hesabı dosyasının tamamını yapıştırın.',
+  bad_private_key: 'FCM_SERVICE_ACCOUNT_JSON’daki private_key bozulmuş. Dosyanın içeriğini değiştirmeden yeniden yapıştırın.',
+};
+
 /**
  * "Bildirimleri test et" (Profil): an alarm sent straight to the person's own
  * phones, with what went wrong if it could not be sent, so a phone that does not
@@ -37,7 +47,10 @@ export async function forgetPushToken(q: Queryable, token: string) {
  */
 export async function sendTestPush(deps: Deps, user: User) {
   const phones = (await pushTokensFor(deps.db, user.id)).length;
-  if (deps.push.name === 'console') return { sent: false, reason: 'NOT_CONFIGURED' as const, phones };
+  if (deps.push.name === 'console') {
+    const problem = deps.push.problem ?? 'missing';
+    return { sent: false, reason: 'NOT_CONFIGURED' as const, problem, message: KEY_PROBLEMS[problem] ?? KEY_PROBLEMS.not_json, phones };
+  }
   if (!phones) return { sent: false, reason: 'NO_PHONE' as const, phones };
   try {
     await deps.push.send(user.id, {

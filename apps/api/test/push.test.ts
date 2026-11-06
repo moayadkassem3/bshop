@@ -1,6 +1,6 @@
 import { generateKeyPairSync } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { fcmPush, parseServiceAccount } from '../src/fcm.js';
+import { FcmKeyError, fcmPush, parseServiceAccount } from '../src/fcm.js';
 import { withoutLink } from '../src/notifications.js';
 import { at, book, PHONES, setupShop, useTestApp } from './helpers.js';
 
@@ -64,6 +64,36 @@ describe('push notifications (phase 3)', () => {
     await t.call('POST', '/me/push-device', { token: me, body: { token: TOKEN_A } });
     expect((await t.call('POST', '/me/push-test', { token: me })).body).toEqual({ sent: true, phones: 1 });
     expect(t.push.to(await userIdOf(PHONES.customer)).at(-1)).toMatchObject({ title: 'Test alarmı', data: { kind: 'confirmed' } });
+  });
+
+  it('the Firebase key survives the usual copy-and-paste damage, and a wrong file is named', () => {
+    const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+    const pem = privateKey.export({ type: 'pkcs8', format: 'pem' }) as string;
+    const file = JSON.stringify({ type: 'service_account', project_id: 'p1', client_email: 'a@p1.iam.gserviceaccount.com', private_key: pem }, null, 2);
+    const problem = (raw: string) => {
+      try {
+        parseServiceAccount(raw);
+        return null;
+      } catch (err) {
+        return err instanceof FcmKeyError ? err.problem : 'other';
+      }
+    };
+    for (const raw of [
+      file,
+      `'${file}'`,
+      JSON.stringify(file), // the whole file pasted as a JSON string
+      file.replace(/\\n/g, '\n'), // "\n" in the key turned into real line breaks
+      Buffer.from(file).toString('base64'),
+      JSON.stringify({ ...JSON.parse(file), private_key: pem.replace(/\n/g, '\\n') }), // doubly escaped
+    ]) {
+      expect(parseServiceAccount(raw)?.project_id).toBe('p1');
+      expect(parseServiceAccount(raw)?.private_key).toContain('\n');
+    }
+    expect(parseServiceAccount('  ')).toBeNull();
+    expect(problem('{"project_info": {"project_id": "p1"}, "client": []}')).toBe('google_services_file');
+    expect(problem('{"project_id": "p1"}')).toBe('missing_fields');
+    expect(problem('not a key')).toBe('not_json');
+    expect(problem(JSON.stringify({ ...JSON.parse(file), private_key: 'broken' }))).toBe('bad_private_key');
   });
 
   it('the SMS link is left out of the app notification', () => {
