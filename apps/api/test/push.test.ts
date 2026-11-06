@@ -81,6 +81,7 @@ describe('push notifications (phase 3)', () => {
     for (const raw of [
       file,
       `'${file}'`,
+      `FCM_SERVICE_ACCOUNT_JSON : ${file}`,
       JSON.stringify(file), // the whole file pasted as a JSON string
       file.replace(/\\n/g, '\n'), // "\n" in the key turned into real line breaks
       Buffer.from(file).toString('base64'),

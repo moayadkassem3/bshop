@@ -60,6 +60,8 @@ function parseLenient(text: string): unknown {
 export function parseServiceAccount(raw: string | undefined): ServiceAccount | null {
   let text = raw?.replace(/^\uFEFF/, '').trim();
   if (!text) return null;
+  // The variable's name pasted into the value too ("FCM_SERVICE_ACCOUNT_JSON : {...}").
+  text = text.replace(/^FCM_SERVICE_ACCOUNT_JSON\s*[:=]\s*/i, '');
   if (/^(['`])[\s\S]*\1$/.test(text)) text = text.slice(1, -1).trim();
   if (!text.startsWith('{') && !text.startsWith('"')) {
     const decoded = Buffer.from(text, 'base64').toString('utf8').trim();
