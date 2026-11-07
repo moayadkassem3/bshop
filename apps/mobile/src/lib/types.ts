@@ -61,6 +61,8 @@ export type BusinessShop = {
 
 export type HaircutPost = { id: string; style: string; style_name: string; caption: string | null; width: number; height: number; created_at: string; like_count: number };
 export type HaircutStyle = { key: string; name: string; audience: 'men' | 'women' };
+/** A post in Popüler kesimler, with the salon that made it. */
+export type PopularPost = HaircutPost & { shop_name: string; shop_slug: string; shop_verified?: boolean; district: string | null; city: string | null };
 
 export type Member = { id: string; display_name: string; active: boolean; bookable: boolean };
 

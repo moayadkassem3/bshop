@@ -7,14 +7,16 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { Appear, PageSkeleton } from '@/components/motion';
+import { HaircutCard } from '@/components/HaircutCard';
 import { PhotoCarousel } from '@/components/PhotoCarousel';
 import { PhotoTile } from '@/components/PhotoTile';
 import { photoUrl } from '@/components/SalonCard';
 import { formatRating, StarRow } from '@/components/Stars';
 import { Alert, Button, Card, Text } from '@/components/ui';
-import { api, API_URL, errorMessage } from '@/lib/api';
+import { api, errorMessage } from '@/lib/api';
 import { formatDuration, formatPrice } from '@/lib/format';
 import { formatPhone } from '@/lib/phone';
+import { useLikes } from '@/lib/likes';
 import { useSession } from '@/lib/session';
 import { colors, radius } from '@/lib/theme';
 import { AUDIENCE, type RatingsSummary, type ShopProfile } from '@/lib/types';
@@ -40,6 +42,7 @@ export default function SalonScreen() {
   const [favorite, setFavorite] = useState<boolean | null>(null);
   const [ratings, setRatings] = useState<RatingsSummary | null>(null);
   const [viewer, setViewer] = useState<number | null>(null);
+  const { liked, toggle: toggleLike } = useLikes();
 
   const load = useCallback(async () => {
     try {
@@ -192,23 +195,9 @@ export default function SalonScreen() {
                 <SectionTitle>Çalışmalarımız</SectionTitle>
                 <View style={styles.posts}>
                   {profile.posts.map((p) => (
-                    <Pressable key={p.id} onPress={() => router.push(`/randevu/${profile.slug}`)} style={({ pressed }) => [styles.post, pressed && { transform: [{ scale: 0.98 }] }]}>
-                      <PhotoTile uri={haircutPhotoUrl(p.id)} ratio={5 / 4}>
-                        <View style={styles.postTag}>
-                          <Text size={12} weight="bold" color={colors.white} numberOfLines={1}>
-                            {p.style_name}
-                          </Text>
-                        </View>
-                      </PhotoTile>
-                      <View style={styles.postFooter}>
-                        <Text size={13} color={colors.ink2} numberOfLines={1} style={{ flex: 1 }}>
-                          {p.caption ?? ''}
-                        </Text>
-                        <Text size={13} weight="semibold" color={colors.ink2}>
-                          ♥ {p.like_count}
-                        </Text>
-                      </View>
-                    </Pressable>
+                    <View key={p.id} style={{ width: '47.5%' }}>
+                      <HaircutCard post={p} liked={liked.has(p.id)} onToggleLike={toggleLike} onPress={() => router.push(`/randevu/${profile.slug}`)} />
+                    </View>
                   ))}
                 </View>
               </Card>
@@ -442,7 +431,6 @@ const initials = (name: string) =>
     .map((p) => p[0]?.toLocaleUpperCase('tr-TR') ?? '')
     .join('');
 const whatsappUrl = (phone: string) => `https://wa.me/${phone.replace(/^\+/, '')}`;
-const haircutPhotoUrl = (id: string) => `${API_URL}/public/haircut-photos/${id}`;
 
 const styles = StyleSheet.create({
   floatingBack: { position: 'absolute', left: 14, width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' },
@@ -461,10 +449,6 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   gridCell: { width: '31.5%' },
   posts: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  post: { width: '47.5%', borderRadius: radius.sm, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
-  postPhoto: { aspectRatio: 4 / 5, backgroundColor: colors.surface2 },
-  postTag: { position: 'absolute', left: 8, bottom: 8, maxWidth: '85%', paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.7)' },
-  postFooter: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 8 },
   track: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surface2, overflow: 'hidden' },
   fill: { height: 8, borderRadius: 4, backgroundColor: colors.star },
   reply: { padding: 10, borderRadius: radius.sm, backgroundColor: colors.surface2 },

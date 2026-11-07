@@ -1,12 +1,13 @@
 import { useCallback, useState } from 'react';
 import { Appear, SkeletonList } from '@/components/motion';
 import { SalonCard } from '@/components/SalonCard';
-import { Alert, Empty, Screen, Text } from '@/components/ui';
+import { router } from 'expo-router';
+import { PopularStrip } from '@/components/PopularStrip';
+import { Alert, Button, Empty, Screen, Text } from '@/components/ui';
 import { api, errorMessage } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { colors } from '@/lib/theme';
 import { usePolling } from '@/lib/usePolling';
-import { SignInFirst } from './salonum';
 
 type MyShop = {
   slug: string;
@@ -38,11 +39,21 @@ export default function FavoritesScreen() {
   }, [me]);
   const { refreshing, refresh } = usePolling(load, 60_000);
 
-  if (!me) return <SignInFirst />;
+  const audience = me?.gender === 'female' ? 'women' : me?.gender === 'male' ? 'men' : 'all';
+  // Signed out: the sign-in prompt, with Popüler kesimler still below it (as on the website).
+  if (!me)
+    return (
+      <Screen title="Favoriler" subtitle="Kuaförünüz bir dokunuş uzağınızda.">
+        <Empty title="Favorileriniz için giriş yapın" text="Telefon numaranızla Profil’den giriş yapabilirsiniz.">
+          <Button title="Giriş yap" onPress={() => router.push('/profil')} style={{ alignSelf: 'stretch', marginTop: 8 }} />
+        </Empty>
+        <PopularStrip audience={audience} />
+      </Screen>
+    );
   const favorites = shops?.filter((s) => s.favorite) ?? [];
   const visited = shops?.filter((s) => !s.favorite) ?? [];
   return (
-    <Screen title="Favoriler" onRefresh={refresh} refreshing={refreshing}>
+    <Screen title="Favoriler" subtitle="Kuaförünüz bir dokunuş uzağınızda." onRefresh={refresh} refreshing={refreshing}>
       {error ? <Alert text={error} /> : null}
       {!shops && !error ? <SkeletonList rows={3} /> : null}
       {shops && shops.length === 0 ? (
@@ -62,6 +73,7 @@ export default function FavoritesScreen() {
           <SalonCard salon={s} />
         </Appear>
       ))}
+      <PopularStrip audience={audience} />
     </Screen>
   );
 }

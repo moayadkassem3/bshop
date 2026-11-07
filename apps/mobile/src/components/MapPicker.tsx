@@ -1,7 +1,7 @@
 import { Camera, Map, type CameraRef } from '@maplibre/maplibre-react-native';
 import * as Location from 'expo-location';
 import { useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { colors, radius } from '@/lib/theme';
@@ -27,6 +27,20 @@ export function Pin({ size = 44, faded = false }: { size?: number; faded?: boole
   );
 }
 
+/**
+ * The map data's credit (OpenStreetMap's licence asks for it), as small text instead
+ * of MapLibre's (i) button (founder, 8 November 2026).
+ */
+export function MapCredit({ style }: { style?: StyleProp<ViewStyle> }) {
+  return (
+    <View pointerEvents="none" style={[{ position: 'absolute' }, style]}>
+      <Text size={9} color="rgba(14,20,35,0.5)">
+        © OpenStreetMap
+      </Text>
+    </View>
+  );
+}
+
 /** A still map with the pin: tapping it opens the full-screen picker. */
 export function MapPreview(props: { point: Point | null; focus: MapFocus | null; onPress: () => void }) {
   const at = props.point ? { ...props.point, zoom: 16 } : (props.focus ?? TURKIYE);
@@ -48,6 +62,7 @@ export function MapPreview(props: { point: Point | null; focus: MapFocus | null;
         >
           <Camera initialViewState={{ center: [at.lng, at.lat], zoom: at.zoom }} />
         </Map>
+        <MapCredit style={{ top: 6, right: 8 }} />
       </View>
       <View pointerEvents="none" style={styles.centerPin}>
         <Pin faded={!props.point} />
@@ -103,7 +118,7 @@ export function MapPickerModal(props: { visible: boolean; point: Point | null; f
           touchPitch={false}
           compass={false}
           logo={false}
-          attributionPosition={{ bottom: 150 + insets.bottom, left: 8 }}
+          attribution={false}
           onRegionDidChange={(e) => {
             const [lng, lat] = e.nativeEvent.center;
             setCenter({ lat, lng });
@@ -112,6 +127,7 @@ export function MapPickerModal(props: { visible: boolean; point: Point | null; f
         >
           <Camera ref={camera} initialViewState={{ center: [start.lng, start.lat], zoom: start.zoom }} />
         </Map>
+        <MapCredit style={{ bottom: 150 + insets.bottom + 6, left: 10 }} />
         {/* The pin's tip marks the spot: it sits half its height above the centre. */}
         <View pointerEvents="none" style={[styles.centerPin, { marginTop: -22 }]}>
           <Pin size={48} faded={!moved} />

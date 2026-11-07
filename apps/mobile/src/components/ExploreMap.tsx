@@ -17,7 +17,7 @@ import { colors, fonts, radius } from '@/lib/theme';
 import { AUDIENCE, type BusinessShop, type NearbyShop } from '@/lib/types';
 import { Icon } from './Icon';
 import { LogoMark } from './LogoMark';
-import { MAP_STYLE } from './MapPicker';
+import { MapCredit, MAP_STYLE } from './MapPicker';
 import { Appear, SkeletonList } from './motion';
 import { photoUrl } from './SalonCard';
 import { Alert, Button, Text } from './ui';
@@ -74,6 +74,7 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
       if (last) {
         setCenter(last);
         setUser(last);
+        lastHere.current = last;
       }
       // Refresh it quietly when already allowed; asking is left to "Konumumu kullan".
       const perm = await Location.getForegroundPermissionsAsync().catch(() => null);
@@ -82,21 +83,32 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The last position found, for the locate button to fly to at once every time it is pressed.
+  const lastHere = useRef<LatLng | null>(null);
+  const flyHere = (here: LatLng) => {
+    camera.current?.flyTo({ center: [here.lng, here.lat], zoom: 15, duration: 900 });
+    setCenter(here);
+  };
+
   const locate = useCallback(async (quiet = false, before: LatLng | null = null) => {
     if (!quiet) setLocating(true);
     setLocationError(null);
     try {
       const perm = quiet ? await Location.getForegroundPermissionsAsync() : await Location.requestForegroundPermissionsAsync();
       if (!perm.granted) throw new Error('denied');
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      // Pressing the button moves the map straight away (the second press used to wait for a
+      // new GPS fix that Android sometimes never delivers); a fresh fix follows if it comes.
+      const known = lastHere.current;
+      if (!quiet && known) flyHere(known);
+      const pos = await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }), 8000).catch(() => Location.getLastKnownPositionAsync({ maxAge: 10 * 60_000 }));
+      if (!pos) throw new Error('no position');
       const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      lastHere.current = here;
       setUser(here);
       SecureStore.setItemAsync(LOCATION_KEY, JSON.stringify(here)).catch(() => undefined);
-      // A quiet refresh only moves the map when the customer is somewhere new.
-      if (!quiet || !before || distanceMeters(before, here) > 300) {
-        camera.current?.flyTo({ center: [here.lng, here.lat], zoom: 15, duration: 900 });
-        setCenter(here);
-      }
+      // A quiet refresh only moves the map when the customer is somewhere new; a press moves it
+      // again only when the fresh position differs from where it already flew.
+      if (quiet ? !before || distanceMeters(before, here) > 300 : !known || distanceMeters(known, here) > 30) flyHere(here);
     } catch {
       if (!quiet) setLocationError('Konumunuza erişilemedi. Telefon ayarlarından konum iznini açabilirsiniz.');
     } finally {
@@ -185,7 +197,7 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
           touchPitch={false}
           compass={false}
           logo={false}
-          attributionPosition={{ bottom: closedH + 8, left: 8 }}
+          attribution={false}
           contentInset={{ top: topHeight, bottom: closedH }}
           onPress={() => {
             if (Date.now() - pinTap.current > 400) setSelected(null);
@@ -270,6 +282,7 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
         </Pressable>
       </View>
 
+      {start ? <MapCredit style={{ bottom: closedH + 6, left: 12 }} /> : null}
       <Animated.View style={[styles.locate, locateStyle]}>
         <Pressable onPress={() => (home ? goHome() : void locate())} accessibilityLabel={home ? 'Salonuma git' : 'Konumuma git'} style={styles.locateInner} hitSlop={6}>
           <Icon name="locate" size={22} color={colors.primary} strokeWidth={2} />
@@ -495,3 +508,20 @@ const styles = StyleSheet.create({
   userHalo: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(31,72,201,0.2)', alignItems: 'center', justifyContent: 'center' },
   userDot: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.primary, borderWidth: 3, borderColor: colors.white },
 });
+
+/** Rejects when the promise has not settled within ms. */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
