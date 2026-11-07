@@ -21,13 +21,16 @@ import org.json.JSONObject
  * request ring as an alarm: the alarm sound, a full-screen view over the lock
  * screen, and, for a request, Onayla / Reddet; a request keeps ringing until it
  * is answered or dismissed (founder, after alert test 1). Everything else is an
- * ordinary notification. All messages about one appointment share one
- * notification, so a later one (automatically confirmed, cancelled) replaces
- * and silences the alarm.
+ * ordinary notification. Outside the salon's working hours the server marks a
+ * message quiet: it is shown without any sound and never as an alarm. All
+ * messages about one appointment share one notification, so a later one
+ * (automatically confirmed, cancelled) replaces and silences the alarm.
  */
 object Alerts {
   const val CHANNEL_ALARM = "randevu_alarm"
   const val CHANNEL_DEFAULT = "bildirimler"
+  /** Outside the salon's working hours: shown, but without sound, vibration or a banner. */
+  const val CHANNEL_QUIET = "sessiz_bildirimler"
   const val EXTRA_PAYLOAD = "salonPushPayload"
   const val EXTRA_ACTION = "salonPushAction"
   const val EXTRA_NOTIFICATION_ID = "salonPushNotificationId"
@@ -56,6 +59,16 @@ object Alerts {
         },
       )
     }
+    if (manager.getNotificationChannel(CHANNEL_QUIET) == null) {
+      manager.createNotificationChannel(
+        NotificationChannel(CHANNEL_QUIET, "Mesai dışı bildirimler", NotificationManager.IMPORTANCE_LOW).apply {
+          description = "Salonun çalışma saatleri dışında gelenler: sessiz."
+          setSound(null, null)
+          enableVibration(false)
+          lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+        },
+      )
+    }
     if (manager.getNotificationChannel(CHANNEL_DEFAULT) == null) {
       manager.createNotificationChannel(
         NotificationChannel(CHANNEL_DEFAULT, "Bildirimler", NotificationManager.IMPORTANCE_HIGH).apply {
@@ -71,7 +84,9 @@ object Alerts {
   fun show(context: Context, data: Map<String, String>) {
     ensureChannels(context)
     val kind = data["kind"] ?: ""
-    val alarm = kind in ALARM_KINDS
+    // Outside the salon's working hours the server marks it quiet: no alarm, no sound (founder, 7 November 2026).
+    val quiet = data["quiet"] == "1"
+    val alarm = kind in ALARM_KINDS && !quiet
     val answerable = kind in ANSWERABLE_KINDS
     val title = data["title"] ?: "Salon Randevu"
     val body = data["body"] ?: ""
@@ -92,12 +107,24 @@ object Alerts {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
       )
 
-    val builder = NotificationCompat.Builder(context, if (alarm) CHANNEL_ALARM else CHANNEL_DEFAULT)
+    val channel = when {
+      alarm -> CHANNEL_ALARM
+      quiet -> CHANNEL_QUIET
+      else -> CHANNEL_DEFAULT
+    }
+    val builder = NotificationCompat.Builder(context, channel)
       .setSmallIcon(context.applicationInfo.icon)
       .setContentTitle(title)
       .setContentText(body)
       .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-      .setPriority(if (alarm) NotificationCompat.PRIORITY_MAX else NotificationCompat.PRIORITY_HIGH)
+      .setPriority(
+        when {
+          alarm -> NotificationCompat.PRIORITY_MAX
+          quiet -> NotificationCompat.PRIORITY_LOW
+          else -> NotificationCompat.PRIORITY_HIGH
+        },
+      )
+      .setSilent(quiet)
       .setAutoCancel(true)
       .setContentIntent(open(null, 1))
     if (alarm) {
@@ -110,8 +137,8 @@ object Alerts {
       builder.addAction(0, "Reddet", open("reddet", 2)).addAction(0, "Onayla", open("onayla", 3))
     }
     val notification = builder.build()
-    // A request rings until it is answered or the notification is dismissed.
-    if (answerable) notification.flags = notification.flags or Notification.FLAG_INSISTENT
+    // A request rings until it is answered or the notification is dismissed (not when quiet).
+    if (answerable && alarm) notification.flags = notification.flags or Notification.FLAG_INSISTENT
     context.getSystemService(NotificationManager::class.java).notify(id, notification)
   }
 

@@ -105,6 +105,34 @@ describe('push notifications (phase 3)', () => {
     expect(problem(JSON.stringify({ ...JSON.parse(file), private_key: 'broken' }))).toBe('bad_private_key');
   });
 
+  it('outside the salon\'s working hours a push arrives quietly (no alarm, no sound)', async () => {
+    const shop = await setupShop(t); // open 10:00–21:00 every day
+    const me = await t.login(PHONES.customer, { names: { firstName: 'Ayşe', lastName: 'Kaya' } });
+    const cumaliId = (await t.db.query('SELECT user_id FROM shop_members WHERE id = $1', [shop.staff.cumali])).rows[0].user_id;
+    const request = (when: string) => book(t, shop, me, { serviceIds: [shop.services.haircut], staffId: shop.staff.cumali, startsAt: when });
+
+    // 09:00, before opening: the new request is quiet.
+    t.clock.set(at('09:00'));
+    const early = (await request(at('15:00'))).body.appointments[0].id;
+    await t.tick();
+    expect(t.push.to(cumaliId).find((m) => m.data.appointmentId === early)?.data).toMatchObject({ kind: 'request', quiet: '1' });
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
+    await t.call('POST', `${shop.base}/appointments/${early}/confirm`, { token: cumali });
+
+    // 12:00, open: it rings as an alarm again.
+    t.clock.set(at('12:00'));
+    const open = (await request(at('17:00'))).body.appointments[0].id;
+    await t.tick();
+    expect(t.push.to(cumaliId).find((m) => m.data.appointmentId === open)?.data.quiet).toBeUndefined();
+
+    // 22:30, closed: the request was not answered and is confirmed automatically; the customer hears quietly.
+    t.clock.set(at('22:30'));
+    await t.tick();
+    await t.tick();
+    const customerId = await userIdOf(PHONES.customer);
+    expect(t.push.to(customerId).find((m) => m.data.template === 'confirmed' && m.data.appointmentId === open)?.data).toMatchObject({ kind: 'customer', quiet: '1' });
+  });
+
   it('the SMS link is left out of the app notification', () => {
     expect(withoutLink('Salon: 26 Ekim Pazartesi 15:00 randevunuz onaylandı (Cumali). Ödeme salonda. Randevularınız: https://x.test/randevularim')).toBe(
       'Salon: 26 Ekim Pazartesi 15:00 randevunuz onaylandı (Cumali). Ödeme salonda.',

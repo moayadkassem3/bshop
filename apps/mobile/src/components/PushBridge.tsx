@@ -43,8 +43,9 @@ export function PushBridge() {
       SalonPush.addListener('onPush', (data) => {
         const push = data as PushData;
         emitPush(push);
-        // With the app open, a new request also opens the alarm screen (Android only shows a banner).
-        if (state.current.signedIn && (push.kind === 'request' || push.kind === 'reminder')) {
+        // With the app open, a new request also opens the alarm screen (Android only shows a banner);
+        // not outside the salon's working hours, when it arrives quietly.
+        if (state.current.signedIn && push.quiet !== '1' && (push.kind === 'request' || push.kind === 'reminder')) {
           showAlarm(push, notificationIdFor(push), null);
         }
       }),

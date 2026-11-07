@@ -10,6 +10,8 @@ export type PushData = {
   shopId?: string;
   appointmentId?: string;
   template?: string;
+  /** '1' outside the salon's working hours: shown silently, never as an alarm. */
+  quiet?: string;
 };
 
 /** New appointments and unanswered requests ring as an alarm (modules/salon-push Alerts.kt). */

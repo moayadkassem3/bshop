@@ -1,5 +1,6 @@
 import type { Deps } from './deps.js';
 import { withTx, type Queryable } from './db.js';
+import { shopOpenAt } from './services/quietHours.js';
 
 export interface SmsProvider {
   send(to: string, text: string): Promise<void>;
@@ -92,6 +93,14 @@ type Row = {
 /** Sends queued notifications. Safe to run from several workers at once. */
 export async function dispatchNotifications(deps: Deps, limit = 50): Promise<number> {
   return withTx(deps.db, async (tx) => {
+    // Outside the salon's working hours a push arrives silently: no alarm for the salon,
+    // no sound for the customer (founder, 7 November 2026). Looked up once per salon per pass.
+    const open = new Map<string, boolean>();
+    const quiet = async (shopId: string | null) => {
+      if (!shopId) return {};
+      if (!open.has(shopId)) open.set(shopId, await shopOpenAt(tx, shopId, deps.clock.now()));
+      return open.get(shopId) ? {} : { quiet: '1' };
+    };
     const { rows } = await tx.query<Row>(
       `SELECT id, shop_id, template, appointment_id, channel, recipient_user_id, recipient_phone, body, payload FROM notifications
        WHERE status = 'queued' ORDER BY created_at LIMIT $1 FOR UPDATE SKIP LOCKED`,
@@ -105,14 +114,14 @@ export async function dispatchNotifications(deps: Deps, limit = 50): Promise<num
           if (title && n.recipient_user_id) {
             // The SMS is what counts; a push that fails does not fail it.
             await deps.push
-              .send(n.recipient_user_id, { title, body: withoutLink(n.body), data: { kind: 'customer', shopId: n.shop_id, appointmentId: n.appointment_id, template: n.template } })
+              .send(n.recipient_user_id, { title, body: withoutLink(n.body), data: { kind: 'customer', shopId: n.shop_id, appointmentId: n.appointment_id, template: n.template, ...(await quiet(n.shop_id)) } })
               .catch((err) => console.error(`[push] ${n.template}: ${String(err)}`));
           }
         } else
           await deps.push.send(n.recipient_user_id!, {
             title: n.payload.title ?? '',
             body: n.body,
-            data: n.payload.data ?? {},
+            data: { ...(n.payload.data ?? {}), ...(await quiet(n.shop_id)) },
           });
         // Security (v1.7): a sign-in code is not kept readable in the database once sent.
         await tx.query(
