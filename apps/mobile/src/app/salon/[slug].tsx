@@ -2,11 +2,12 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { Dimensions, Linking, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Dimensions, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { Appear, PageSkeleton } from '@/components/motion';
+import { PhotoCarousel } from '@/components/PhotoCarousel';
 import { PhotoTile } from '@/components/PhotoTile';
 import { photoUrl } from '@/components/SalonCard';
 import { formatRating, StarRow } from '@/components/Stars';
@@ -106,8 +107,10 @@ export default function SalonScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}>
         {profile.photos.length ? (
           <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
-            {profile.photos.map((p) => (
-              <Image key={p.id} source={{ uri: photoUrl(p.id) }} style={{ width, height: width * 0.75 }} contentFit="cover" transition={150} />
+            {profile.photos.map((p, i) => (
+              <Pressable key={p.id} onPress={() => setViewer(i)} accessibilityLabel={`Fotoğraf ${i + 1}`}>
+                <Image source={{ uri: photoUrl(p.id) }} style={{ width, height: width * 0.75 }} contentFit="cover" transition={150} />
+              </Pressable>
             ))}
           </ScrollView>
         ) : (
@@ -298,7 +301,7 @@ export default function SalonScreen() {
         {directions ? <ActionButton icon="navigate" label="Yol tarifi" onPress={() => Linking.openURL(directions)} /> : null}
         <Button title="Randevu al" onPress={() => router.push(`/randevu/${profile.slug}`)} style={{ flex: 1 }} />
       </View>
-      {viewer !== null ? <PhotoViewer photos={profile.photos} start={viewer} onClose={() => setViewer(null)} /> : null}
+      {viewer !== null ? <PhotoCarousel photos={profile.photos} start={viewer} onClose={() => setViewer(null)} /> : null}
     </View>
   );
 }
@@ -432,38 +435,6 @@ function RatingsCard({ data }: { data: RatingsSummary }) {
 }
 
 /** Full-screen photos, swiped left and right, opened from the grid. */
-function PhotoViewer({ photos, start, onClose }: { photos: { id: string }[]; start: number; onClose: () => void }) {
-  const insets = useSafeAreaInsets();
-  const [index, setIndex] = useState(start);
-  return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={{ flex: 1, backgroundColor: '#08090b', justifyContent: 'center' }}>
-        <ScrollView
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          contentOffset={{ x: start * width, y: 0 }}
-          onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
-        >
-          {photos.map((p) => (
-            <Image key={p.id} source={{ uri: photoUrl(p.id) }} style={{ width, height: '100%' }} contentFit="contain" transition={150} />
-          ))}
-        </ScrollView>
-        <View style={[styles.viewerTop, { top: insets.top + 12 }]}>
-          <Text weight="bold" color={colors.white}>
-            {index + 1} / {photos.length}
-          </Text>
-          <Pressable onPress={onClose} hitSlop={12} accessibilityLabel="Kapat" style={styles.viewerClose}>
-            <Text size={22} color={colors.white}>
-              ×
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
 const initials = (name: string) =>
   name
     .split(/\s+/)
@@ -511,6 +482,4 @@ const styles = StyleSheet.create({
     borderTopColor: colors.line,
   },
   action: { width: 52, height: 50, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
-  viewerTop: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  viewerClose: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.12)' },
 });

@@ -132,7 +132,8 @@ export type ShopProfile = {
   longitude: number | null;
   audience: 'men' | 'women' | 'unisex';
   verified?: boolean;
-  photos: { id: string }[];
+  /** Sizes as uploaded, so the photo viewer keeps each photo's shape. */
+  photos: { id: string; width?: number; height?: number }[];
   openingHours: { weekday: number; open: string | null; close: string | null }[];
   services: { id: string; name: string; duration_minutes: number; price_kurus: number; price_is_starting_from: boolean }[];
   staff: { id: string; display_name: string; service_ids: string[] }[];

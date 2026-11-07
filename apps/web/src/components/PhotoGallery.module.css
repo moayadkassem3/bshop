@@ -69,20 +69,71 @@
   position: fixed;
   inset: 0;
   z-index: 100;
-  display: grid;
-  place-items: center;
-  background: rgb(11 17 32 / 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: rgb(11 17 32 / 0.88);
+  backdrop-filter: blur(6px);
+  animation: var(--dur-2) var(--ease-out) both lightbox-fade;
 }
 
-.full {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+.lightboxTop {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.lightboxTop > * {
+  pointer-events: auto;
+}
+
+/* The photos side by side; the middle one snaps to the centre and the next ones peek in. */
+.carousel {
+  --slide: min(80vw, 440px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-inline: calc((100% - var(--slide)) / 2);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  animation: var(--dur-3) var(--ease-out) both lightbox-pop;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.card {
+  --away: 0;
+  flex: 0 0 var(--slide);
+  padding: 0;
+  border: 0;
+  background: none;
+  scroll-snap-align: center;
+  cursor: pointer;
+  opacity: calc(1 - var(--away) * 0.5);
+  transform: scale(calc(1 - var(--away) * 0.12));
+  transition: opacity 120ms linear;
+}
+
+.card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 62vh;
+  object-fit: cover;
+  border-radius: 20px;
+  background: rgb(255 255 255 / 0.06);
 }
 
 .close,
 .nav {
-  position: absolute;
   display: grid;
   place-items: center;
   width: 44px;
@@ -95,26 +146,68 @@
   cursor: pointer;
 }
 
-.close {
-  top: 16px;
-  right: 16px;
+.nav {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
 }
 
 .prev {
   left: 12px;
-  top: 50%;
 }
 
 .next {
   right: 12px;
-  top: 50%;
+}
+
+/* On phones the photos are swiped; the arrows are for mouse users. */
+@media (hover: none) {
+  .nav {
+    display: none;
+  }
 }
 
 .lightboxCounter {
-  position: absolute;
-  bottom: 20px;
   color: #fff;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.35);
+  transition: width var(--dur-2) var(--ease-out);
+}
+
+.dots .dotOn {
+  width: 18px;
+  background: #fff;
+}
+
+@keyframes lightbox-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes lightbox-pop {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
 }
 
 .grid {
