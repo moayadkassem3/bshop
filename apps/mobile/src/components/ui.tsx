@@ -1,5 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
+import { Icon, type IconName } from './Icon';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -41,7 +42,7 @@ export function Text(props: { children?: ReactNode; size?: number; weight?: Weig
 type ButtonKind = 'primary' | 'secondary' | 'danger' | 'dangerOutline' | 'ghost';
 
 /** A large touch target with a light press feedback (scale and haptic), like the website's buttons. */
-export function Button(props: { title: string; onPress: () => void; kind?: ButtonKind; disabled?: boolean; busy?: boolean; style?: StyleProp<ViewStyle>; small?: boolean }) {
+export function Button(props: { title: string; onPress: () => void; kind?: ButtonKind; disabled?: boolean; busy?: boolean; style?: StyleProp<ViewStyle>; small?: boolean; icon?: IconName }) {
   const kind = props.kind ?? 'primary';
   const disabled = props.disabled || props.busy;
   const palette: Record<ButtonKind, { bg: string; border: string; fg: string }> = {
@@ -71,9 +72,12 @@ export function Button(props: { title: string; onPress: () => void; kind?: Butto
       {props.busy ? (
         <ActivityIndicator color={c.fg} />
       ) : (
-        <Text weight="bold" size={props.small ? 14 : 15} color={c.fg}>
-          {props.title}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {props.icon ? <Icon name={props.icon} size={props.small ? 16 : 19} color={c.fg} strokeWidth={2} /> : null}
+          <Text weight="bold" size={props.small ? 14 : 15} color={c.fg}>
+            {props.title}
+          </Text>
+        </View>
       )}
     </Pressable>
   );
@@ -238,9 +242,15 @@ export function Chip(props: { label: string; on: boolean; onPress: () => void; d
   );
 }
 
-export function Empty(props: { title: string; text?: string; children?: ReactNode }) {
+/** An empty list (as on the website): an icon in a soft blue circle, a title, a line and an action. */
+export function Empty(props: { title: string; text?: string; icon?: IconName; children?: ReactNode }) {
   return (
     <Card style={{ alignItems: 'center', gap: 6, paddingVertical: 28 }}>
+      {props.icon ? (
+        <View style={styles.emptyIcon}>
+          <Icon name={props.icon} size={28} color={colors.primary} strokeWidth={2} />
+        </View>
+      ) : null}
       <Text size={18} weight="bold" center>
         {props.title}
       </Text>
@@ -270,6 +280,7 @@ const styles = StyleSheet.create({
   alert: { padding: 12, borderRadius: radius.sm },
   header: { backgroundColor: colors.ink, paddingHorizontal: 16, paddingBottom: 22, gap: 6 },
   body: { padding: 16, gap: 12 },
+  emptyIcon: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft, marginBottom: 10 },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, gap: 8, paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.line },
   statusBand: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: colors.ink },
   input: {

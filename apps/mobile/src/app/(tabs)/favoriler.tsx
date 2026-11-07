@@ -44,7 +44,7 @@ export default function FavoritesScreen() {
   if (!me)
     return (
       <Screen title="Favoriler" subtitle="Kuaförünüz bir dokunuş uzağınızda.">
-        <Empty title="Favorileriniz için giriş yapın" text="Telefon numaranızla Profil’den giriş yapabilirsiniz.">
+        <Empty icon="favoriler" title="Favorileriniz için giriş yapın" text="Telefon numaranızla Profil’den giriş yapabilirsiniz.">
           <Button title="Giriş yap" onPress={() => router.push('/profil')} style={{ alignSelf: 'stretch', marginTop: 8 }} />
         </Empty>
         <PopularStrip audience={audience} />
@@ -58,7 +58,9 @@ export default function FavoritesScreen() {
       {!shops && !error ? <SkeletonList rows={3} /> : null}
       {shops && shops.length === 0 ? (
         <Appear>
-          <Empty title="Henüz favori salonunuz yok" text="Bir salonun sayfasında kalbe dokunarak favorilere ekleyebilirsiniz." />
+          <Empty icon="favoriler" title="Henüz favori kuaförünüz yok" text="Bir kuaförün sayfasındaki kalbe dokunun; burada hep elinizin altında olsun.">
+            <Button title="Kuaför keşfet" onPress={() => router.push('/')} style={{ alignSelf: 'center', paddingHorizontal: 28, marginTop: 8 }} />
+          </Empty>
         </Appear>
       ) : null}
       {favorites.length ? <Section title="Favorilerim" /> : null}

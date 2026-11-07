@@ -38,6 +38,13 @@ const ICONS = {
   back: <Path d="M15 5l-7 7 7 7" />,
   chevron: <Path d="M9 5l7 7-7 7" />,
   check: <Path d="M5 12.5l4.5 4.5L19 7.5" />,
+  // The website's calendar for empty lists (with the day dots).
+  calendarDots: (
+    <>
+      <Rect x="3" y="5" width="18" height="16" rx="2.5" />
+      <Path d="M3 10h18M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01" />
+    </>
+  ),
   close: <Path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />,
   pin: (
     <>

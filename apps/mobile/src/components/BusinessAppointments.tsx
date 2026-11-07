@@ -147,7 +147,7 @@ export function BusinessAppointments() {
                 <SkeletonList rows={2} />
               ) : requests.length === 0 ? (
                 <Appear>
-                  <Empty title="Bekleyen talep yok" text="Yeni randevu talepleri burada görünür. Sayfa kendiliğinden yenilenir." />
+                  <Empty icon="check" title="Bekleyen talep yok" text="Yeni randevu talepleri burada görünür. Sayfa kendiliğinden yenilenir." />
                 </Appear>
               ) : (
                 requests.map((a, i) => (

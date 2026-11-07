@@ -60,8 +60,8 @@ export function MyAppointments() {
       {error ? <Alert text={error} /> : null}
       {!items && !error ? <SkeletonList rows={3} /> : null}
       {items && shown.length === 0 ? (
-        <Empty title={when === 'upcoming' ? 'Yaklaşan randevunuz yok' : 'Geçmiş randevunuz yok'} text={when === 'upcoming' ? 'Keşfet’ten size yakın bir kuaför bulun.' : undefined}>
-          {when === 'upcoming' ? <Button title="Kuaför keşfet" onPress={() => router.push('/')} style={{ alignSelf: 'stretch', marginTop: 8 }} /> : null}
+        <Empty icon="calendarDots" title={when === 'upcoming' ? 'Yaklaşan randevunuz yok' : 'Geçmiş randevunuz yok'} text={when === 'upcoming' ? 'Keşfet’ten size yakın bir kuaför bulun.' : undefined}>
+          {when === 'upcoming' ? <Button icon="kesfet" title="Kuaför keşfet" onPress={() => router.push('/')} style={{ alignSelf: 'center', paddingHorizontal: 28, marginTop: 8 }} /> : null}
         </Empty>
       ) : null}
       {shown.map((a, i) => (
