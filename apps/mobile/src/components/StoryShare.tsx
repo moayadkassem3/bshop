@@ -12,7 +12,7 @@ import { Alert, Button, Card, Text } from './ui';
 const W = 360;
 const H = 640;
 const PREVIEW = 0.62;
-const C = { bg: '#0e1013', panel: '#1c2027', line: 'rgba(255,255,255,0.09)', accent: '#8daeff', blue: '#2b5cf0', muted: '#9aa0a9' };
+const C = { bg: '#0b1120', panel: '#172033', line: 'rgba(255,255,255,0.09)', accent: '#8daeff', blue: '#2b5cf0', muted: '#9aa0a9' };
 
 /** The words on the story, as on the website (lib/story.ts). */
 const STEPS = ['Okut', 'Saatini seç', 'Gel'];

@@ -912,7 +912,7 @@ const styles = StyleSheet.create({
   },
   photos: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   photo: { width: '31.5%', aspectRatio: 1, borderRadius: radius.sm, overflow: 'hidden', backgroundColor: colors.surface2 },
-  cover: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: 'rgba(14,16,19,0.75)' },
+  cover: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.75)' },
   line: { borderBottomWidth: 1, borderBottomColor: colors.line },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 58, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.sm },
   fold: { flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: 16, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.line },

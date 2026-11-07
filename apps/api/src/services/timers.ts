@@ -4,7 +4,7 @@ import { push } from '../messages.js';
 import { queuePush } from '../notifications.js';
 import { expireOffers } from './offers.js';
 import { sendSubscriptionReminders } from './subscriptionReminders.js';
-import { messageContext, ownerUserIds, queueResultSms } from './booking.js';
+import { appointmentPushData, messageContext, ownerUserIds, queueResultSms } from './booking.js';
 
 /**
  * Runs due reminders and automatic confirmations (handoff 4.4). Called every
@@ -29,7 +29,7 @@ export async function runTimers(deps: Deps) {
         userIds: [c.staff_user_id, ...(await ownerUserIds(tx, r.shop_id))],
         template: 'reminder',
         ...push.reminder({ ...c.appt, deadline: c.deadline }),
-        data: { appointmentId: r.id, kind: 'reminder' },
+        data: { appointmentId: r.id, kind: 'reminder', ...appointmentPushData(c) },
       });
     }
 

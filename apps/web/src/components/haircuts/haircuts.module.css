@@ -39,7 +39,7 @@
   max-width: calc(100% - 16px);
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgb(14 16 19 / 0.72);
+  background: rgb(11 17 32 / 0.72);
   color: #fff;
   font-size: 12px;
   font-weight: 750;
@@ -144,7 +144,7 @@
   position: absolute;
   inset: auto 0 0 0;
   padding: 22px 10px 8px;
-  background: linear-gradient(transparent, rgb(14 16 19 / 0.85));
+  background: linear-gradient(transparent, rgb(11 17 32 / 0.85));
   color: #fff;
   font-size: 12px;
   font-weight: 750;

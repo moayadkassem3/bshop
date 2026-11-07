@@ -998,6 +998,6 @@ const styles = StyleSheet.create({
   },
   photos: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   photo: { width: '31.5%', aspectRatio: 1, borderRadius: radius.sm, overflow: 'hidden', backgroundColor: colors.surface2 },
-  coverBadge: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: 'rgba(14,16,19,0.75)' },
+  coverBadge: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.75)' },
   doneMark: { width: 88, height: 88, borderRadius: 44, backgroundColor: colors.successSoft, alignItems: 'center', justifyContent: 'center' },
 });

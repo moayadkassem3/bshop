@@ -42,6 +42,14 @@ describe('push notifications (phase 3)', () => {
     await t.call('POST', `${shop.base}/appointments/${id}/confirm`, { token: cumali });
     await t.tick();
 
+    // The salon's alarm carries the details its new-appointment screen shows.
+    const cumaliId = (await t.db.query('SELECT user_id FROM shop_members WHERE id = $1', [shop.staff.cumali])).rows[0].user_id;
+    expect(t.push.to(cumaliId).find((m) => m.data.kind === 'request')?.data).toMatchObject({
+      appointmentId: id,
+      customer: 'Ayşe Kaya',
+      startsAt: new Date(at('15:00')).toISOString(),
+      deadlineAt: expect.any(String),
+    });
     const answer = t.push.to(customerId).find((m) => m.data.template === 'confirmed')!;
     expect(answer).toMatchObject({ title: 'Randevunuz onaylandı', data: { kind: 'customer', appointmentId: id } });
     expect(answer.body).not.toMatch(/https?:/);

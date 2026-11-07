@@ -59,6 +59,19 @@ export type AppointmentRow = {
 };
 
 /** Everything needed to word a message about one appointment. */
+/**
+ * The appointment's details for the app's new-appointment screen (phase 3): who,
+ * which services, when, and when it is confirmed automatically. Sent with the push.
+ */
+export function appointmentPushData(c: Awaited<ReturnType<typeof messageContext>>) {
+  return {
+    customer: c.appt.customer,
+    services: c.services,
+    startsAt: c.starts_at.toISOString(),
+    ...(c.deadline_at ? { deadlineAt: c.deadline_at.toISOString() } : {}),
+  };
+}
+
 export async function messageContext(q: Queryable, appointmentId: string) {
   const { rows } = await q.query<{
     shop_id: string;
@@ -302,7 +315,7 @@ export async function createBooking(
         userIds: [c.staff_user_id],
         template: appt.instant ? 'new_confirmed' : 'new_request',
         ...message,
-        data: { appointmentId: id, kind: appt.instant ? 'confirmed' : 'request' },
+        data: { appointmentId: id, kind: appt.instant ? 'confirmed' : 'request', ...appointmentPushData(c) },
       });
       if (appt.instant) await queueResultSms(tx, deps, id, 'confirmed');
     }

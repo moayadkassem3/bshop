@@ -460,7 +460,7 @@ function Glyph({ size, color }: { size: number; color: string }) {
   );
 }
 
-const shadow = { shadowColor: '#0e1013', shadowOpacity: 0.16, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4 };
+const shadow = { shadowColor: '#0b1120', shadowOpacity: 0.16, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4 };
 
 const styles = StyleSheet.create({
   top: { position: 'absolute', top: 0, left: 0, right: 0, gap: 10, paddingHorizontal: 16 },
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     backgroundColor: colors.surface,
-    shadowColor: '#0e1013',
+    shadowColor: '#0b1120',
     shadowOpacity: 0.14,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: -8 },

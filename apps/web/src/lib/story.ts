@@ -6,7 +6,7 @@ import { qrSvg } from './qr';
 const W = 1080;
 const H = 1920;
 const FONT = '"Inter Variable", system-ui, sans-serif';
-const C = { bg: '#0e1013', panel: '#1c2027', line: 'rgba(255,255,255,0.09)', white: '#ffffff', accent: '#8daeff', blue: '#2b5cf0', muted: '#9aa0a9', ink: '#0e1013' };
+const C = { bg: '#0b1120', panel: '#172033', line: 'rgba(255,255,255,0.09)', white: '#ffffff', accent: '#8daeff', blue: '#2b5cf0', muted: '#9aa0a9', ink: '#0e1013' };
 
 /** The words on the story (v1.7); the salon's name, code and link are filled in. */
 export const STORY_TEXT = {

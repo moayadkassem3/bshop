@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: 'Yakınınızdaki kuaförleri bulun, boş saatleri görün ve randevunuzu hemen oluşturun.',
 };
 
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#0e1013', viewportFit: 'cover' };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#0b1120', viewportFit: 'cover' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

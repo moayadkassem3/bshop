@@ -8,7 +8,7 @@ import { push, sms } from '../messages.js';
 import { queuePush, queueSms } from '../notifications.js';
 import { requireMember, requireOwner, requireSelfOrOwner } from './access.js';
 import type { User } from './auth.js';
-import { messageContext, ownerUserIds, type AppointmentRow } from './booking.js';
+import { appointmentPushData, messageContext, ownerUserIds, type AppointmentRow } from './booking.js';
 import { dayLoadMinutes, eligibleStaff, loadDaySchedules } from './schedule.js';
 import type { Shop } from './shops.js';
 
@@ -216,7 +216,7 @@ export async function applyAbsence(deps: Deps, user: User, shopId: string, absen
         userIds: [after.staff_user_id],
         template: 'reassigned_to_you',
         ...push.reassignedToYou(after.appt),
-        data: { appointmentId: appt.id, kind: appt.status === 'pending' ? 'request' : 'confirmed' },
+        data: { appointmentId: appt.id, kind: appt.status === 'pending' ? 'request' : 'confirmed', ...appointmentPushData(after) },
       });
       results.push({ appointmentId: appt.id, outcome: 'reassigned' });
     }

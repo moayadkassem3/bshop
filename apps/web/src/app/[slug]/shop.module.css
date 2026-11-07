@@ -18,7 +18,7 @@
   font-size: 20px;
   font-weight: 700;
   text-decoration: none;
-  box-shadow: 0 4px 14px rgb(14 16 19 / 0.2);
+  box-shadow: 0 4px 14px rgb(11 17 32 / 0.2);
 }
 
 .profileHeader {
@@ -300,7 +300,7 @@
   z-index: 40;
   background: var(--surface);
   border-top: 1px solid var(--line);
-  box-shadow: 0 -8px 24px rgb(14 16 19 / 0.06);
+  box-shadow: 0 -8px 24px rgb(11 17 32 / 0.06);
   padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
 }
 

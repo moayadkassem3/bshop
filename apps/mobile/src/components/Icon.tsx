@@ -37,6 +37,15 @@ const ICONS = {
   ),
   back: <Path d="M15 5l-7 7 7 7" />,
   chevron: <Path d="M9 5l7 7-7 7" />,
+  scissors: (
+    <>
+      <Circle cx="6" cy="6.5" r="2.8" />
+      <Circle cx="6" cy="17.5" r="2.8" />
+      <Path d="M8.3 8.2 20 19M8.3 15.8 20 5" />
+    </>
+  ),
+  check: <Path d="M5 12.5l4.5 4.5L19 7.5" />,
+  close: <Path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />,
   pin: (
     <>
       <Path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />

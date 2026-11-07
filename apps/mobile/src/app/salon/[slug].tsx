@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   posts: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   post: { width: '47.5%', borderRadius: radius.sm, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
   postPhoto: { aspectRatio: 4 / 5, backgroundColor: colors.surface2 },
-  postTag: { position: 'absolute', left: 8, bottom: 8, maxWidth: '85%', paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(14,16,19,0.7)' },
+  postTag: { position: 'absolute', left: 8, bottom: 8, maxWidth: '85%', paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.7)' },
   postFooter: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 8 },
   track: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surface2, overflow: 'hidden' },
   fill: { height: 8, borderRadius: 4, backgroundColor: colors.star },

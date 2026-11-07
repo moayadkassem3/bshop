@@ -8,7 +8,7 @@
   --bg: #f3f5f8;
   --surface: #ffffff;
   --surface-2: #f5f8ff;
-  --ink: #0e1013;
+  --ink: #0b1120;
   --ink-2: #3a3f48;
   --muted: #666c78;
   --line: #e1e5eb;
@@ -17,8 +17,8 @@
   --primary-ink: #ffffff;
   --primary-soft: #e7edfc;
   --primary-light: #8daeff;
-  --dark-2: #1c2027;
-  --dark-muted: #9aa0a9;
+  --dark-2: #172033;
+  --dark-muted: #9ba4b5;
   --success: #15803d;
   --success-soft: #e5f5ea;
   --warning: #b45309;
@@ -27,7 +27,7 @@
   --danger-soft: #fdecec;
   --radius: 20px;
   --radius-sm: 14px;
-  --shadow: 0 1px 2px rgb(14 16 19 / 0.04), 0 8px 24px rgb(14 16 19 / 0.05);
+  --shadow: 0 1px 2px rgb(11 17 32 / 0.04), 0 8px 24px rgb(11 17 32 / 0.05);
   /* Motion (v1.7): short and calm; everything off with “reduce motion”. */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);

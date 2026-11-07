@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   compact: { minHeight: 42, paddingHorizontal: 10, justifyContent: 'center', alignItems: 'center' },
-  backdrop: { flex: 1, backgroundColor: 'rgba(14,16,19,0.45)' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(11,17,32,0.45)' },
   sheet: { maxHeight: '75%', gap: 10, paddingTop: 8, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.surface },
   grab: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: colors.line, marginBottom: 4 },
   search: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, paddingHorizontal: 12, minHeight: 44, borderRadius: radius.sm, backgroundColor: colors.surface2 },

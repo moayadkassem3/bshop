@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface2,
   },
   preview: { borderRadius: radius.md, overflow: 'hidden' },
-  change: { position: 'absolute', right: 10, bottom: 10, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: 'rgba(14,16,19,0.7)' },
+  change: { position: 'absolute', right: 10, bottom: 10, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.7)' },
   input: {
     minHeight: 48,
     paddingHorizontal: 14,
@@ -214,6 +214,6 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   cell: { width: '48.5%', borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
   photoWrap: {},
-  styleTag: { position: 'absolute', left: 8, bottom: 8, maxWidth: '85%', paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(14,16,19,0.7)' },
+  styleTag: { position: 'absolute', left: 8, bottom: 8, maxWidth: '85%', paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.7)' },
   cellFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 8 },
 });
