@@ -78,30 +78,18 @@ export function MyAppointments() {
   return <List items={items} fresh={fresh} error={error} onChanged={load} />;
 }
 
-type Tab = 'appointments' | 'requests';
 type When = 'upcoming' | 'past';
 
-// Talepler: requests not settled yet (including a time the salon offered), and declined ones. Randevular: everything agreed.
-const isRequest = (a: CustomerAppointment) => a.status === 'pending' || a.status === 'offered' || a.status === 'declined';
+// As in the app (founder, 8 November 2026): one list. Yaklaşan holds everything still ahead,
+// requests waiting for an answer included (each card says where it stands); Geçmiş the rest.
 const isUpcoming = (a: CustomerAppointment, now: number) =>
-  ['pending', 'offered', 'confirmed'].includes(a.status) && new Date(a.starts_at).getTime() > now;
-
-const EMPTY: Record<Tab, Record<When, { title: string; text: string | null }>> = {
-  appointments: {
-    upcoming: { title: 'Yaklaşan randevun yok', text: 'Bir kuaför seçip randevu oluşturabilirsin.' },
-    past: { title: 'Geçmiş randevun yok', text: 'Tamamlanan randevuların burada görünür.' },
-  },
-  requests: {
-    upcoming: { title: 'Bekleyen talebin yok', text: 'Gönderdiğin talepler salon yanıtlayana kadar burada görünür.' },
-    past: { title: 'Geçmiş talebin yok', text: null },
-  },
-};
+  ['pending', 'offered', 'confirmed'].includes(a.status) && new Date(a.ends_at).getTime() > now;
 
 function Header({ children }: { children?: React.ReactNode }) {
   return (
     <header className={`page-header ${styles.header}`}>
       <div className="container narrow">
-        <h1>Randevular</h1>
+        <h1>Randevularım</h1>
         {children}
       </div>
     </header>
@@ -112,50 +100,26 @@ function List(props: { items: CustomerAppointment[] | null; fresh: Set<string>; 
   const now = Date.now();
   const all = props.items ?? [];
   const isFresh = (a: CustomerAppointment) => props.fresh.has(a.id);
-  // A change from the salon opens where it is: the right tab and Yaklaşan or Geçmiş.
+  // A change from the salon opens where it is: Yaklaşan or Geçmiş.
   const firstFresh = all.find(isFresh);
-  const waiting = all.filter((a) => (a.status === 'pending' || a.status === 'offered') && isUpcoming(a, now)).length;
-  const offers = all.some((a) => a.status === 'offered' && isUpcoming(a, now));
-  const [tab, setTab] = useState<Tab | null>(null);
   const [chosenWhen, setWhen] = useState<When | null>(null);
   const when: When = chosenWhen ?? (firstFresh && !isUpcoming(firstFresh, now) ? 'past' : 'upcoming');
-  // A new request opens on Talepler, so it is the first thing the customer sees after booking.
-  // An offered time waits for the customer's answer, so it opens Talepler too.
-  const shownTab: Tab =
-    tab ??
-    (firstFresh
-      ? isRequest(firstFresh)
-        ? 'requests'
-        : 'appointments'
-      : offers || (waiting && !all.some((a) => a.status === 'confirmed' && isUpcoming(a, now)))
-        ? 'requests'
-        : 'appointments');
-  const freshIn = (t: Tab, w?: When) => all.some((a) => isFresh(a) && (t === 'requests') === isRequest(a) && (!w || (w === 'upcoming') === isUpcoming(a, now)));
+  const freshIn = (w: When) => all.some((a) => isFresh(a) && (w === 'upcoming') === isUpcoming(a, now));
   const shown = all
-    .filter((a) => (shownTab === 'requests') === isRequest(a) && (when === 'upcoming') === isUpcoming(a, now))
-    // What the salon just changed comes first.
+    .filter((a) => (when === 'upcoming') === isUpcoming(a, now))
+    // Soonest first in Yaklaşan; what the salon just changed comes first either way.
+    .sort((a, b) => (when === 'upcoming' ? a.starts_at.localeCompare(b.starts_at) : 0))
     .sort((a, b) => Number(isFresh(b)) - Number(isFresh(a)));
-  const empty = EMPTY[shownTab][when];
 
   return (
     <>
-      <Header>
-        <div className={styles.segmented} role="tablist" aria-label="Randevular veya talepler">
-          {(['appointments', 'requests'] as const).map((t) => (
-            <button key={t} type="button" role="tab" aria-selected={shownTab === t} className={shownTab === t ? styles.segOn : ''} onClick={() => setTab(t)}>
-              {t === 'appointments' ? 'Randevular' : 'Talepler'}
-              {t === 'requests' && waiting > 0 && <span className={styles.count}>{waiting}</span>}
-              {freshIn(t) && <span className={styles.newDot} aria-label="yeni" />}
-            </button>
-          ))}
-        </div>
-      </Header>
+      <Header />
       <div className={`container narrow ${styles.body}`}>
         <div className={styles.chips} role="radiogroup" aria-label="Zaman">
           {(['upcoming', 'past'] as const).map((w) => (
             <button key={w} type="button" role="radio" aria-checked={when === w} className={`${styles.chip} ${when === w ? styles.chipOn : ''}`} onClick={() => setWhen(w)}>
               {w === 'upcoming' ? 'Yaklaşan' : 'Geçmiş'}
-              {freshIn(shownTab, w) && <span className={styles.newDot} aria-label="yeni" />}
+              {freshIn(w) && <span className={styles.newDot} aria-label="yeni" />}
             </button>
           ))}
         </div>
@@ -167,9 +131,9 @@ function List(props: { items: CustomerAppointment[] | null; fresh: Set<string>; 
               <span className={styles.emptyIcon} aria-hidden>
                 <CalendarIcon />
               </span>
-              <h2>{empty.title}</h2>
-              {empty.text && <p>{empty.text}</p>}
-              {shownTab === 'appointments' && when === 'upcoming' && (
+              <h2>{when === 'upcoming' ? 'Yaklaşan randevunuz yok' : 'Geçmiş randevunuz yok'}</h2>
+              {when === 'upcoming' && <p>Keşfet’ten size yakın bir kuaför bulun.</p>}
+              {when === 'upcoming' && (
                 <Link transitionTypes={TAB} href="/" className="btn btn-primary">
                   <MapIcon /> Kuaför keşfet
                 </Link>
