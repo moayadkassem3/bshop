@@ -1,0 +1,232 @@
+.page {
+  padding-bottom: 170px;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--primary-light);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.intro {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.intro a {
+  color: var(--primary);
+  font-weight: 650;
+}
+
+.days {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+}
+
+.day + .day {
+  border-top: 1px solid var(--line);
+}
+
+.dayHead {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dayHead strong {
+  font-size: 15px;
+}
+
+.daySummary {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+.daySummary small span {
+  white-space: nowrap;
+}
+
+.daySummary small {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.closedDay {
+  color: var(--muted);
+}
+
+.bad {
+  color: var(--danger);
+  font-weight: 650;
+}
+
+.chevron {
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.editor {
+  display: grid;
+  gap: 12px;
+  padding: 2px 16px 16px;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.switch input,
+.everyone input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+}
+
+.times {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.times input {
+  width: 100%;
+  min-width: 0;
+}
+
+.times label {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.break {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px;
+  align-items: end;
+  gap: 8px;
+  padding-left: 10px;
+  border-left: 3px solid var(--line);
+}
+
+.remove {
+  width: 32px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.remove:hover {
+  color: var(--danger);
+}
+
+.issue {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--danger);
+}
+
+.dayActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.link {
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.link:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.everyone {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.everyone small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.saveBar {
+  position: fixed;
+  left: var(--nav-left);
+  right: 0;
+  bottom: var(--nav-bottom);
+  z-index: 5;
+  padding: 10px 0;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
+.done {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--success);
+}

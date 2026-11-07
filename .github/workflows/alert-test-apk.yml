@@ -1,0 +1,61 @@
+name: Alert test APK
+
+on:
+  push:
+    paths:
+      - "apps/alert-test/**"
+      - ".github/workflows/alert-test-apk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: alert-test-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/alert-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/alert-test/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx expo prebuild --platform android --no-install
+
+      - name: Build release APK (signed with the debug key, for testing only)
+        working-directory: apps/alert-test/android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Publish APK as a pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk randevu-alarm-testi.apk
+          tag="alert-test-${{ github.run_number }}"
+          gh release create "$tag" randevu-alarm-testi.apk \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Randevu Alarm Testi (build ${{ github.run_number }})" \
+            --notes "Android test app for the new-appointment alert (milestone 0). Open this page on the Android phone, download randevu-alarm-testi.apk, and allow installing from this source when asked. Testing only: not for the Play Store."
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: randevu-alarm-testi-apk
+          path: apps/alert-test/randevu-alarm-testi.apk

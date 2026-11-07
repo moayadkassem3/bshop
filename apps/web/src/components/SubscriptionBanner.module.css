@@ -1,0 +1,51 @@
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.banner p {
+  margin: 0;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.warning {
+  background: var(--warning-soft);
+  color: var(--ink);
+}
+
+.warning strong {
+  color: var(--warning);
+}
+
+.danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.cta {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.danger .cta {
+  background: #fff;
+  color: var(--danger);
+}
+
+.note {
+  flex-shrink: 0;
+  font-weight: 650;
+  opacity: 0.9;
+}

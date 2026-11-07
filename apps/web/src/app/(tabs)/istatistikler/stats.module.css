@@ -1,0 +1,300 @@
+.page {
+  padding-bottom: 150px;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--primary-light);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Month stepper: the one filter, above everything it scopes. */
+.monthBar {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--dark-2);
+}
+
+.monthBar span {
+  text-align: center;
+  font-weight: 750;
+}
+
+.monthBar button {
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.monthBar button:disabled {
+  color: var(--dark-muted);
+  opacity: 0.4;
+  cursor: default;
+}
+
+.refreshing {
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+
+/* Stat tiles */
+.kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.tile {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 16px;
+}
+
+.tileLabel {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.tileValue {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.tileNote {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.kpiFoot {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.card {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 16px;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.cardNote {
+  margin: -8px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Sources: thin bars from one baseline, value at the tip. */
+.sources {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sources li {
+  display: grid;
+  gap: 6px;
+}
+
+.sourceLabel {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.sourceRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.track {
+  display: block;
+  height: 10px;
+  border-left: 1px solid var(--line);
+}
+
+.bar {
+  display: block;
+  height: 100%;
+  min-width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--primary);
+}
+
+.sourceValue {
+  min-width: 64px;
+  font-size: 14px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.sourceValue span {
+  font-weight: 550;
+  color: var(--muted);
+}
+
+/* Daily columns */
+.chart {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 140px auto;
+  column-gap: 8px;
+}
+
+.yTop,
+.yZero {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.yTop {
+  align-self: start;
+  transform: translateY(-50%);
+}
+
+.yZero {
+  align-self: end;
+  transform: translateY(50%);
+}
+
+.plot {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--line);
+}
+
+.grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--line);
+}
+
+/* Each day's hit area is its whole slot, not only the painted column. */
+.slot {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  flex: 1;
+  height: 100%;
+  padding: 0 1px;
+  cursor: default;
+}
+
+.col {
+  display: block;
+  width: 100%;
+  max-width: 24px;
+  min-height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--primary);
+}
+
+.slotOn .col {
+  background: var(--ink);
+}
+
+.slotOn::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 0;
+  border-radius: 4px;
+  background: var(--primary-soft);
+  z-index: -1;
+}
+
+.tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tip strong {
+  font-size: 15px;
+}
+
+.xAxis {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.table summary {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.table table {
+  width: 100%;
+  margin-top: 8px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.table td:last-child,
+.table th:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.footnote {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}

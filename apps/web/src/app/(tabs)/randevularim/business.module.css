@@ -1,0 +1,287 @@
+.shopSelect {
+  margin-top: 8px;
+  padding: 6px 28px 6px 10px;
+  border: 1px solid var(--dark-2);
+  border-radius: 10px;
+  background: var(--dark-2);
+  color: #fff;
+  font-weight: 650;
+}
+
+.card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.card p {
+  margin: 0;
+}
+
+.pending {
+  border-color: var(--primary);
+  background: var(--surface-2);
+}
+
+.cardTop {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.time {
+  display: grid;
+  justify-items: center;
+  min-width: 58px;
+  padding: 8px 6px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #fff;
+}
+
+.time strong {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+
+.time span {
+  font-size: 12px;
+  color: var(--dark-muted);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.date {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--primary);
+  text-transform: capitalize;
+}
+
+.customer {
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.services {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.price {
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.phone {
+  margin-left: auto;
+  color: var(--primary);
+  font-weight: 750;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.deadline {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dayNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.dayArrow {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.dayLabel {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.dayLabel strong {
+  font-size: 18px;
+}
+
+.dayLabel span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.todayLink {
+  display: block;
+  margin: 0 auto 8px;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.staffChips {
+  margin-top: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.staffChips button {
+  flex-shrink: 0;
+}
+
+.dropped {
+  margin-top: 8px;
+}
+
+.dropped summary {
+  padding: 8px 0;
+  color: var(--muted);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+/* "Başka saat öner": day and time chips (v1.7). */
+.offer {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.offerTitle {
+  margin: 0;
+  font-weight: 700;
+}
+
+.offerDays,
+.offerTimes {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.offerTimes {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.offerDays button,
+.offerTimes button {
+  flex-shrink: 0;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.offerTimes button {
+  font-variant-numeric: tabular-nums;
+}
+
+.offerDays .on,
+.offerTimes .on {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Closed times and "Saat kapat" (v1.7). */
+.blockButton {
+  margin-bottom: 12px;
+  border-style: dashed;
+}
+
+.blockForm {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 16px;
+}
+
+.timeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+}
+
+.closed {
+  border-style: dashed;
+  background: repeating-linear-gradient(135deg, var(--surface), var(--surface) 10px, var(--bg) 10px, var(--bg) 20px);
+}
+
+.closedRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.closedTime {
+  min-width: 96px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.closedText {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.closedText span {
+  font-size: 13px;
+  color: var(--muted);
+}
