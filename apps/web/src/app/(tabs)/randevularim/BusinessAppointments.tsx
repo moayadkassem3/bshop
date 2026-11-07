@@ -1,6 +1,6 @@
 'use client';
 
-import { startTransition, useCallback, useEffect, useState, ViewTransition } from 'react';
+import { startTransition, useCallback, useEffect, useRef, useState, ViewTransition, type TouchEvent } from 'react';
 import { api, errorMessage } from '@/lib/api';
 import { formatLongDate, formatPrice, formatTime, turkeyDate } from '@/lib/format';
 import { useBusinessShops, type ShopAppointment } from '@/lib/business';
@@ -60,8 +60,32 @@ export function BusinessAppointments() {
 
   const pending = requests?.filter((a) => a.status === 'pending').length ?? 0;
 
+  // Swiping sideways switches between Talepler and Takvim, as in the app (founder request,
+  // 7 November 2026); the content slides in from the side it comes from.
+  const [from, setFrom] = useState<'right' | 'left'>('right');
+  const switchTo = (next: 'requests' | 'calendar') => {
+    if (next === tab) return;
+    setFrom(next === 'calendar' ? 'right' : 'left');
+    setTab(next);
+  };
+  const touch = useRef<{ x: number; y: number; at: number } | null>(null);
+  const onTouchStart = (e: TouchEvent) => {
+    const t = e.touches[0];
+    // Not from the screen edge (the phone's own back gesture), a form field, or a row that scrolls sideways.
+    touch.current = e.touches.length === 1 && t && t.clientX > 24 && !swipeBlocked(e.target as Element, e.currentTarget) ? { x: t.clientX, y: t.clientY, at: Date.now() } : null;
+  };
+  const onTouchEnd = (e: TouchEvent) => {
+    const start = touch.current;
+    const t = e.changedTouches[0];
+    touch.current = null;
+    if (!start || !t) return;
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy) && Date.now() - start.at < 800) switchTo(dx < 0 ? 'calendar' : 'requests');
+  };
+
   return (
-    <>
+    <div className={styles.swipeArea} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <header className={`page-header ${styles.header}`}>
         <div className="container narrow">
           <h1>Randevular</h1>
@@ -85,7 +109,7 @@ export function BusinessAppointments() {
             shop && <p>{shop.name}</p>
           )}
           <div className={styles.segmented} role="tablist" aria-label="Talepler veya takvim">
-            <button type="button" role="tab" aria-selected={tab === 'requests'} className={tab === 'requests' ? styles.segOn : ''} onClick={() => setTab('requests')}>
+            <button type="button" role="tab" aria-selected={tab === 'requests'} className={tab === 'requests' ? styles.segOn : ''} onClick={() => switchTo('requests')}>
               Talepler
               {!!pending && (
                 <span key={pending} className={`${styles.count} motion-pop`}>
@@ -93,7 +117,7 @@ export function BusinessAppointments() {
                 </span>
               )}
             </button>
-            <button type="button" role="tab" aria-selected={tab === 'calendar'} className={tab === 'calendar' ? styles.segOn : ''} onClick={() => setTab('calendar')}>
+            <button type="button" role="tab" aria-selected={tab === 'calendar'} className={tab === 'calendar' ? styles.segOn : ''} onClick={() => switchTo('calendar')}>
               Takvim
             </button>
           </div>
@@ -106,11 +130,25 @@ export function BusinessAppointments() {
         {shop && !shop.reviewed_at && (
           <p className="alert alert-info">İşletmeniz henüz yayında değil.</p>
         )}
-        {shopId && tab === 'requests' && <Requests shopId={shopId} items={requests} onChanged={loadRequests} />}
-        {shopId && shop && tab === 'calendar' && <Calendar shopId={shopId} isOwner={shop.role === 'owner'} myMemberId={shop.member_id} onChanged={loadRequests} />}
+        {shopId && (
+          <div key={tab} className={from === 'right' ? 'motion-slide-from-right' : 'motion-slide-from-left'}>
+            {tab === 'requests' && <Requests shopId={shopId} items={requests} onChanged={loadRequests} />}
+            {shop && tab === 'calendar' && <Calendar shopId={shopId} isOwner={shop.role === 'owner'} myMemberId={shop.member_id} onChanged={loadRequests} />}
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
+}
+
+/** A touch on a form field or on something that scrolls sideways (the staff chips) is not a tab swipe. */
+function swipeBlocked(target: Element | null, area: Element): boolean {
+  for (let el = target; el && el !== area; el = el.parentElement) {
+    if (el.matches('input, textarea, select, [contenteditable="true"]')) return true;
+    const overflow = getComputedStyle(el).overflowX;
+    if ((overflow === 'auto' || overflow === 'scroll') && el.scrollWidth > el.clientWidth + 1) return true;
+  }
+  return false;
 }
 
 function Requests({ shopId, items, onChanged }: { shopId: string; items: Appointment[] | null; onChanged: () => void }) {

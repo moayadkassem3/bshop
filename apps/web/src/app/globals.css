@@ -303,6 +303,19 @@ select {
   animation-timing-function: var(--ease-out);
 }
 
+/* Tab content arriving from the side it comes from (Randevular: Talepler ↔ Takvim). */
+.motion-slide-from-right {
+  animation:
+    var(--dur-2) var(--ease-out) both motion-fade-in,
+    var(--dur-3) var(--ease-out) both motion-from-right;
+}
+
+.motion-slide-from-left {
+  animation:
+    var(--dur-2) var(--ease-out) both motion-fade-in,
+    var(--dur-3) var(--ease-out) both motion-from-left;
+}
+
 @keyframes motion-fade-in {
   from {
     opacity: 0;

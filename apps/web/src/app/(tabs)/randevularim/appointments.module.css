@@ -255,3 +255,8 @@
   font-size: 13px;
   color: var(--muted);
 }
+
+/* The whole page takes sideways swipes (Talepler ↔ Takvim), also below short content. */
+.swipeArea {
+  min-height: calc(100dvh - var(--nav-bottom));
+}
