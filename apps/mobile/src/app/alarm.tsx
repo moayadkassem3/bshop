@@ -5,6 +5,7 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, w
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SalonPush } from '../../modules/salon-push';
 import { Icon } from '@/components/Icon';
+import { LogoMark } from '@/components/LogoMark';
 import { Appear, PopIn } from '@/components/motion';
 import { Text } from '@/components/ui';
 import { api, ApiError, errorMessage } from '@/lib/api';
@@ -163,11 +164,7 @@ export default function AlarmScreen() {
         : answerable
           ? { label: 'Yeni talep', dot: colors.primaryLight }
           : { label: 'Bildirim', dot: colors.primaryLight };
-  const heading = !hasDetails
-    ? (p.title ?? 'Yeni randevu')
-    : p.kind === 'confirmed'
-      ? `${who.name} randevu aldı`
-      : `${who.name} randevu istiyor`;
+  const heading = !hasDetails ? (p.title ?? 'Yeni randevu') : p.kind === 'confirmed' ? `${who.name} randevu aldı` : `${who.name} randevu istiyor`;
   const subtitle = !hasDetails
     ? null
     : p.kind === 'confirmed'
@@ -240,7 +237,7 @@ export default function AlarmScreen() {
                     <View style={styles.divider} />
                     <View style={styles.row}>
                       <View style={styles.iconBox}>
-                        <Icon name="scissors" size={20} color={colors.white} />
+                        <LogoMark size={24} color={colors.white} />
                       </View>
                       <View style={{ flex: 1, gap: 2 }}>
                         <Text size={13} color={colors.darkMuted}>
@@ -267,7 +264,8 @@ export default function AlarmScreen() {
             <View style={styles.deadline}>
               <Icon name="clock" size={20} color={C.amber} />
               <Text size={15} color={C.amberText} style={{ flex: 1, lineHeight: 21 }}>
-                Yanıt vermezseniz <Text size={15} weight="bold" color={colors.white}>
+                Yanıt vermezseniz{' '}
+                <Text size={15} weight="bold" color={colors.white}>
                   {formatTime(p.deadlineAt)}
                 </Text>{' '}
                 saatinde otomatik onaylanır.

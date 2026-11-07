@@ -10,12 +10,13 @@ import { Pressable, ScrollView, Share, StyleSheet, TextInput, View, type LayoutC
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Ellipse, G, Path } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { api, WEB_URL } from '@/lib/api';
 import { formatDistance } from '@/lib/format';
 import { colors, fonts, radius } from '@/lib/theme';
 import { AUDIENCE, type BusinessShop, type NearbyShop } from '@/lib/types';
 import { Icon } from './Icon';
+import { LogoMark } from './LogoMark';
 import { MAP_STYLE } from './MapPicker';
 import { Appear, SkeletonList } from './motion';
 import { photoUrl } from './SalonCard';
@@ -262,7 +263,7 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
           })}
         </ScrollView>
         <Pressable onPress={() => (home ? goHome() : void locate())} disabled={locating} style={styles.pill}>
-          {home ? <Glyph size={15} color={colors.primary} /> : <Icon name="locate" size={16} color={colors.primary} strokeWidth={2} />}
+          {home ? <LogoMark size={15} color={colors.primary} /> : <Icon name="locate" size={16} color={colors.primary} strokeWidth={2} />}
           <Text size={14} weight="bold" color={colors.primary}>
             {home ? 'Salonum' : user ? 'Mevcut konumum' : locating ? 'Konum alınıyor…' : 'Konumumu kullan'}
           </Text>
@@ -436,27 +437,9 @@ function PinView({ selected, mine, label }: { selected: boolean; mine?: boolean;
         </View>
       ) : null}
       <View style={[styles.pin, { backgroundColor: bg, borderColor: mine && !selected ? colors.ink : colors.primary }]}>
-        <Glyph size={22} color={fg} />
+        <LogoMark size={22} color={fg} />
       </View>
     </View>
-  );
-}
-
-/** The logo's scissors (viewBox 156 × 220), as on the website's pins. */
-function Glyph({ size, color }: { size: number; color: string }) {
-  return (
-    <Svg width={Math.round((size * 156) / 220)} height={size} viewBox="0 0 156 220">
-      <G fill={color}>
-        <Path d="M28 2C18 36 49 94 75 130L89 120C67 84 42 30 28 2Z" />
-        <Path d="M128 2C138 36 107 94 81 130L67 120C89 84 114 30 128 2Z" />
-        <Ellipse cx={78} cy={127} rx={15} ry={13} />
-      </G>
-      <Path d="M72 132 58 152M84 132l14 20" stroke={color} strokeWidth={12} strokeLinecap="round" />
-      <G fill="none" stroke={color} strokeWidth={14}>
-        <Ellipse cx={35} cy={181} rx={30} ry={24} transform="rotate(-33 35 181)" />
-        <Ellipse cx={121} cy={181} rx={30} ry={24} transform="rotate(33 121 181)" />
-      </G>
-    </Svg>
   );
 }
 

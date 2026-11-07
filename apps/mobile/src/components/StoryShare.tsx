@@ -2,7 +2,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 import { useRef, useState } from 'react';
 import { Text as RNText, StyleSheet, View, type TextStyle } from 'react-native';
-import Svg, { Ellipse, G, Path } from 'react-native-svg';
+import { LogoMark } from './LogoMark';
 import { captureRef } from 'react-native-view-shot';
 import { QrCode } from './QrCode';
 import { colors, fonts, radius } from '@/lib/theme';
@@ -61,7 +61,7 @@ export function StoryShare({ shop, link, brand }: { shop: { name: string; slug: 
 
             <View style={styles.topPill}>
               <View style={styles.logo}>
-                <Glyph height={10} />
+                <LogoMark size={10} color="#fff" />
               </View>
               <S style={{ color: '#fff', fontFamily: fonts.bold, fontSize: 11, flexShrink: 1 }} lines={1}>
                 {label}
@@ -110,23 +110,6 @@ function S({ children, style, lines }: { children: React.ReactNode; style?: Text
     <RNText allowFontScaling={false} numberOfLines={lines} style={style}>
       {children}
     </RNText>
-  );
-}
-
-function Glyph({ height }: { height: number }) {
-  return (
-    <Svg width={(height * 156) / 220} height={height} viewBox="0 0 156 220">
-      <G fill="#fff">
-        <Path d="M28 2C18 36 49 94 75 130L89 120C67 84 42 30 28 2Z" />
-        <Path d="M128 2C138 36 107 94 81 130L67 120C89 84 114 30 128 2Z" />
-        <Ellipse cx={78} cy={127} rx={15} ry={13} />
-      </G>
-      <Path d="M72 132 58 152M84 132l14 20" stroke="#fff" strokeWidth={12} strokeLinecap="round" />
-      <G fill="none" stroke="#fff" strokeWidth={14}>
-        <Ellipse cx={35} cy={181} rx={30} ry={24} transform="rotate(-33 35 181)" />
-        <Ellipse cx={121} cy={181} rx={30} ry={24} transform="rotate(33 121 181)" />
-      </G>
-    </Svg>
   );
 }
 
