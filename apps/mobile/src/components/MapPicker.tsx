@@ -1,15 +1,24 @@
-import { Camera, Map, type CameraRef } from '@maplibre/maplibre-react-native';
+import { Camera, Map, type CameraRef, type StyleSpecification } from '@maplibre/maplibre-react-native';
 import * as Location from 'expo-location';
 import { useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
-import { colors, radius } from '@/lib/theme';
+import navyStyle from '@/lib/mapStyleNavy.json';
+import { colors, radius, themed, themeScheme } from '@/lib/theme';
 import { Icon } from './Icon';
 import { Alert, Button, Text } from './ui';
 
 /** The website's map (OpenFreeMap, OpenStreetMap data): the same style in the app. */
 export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+
+/**
+ * The map for the theme in use: OpenFreeMap's Liberty in light, and the same map in the app's
+ * navy in dark (built by scripts/build-navy-map-style.mjs, bundled so it never flashes light).
+ */
+export function mapStyle(): string | StyleSpecification {
+  return themeScheme() === 'dark' ? (navyStyle as unknown as StyleSpecification) : MAP_STYLE;
+}
 export type Point = { lat: number; lng: number };
 export type MapFocus = Point & { zoom: number };
 
@@ -34,7 +43,7 @@ export function Pin({ size = 44, faded = false }: { size?: number; faded?: boole
 export function MapCredit({ style }: { style?: StyleProp<ViewStyle> }) {
   return (
     <View pointerEvents="none" style={[{ position: 'absolute' }, style]}>
-      <Text size={9} color="rgba(14,20,35,0.5)">
+      <Text size={9} color={colors.muted}>
         © OpenStreetMap
       </Text>
     </View>
@@ -50,7 +59,7 @@ export function MapPreview(props: { point: Point | null; focus: MapFocus | null;
         <Map
           key={`${at.lat},${at.lng},${at.zoom}`}
           style={StyleSheet.absoluteFill}
-          mapStyle={MAP_STYLE}
+          mapStyle={mapStyle()}
           dragPan={false}
           touchZoom={false}
           doubleTapZoom={false}
@@ -113,7 +122,7 @@ export function MapPickerModal(props: { visible: boolean; point: Point | null; f
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <Map
           style={StyleSheet.absoluteFill}
-          mapStyle={MAP_STYLE}
+          mapStyle={mapStyle()}
           touchRotate={false}
           touchPitch={false}
           compass={false}
@@ -154,24 +163,26 @@ export function MapPickerModal(props: { visible: boolean; point: Point | null; f
   );
 }
 
-const styles = StyleSheet.create({
-  preview: { height: 190, borderRadius: radius.md, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface2 },
-  centerPin: { position: 'absolute', top: '50%', left: '50%', marginLeft: -22, marginTop: -40 },
-  previewBar: {
-    position: 'absolute',
-    left: 10,
-    right: 10,
-    bottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    minHeight: 42,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-  },
-  topBar: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12 },
-  round: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  hint: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.sm, backgroundColor: colors.surface },
-  bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, gap: 10, padding: 16, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.surface },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    preview: { height: 190, borderRadius: radius.md, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface2 },
+    centerPin: { position: 'absolute', top: '50%', left: '50%', marginLeft: -22, marginTop: -40 },
+    previewBar: {
+      position: 'absolute',
+      left: 10,
+      right: 10,
+      bottom: 10,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      minHeight: 42,
+      borderRadius: radius.sm,
+      backgroundColor: colors.surface,
+    },
+    topBar: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12 },
+    round: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+    hint: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.sm, backgroundColor: colors.surface },
+    bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, gap: 10, padding: 16, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.surface },
+  }),
+);

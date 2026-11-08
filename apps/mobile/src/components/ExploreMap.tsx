@@ -13,11 +13,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { api, WEB_URL } from '@/lib/api';
 import { formatDistance } from '@/lib/format';
-import { colors, fonts, radius } from '@/lib/theme';
+import { colors, fonts, radius, themed, themeScheme } from '@/lib/theme';
 import { AUDIENCE, type BusinessShop, type NearbyShop } from '@/lib/types';
 import { Icon } from './Icon';
 import { LogoMark } from './LogoMark';
-import { MapCredit, MAP_STYLE } from './MapPicker';
+import { MapCredit, mapStyle } from './MapPicker';
 import { Appear, SkeletonList } from './motion';
 import { photoUrl } from './SalonCard';
 import { Alert, Button, Text } from './ui';
@@ -188,12 +188,12 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
   const goHome = () => home && camera.current?.flyTo({ center: [home.lng, home.lat], zoom: 15, duration: 800 });
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#e9eef2' }} onLayout={(e: LayoutChangeEvent) => setArea(e.nativeEvent.layout.height)}>
-      <StatusBar style="dark" />
+    <View style={{ flex: 1, backgroundColor: colors.bg }} onLayout={(e: LayoutChangeEvent) => setArea(e.nativeEvent.layout.height)}>
+      <StatusBar style={themeScheme() === 'dark' ? 'light' : 'dark'} />
       {start ? (
         <Map
           style={StyleSheet.absoluteFill}
-          mapStyle={MAP_STYLE}
+          mapStyle={mapStyle()}
           touchPitch={false}
           compass={false}
           logo={false}
@@ -438,7 +438,7 @@ function Thumb({ photo, name }: { photo: string | null; name: string }) {
 
 /** A salon on the map: the app's scissors in a round pin; the chosen one turns blue with its name above. */
 function PinView({ selected, mine, label }: { selected: boolean; mine?: boolean; label: string | null }) {
-  const bg = selected ? colors.primary : mine ? colors.ink : colors.surface;
+  const bg = selected ? colors.primary : mine ? colors.night : colors.surface;
   const fg = selected || mine ? colors.white : colors.primary;
   return (
     <View style={{ alignItems: 'center' }}>
@@ -458,56 +458,58 @@ function PinView({ selected, mine, label }: { selected: boolean; mine?: boolean;
 
 const shadow = { shadowColor: '#0b1120', shadowOpacity: 0.16, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4 };
 
-const styles = StyleSheet.create({
-  top: { position: 'absolute', top: 0, left: 0, right: 0, gap: 10, paddingHorizontal: 16 },
-  back: { width: 52, height: 52, borderRadius: radius.sm, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadow },
-  search: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, minHeight: 52, borderRadius: radius.sm, backgroundColor: colors.surface, ...shadow },
-  searchInput: { flex: 1, minWidth: 0, fontFamily: fonts.regular, fontSize: 16, color: colors.ink, paddingVertical: 10 },
-  chip: { paddingHorizontal: 16, minHeight: 38, justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.surface, ...shadow },
-  chipOn: { backgroundColor: colors.ink },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 14, minHeight: 36, borderRadius: radius.pill, backgroundColor: colors.surface, ...shadow },
-  locate: { position: 'absolute', right: 16 },
-  locateInner: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadow },
-  sheet: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 16,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    backgroundColor: colors.surface,
-    shadowColor: '#0b1120',
-    shadowOpacity: 0.14,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: -8 },
-    elevation: 12,
-  },
-  grab: { paddingBottom: 10, gap: 2 },
-  handle: { alignSelf: 'center', paddingHorizontal: 40, paddingTop: 10, paddingBottom: 6 },
-  hint: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.md, backgroundColor: colors.surface2, marginBottom: 6 },
-  item: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: radius.md },
-  itemSelected: { backgroundColor: colors.primarySoft },
-  thumb: { width: 56, height: 56, borderRadius: radius.sm },
-  initial: { backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
-  pickedCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 12,
-    marginBottom: 8,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    backgroundColor: colors.surface2,
-  },
-  close: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-start' },
-  myShop: { gap: 10, padding: 12, marginBottom: 12, borderRadius: radius.md, backgroundColor: colors.surface2 },
-  pin: { width: 42, height: 42, borderRadius: 21, borderWidth: 3, alignItems: 'center', justifyContent: 'center', ...shadow },
-  label: { marginBottom: 6, maxWidth: 240, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: colors.ink, ...shadow },
-  userHalo: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(31,72,201,0.2)', alignItems: 'center', justifyContent: 'center' },
-  userDot: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.primary, borderWidth: 3, borderColor: colors.white },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    top: { position: 'absolute', top: 0, left: 0, right: 0, gap: 10, paddingHorizontal: 16 },
+    back: { width: 52, height: 52, borderRadius: radius.sm, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadow },
+    search: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, minHeight: 52, borderRadius: radius.sm, backgroundColor: colors.surface, ...shadow },
+    searchInput: { flex: 1, minWidth: 0, fontFamily: fonts.regular, fontSize: 16, color: colors.ink, paddingVertical: 10 },
+    chip: { paddingHorizontal: 16, minHeight: 38, justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.surface, ...shadow },
+    chipOn: { backgroundColor: colors.night },
+    pill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 14, minHeight: 36, borderRadius: radius.pill, backgroundColor: colors.surface, ...shadow },
+    locate: { position: 'absolute', right: 16 },
+    locateInner: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadow },
+    sheet: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      paddingHorizontal: 16,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      backgroundColor: colors.surface,
+      shadowColor: '#0b1120',
+      shadowOpacity: 0.14,
+      shadowRadius: 20,
+      shadowOffset: { width: 0, height: -8 },
+      elevation: 12,
+    },
+    grab: { paddingBottom: 10, gap: 2 },
+    handle: { alignSelf: 'center', paddingHorizontal: 40, paddingTop: 10, paddingBottom: 6 },
+    hint: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.md, backgroundColor: colors.surface2, marginBottom: 6 },
+    item: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: radius.md },
+    itemSelected: { backgroundColor: colors.primarySoft },
+    thumb: { width: 56, height: 56, borderRadius: radius.sm },
+    initial: { backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+    pickedCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 12,
+      marginBottom: 8,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+      backgroundColor: colors.surface2,
+    },
+    close: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-start' },
+    myShop: { gap: 10, padding: 12, marginBottom: 12, borderRadius: radius.md, backgroundColor: colors.surface2 },
+    pin: { width: 42, height: 42, borderRadius: 21, borderWidth: 3, alignItems: 'center', justifyContent: 'center', ...shadow },
+    label: { marginBottom: 6, maxWidth: 240, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: colors.night, ...shadow },
+    userHalo: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(31,72,201,0.2)', alignItems: 'center', justifyContent: 'center' },
+    userDot: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.primary, borderWidth: 3, borderColor: colors.white },
+  }),
+);
 
 /** Rejects when the promise has not settled within ms. */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {

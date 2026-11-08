@@ -5,7 +5,7 @@ import { Text as RNText, StyleSheet, View, type TextStyle } from 'react-native';
 import { LogoMark } from './LogoMark';
 import { captureRef } from 'react-native-view-shot';
 import { QrCode } from './QrCode';
-import { colors, fonts, radius } from '@/lib/theme';
+import { colors, fonts, radius, themed } from '@/lib/theme';
 import { Alert, Button, Card, Text } from './ui';
 
 /** The story is drawn at 360 × 640 and saved at 1080 × 1920, Instagram's and WhatsApp's story size. */
@@ -113,34 +113,36 @@ function S({ children, style, lines }: { children: React.ReactNode; style?: Text
   );
 }
 
-const styles = StyleSheet.create({
-  previewBox: { alignSelf: 'center', width: W * PREVIEW, height: H * PREVIEW, borderRadius: radius.md, overflow: 'hidden', backgroundColor: C.bg },
-  previewInner: { position: 'absolute', left: (W * PREVIEW - W) / 2, top: (H * PREVIEW - H) / 2, width: W, height: H, transform: [{ scale: PREVIEW }] },
-  story: { width: W, height: H, backgroundColor: C.bg, alignItems: 'center', overflow: 'hidden' },
-  ring: { position: 'absolute', borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  topPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    maxWidth: 290,
-    marginTop: 39,
-    marginBottom: 34,
-    paddingLeft: 8,
-    paddingRight: 11,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: C.panel,
-    borderWidth: 1,
-    borderColor: C.line,
-  },
-  logo: { width: 17, height: 17, borderRadius: 9, backgroundColor: C.blue, alignItems: 'center', justifyContent: 'center' },
-  title: { color: '#fff', fontFamily: fonts.heavy, fontSize: 40, lineHeight: 44, letterSpacing: -1.3, textAlign: 'center' },
-  lead: { color: C.muted, fontFamily: fonts.medium, fontSize: 12.5, lineHeight: 17, textAlign: 'center', marginTop: 14, paddingHorizontal: 40 },
-  glow: { position: 'absolute', top: 222, width: 250, height: 250, borderRadius: 125, backgroundColor: 'rgba(43,92,240,0.28)', transform: [{ scaleY: 1.1 }] },
-  card: { marginTop: 22, width: 220, paddingTop: 12, paddingBottom: 14, alignItems: 'center', borderRadius: 19, backgroundColor: '#fff' },
-  caption: { color: colors.ink, fontFamily: fonts.heavy, fontSize: 14.5, letterSpacing: -0.3, textAlign: 'center', paddingHorizontal: 14, marginTop: 6 },
-  link: { color: C.muted, fontFamily: fonts.medium, fontSize: 10.5, marginTop: 16, paddingHorizontal: 20 },
-  steps: { flexDirection: 'row', gap: 7, marginTop: 14 },
-  step: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 29, paddingLeft: 6, paddingRight: 10, borderRadius: 15, backgroundColor: C.panel },
-  stepNo: { width: 17, height: 17, borderRadius: 9, backgroundColor: C.blue, alignItems: 'center', justifyContent: 'center' },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    previewBox: { alignSelf: 'center', width: W * PREVIEW, height: H * PREVIEW, borderRadius: radius.md, overflow: 'hidden', backgroundColor: C.bg },
+    previewInner: { position: 'absolute', left: (W * PREVIEW - W) / 2, top: (H * PREVIEW - H) / 2, width: W, height: H, transform: [{ scale: PREVIEW }] },
+    story: { width: W, height: H, backgroundColor: C.bg, alignItems: 'center', overflow: 'hidden' },
+    ring: { position: 'absolute', borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+    topPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      maxWidth: 290,
+      marginTop: 39,
+      marginBottom: 34,
+      paddingLeft: 8,
+      paddingRight: 11,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: C.panel,
+      borderWidth: 1,
+      borderColor: C.line,
+    },
+    logo: { width: 17, height: 17, borderRadius: 9, backgroundColor: C.blue, alignItems: 'center', justifyContent: 'center' },
+    title: { color: '#fff', fontFamily: fonts.heavy, fontSize: 40, lineHeight: 44, letterSpacing: -1.3, textAlign: 'center' },
+    lead: { color: C.muted, fontFamily: fonts.medium, fontSize: 12.5, lineHeight: 17, textAlign: 'center', marginTop: 14, paddingHorizontal: 40 },
+    glow: { position: 'absolute', top: 222, width: 250, height: 250, borderRadius: 125, backgroundColor: 'rgba(43,92,240,0.28)', transform: [{ scaleY: 1.1 }] },
+    card: { marginTop: 22, width: 220, paddingTop: 12, paddingBottom: 14, alignItems: 'center', borderRadius: 19, backgroundColor: '#fff' },
+    caption: { color: colors.ink, fontFamily: fonts.heavy, fontSize: 14.5, letterSpacing: -0.3, textAlign: 'center', paddingHorizontal: 14, marginTop: 6 },
+    link: { color: C.muted, fontFamily: fonts.medium, fontSize: 10.5, marginTop: 16, paddingHorizontal: 20 },
+    steps: { flexDirection: 'row', gap: 7, marginTop: 14 },
+    step: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 29, paddingLeft: 6, paddingRight: 10, borderRadius: 15, backgroundColor: C.panel },
+    stepNo: { width: 17, height: 17, borderRadius: 9, backgroundColor: C.blue, alignItems: 'center', justifyContent: 'center' },
+  }),
+);

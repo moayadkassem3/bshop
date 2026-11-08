@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { api } from '@/lib/api';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 import type { PopularPost } from '@/lib/types';
 import { haircutPhotoUrl } from './HaircutCard';
 import { Text } from './ui';
@@ -63,9 +63,11 @@ export function PopularStrip({ audience }: { audience: 'men' | 'women' | 'all' }
   );
 }
 
-const styles = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  item: { width: 132, height: 176, borderRadius: radius.sm, overflow: 'hidden', backgroundColor: colors.surface2 },
-  photo: { width: 132, height: 176 },
-  caption: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 8, paddingVertical: 7, backgroundColor: 'rgba(11,17,32,0.62)' },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    item: { width: 132, height: 176, borderRadius: radius.sm, overflow: 'hidden', backgroundColor: colors.surface2 },
+    photo: { width: 132, height: 176 },
+    caption: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 8, paddingVertical: 7, backgroundColor: 'rgba(11,17,32,0.62)' },
+  }),
+);

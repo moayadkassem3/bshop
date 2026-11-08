@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { api, ApiError, configureApi, errorMessage, WEB_URL } from '@/lib/api';
 import { formatPhoneInput, phoneComplete } from '@/lib/phone';
 import { lastMode, useSession } from '@/lib/session';
-import { colors, fonts, radius } from '@/lib/theme';
+import { colors, fonts, radius, themed } from '@/lib/theme';
 import type { Me } from '@/lib/types';
 import { Alert, Button, Field, Text } from './ui';
 
@@ -250,9 +250,11 @@ function Check(props: { on: boolean; onPress: () => void; children: React.ReactN
   );
 }
 
-const styles = StyleSheet.create({
-  code: { fontFamily: fonts.bold, fontSize: 22, letterSpacing: 6 },
-  gender: { flex: 1, minHeight: 48, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
-  genderOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-  box: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    code: { fontFamily: fonts.bold, fontSize: 22, letterSpacing: 6 },
+    gender: { flex: 1, minHeight: 48, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
+    genderOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+    box: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  }),
+);

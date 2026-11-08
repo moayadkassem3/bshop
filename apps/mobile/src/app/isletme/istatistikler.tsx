@@ -7,7 +7,7 @@ import { ShopPicker } from '@/components/ShopPicker';
 import { Alert, Card, Screen, Text } from '@/components/ui';
 import { api, errorMessage } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 
 type Source = 'kesfet' | 'kesimler' | 'qr' | 'diger';
 type ShopStats = {
@@ -231,7 +231,7 @@ function Daily({ stats }: { stats: ShopStats }) {
               style={[styles.slot, picked === i && { backgroundColor: colors.primarySoft }]}
               accessibilityLabel={`${dayName(d.date)}: ${d.views} ziyaret`}
             >
-              {d.views > 0 ? <View style={[styles.col, { height: `${(d.views / top) * 100}%` }, picked === i && { backgroundColor: colors.ink }]} /> : null}
+              {d.views > 0 ? <View style={[styles.col, { height: `${(d.views / top) * 100}%` }, picked === i && { backgroundColor: colors.night }]} /> : null}
             </Pressable>
           ))}
         </View>
@@ -250,13 +250,15 @@ function Daily({ stats }: { stats: ShopStats }) {
   );
 }
 
-const styles = StyleSheet.create({
-  monthBar: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, padding: 4, borderRadius: radius.sm, backgroundColor: colors.dark2 },
-  monthButton: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
-  tile: { gap: 2, minHeight: 120 },
-  track: { flex: 1, height: 10, borderRadius: 5, backgroundColor: colors.surface2, overflow: 'hidden' },
-  bar: { height: 10, borderRadius: 5, backgroundColor: colors.primary },
-  plot: { flex: 1, height: 140, flexDirection: 'row', alignItems: 'flex-end', gap: 1, borderBottomWidth: 1, borderTopWidth: 1, borderColor: colors.line, borderStyle: 'dashed' },
-  slot: { flex: 1, height: '100%', justifyContent: 'flex-end', borderRadius: 2 },
-  col: { width: '100%', borderTopLeftRadius: 2, borderTopRightRadius: 2, backgroundColor: colors.primary },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    monthBar: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, padding: 4, borderRadius: radius.sm, backgroundColor: colors.dark2 },
+    monthButton: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
+    tile: { gap: 2, minHeight: 120 },
+    track: { flex: 1, height: 10, borderRadius: 5, backgroundColor: colors.surface2, overflow: 'hidden' },
+    bar: { height: 10, borderRadius: 5, backgroundColor: colors.primary },
+    plot: { flex: 1, height: 140, flexDirection: 'row', alignItems: 'flex-end', gap: 1, borderBottomWidth: 1, borderTopWidth: 1, borderColor: colors.line, borderStyle: 'dashed' },
+    slot: { flex: 1, height: '100%', justifyContent: 'flex-end', borderRadius: 2 },
+    col: { width: '100%', borderTopLeftRadius: 2, borderTopRightRadius: 2, backgroundColor: colors.primary },
+  }),
+);

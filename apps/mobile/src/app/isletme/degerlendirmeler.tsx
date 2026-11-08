@@ -8,7 +8,7 @@ import { Alert, Button, Card, Empty, Screen, Text } from '@/components/ui';
 import { api, errorMessage } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
 import { formatFullDate } from '@/lib/format';
-import { colors, fonts, radius } from '@/lib/theme';
+import { colors, fonts, radius, themed } from '@/lib/theme';
 import type { Rating, TeamRatings } from '@/lib/types';
 
 /**
@@ -186,11 +186,13 @@ function RatingItem({ shopId, rating: r, canReply, onChanged }: { shopId: string
   );
 }
 
-const styles = StyleSheet.create({
-  summary: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  bar: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  track: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surface2, overflow: 'hidden' },
-  fill: { height: 8, borderRadius: 4, backgroundColor: colors.star },
-  reply: { padding: 12, borderRadius: radius.sm, backgroundColor: colors.surface2 },
-  input: { minHeight: 96, padding: 12, borderWidth: 1.5, borderColor: colors.line, borderRadius: radius.sm, fontFamily: fonts.regular, fontSize: 16, color: colors.ink, textAlignVertical: 'top' },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    summary: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+    bar: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    track: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surface2, overflow: 'hidden' },
+    fill: { height: 8, borderRadius: 4, backgroundColor: colors.star },
+    reply: { padding: 12, borderRadius: radius.sm, backgroundColor: colors.surface2 },
+    input: { minHeight: 96, padding: 12, borderWidth: 1.5, borderColor: colors.line, borderRadius: radius.sm, fontFamily: fonts.regular, fontSize: 16, color: colors.ink, textAlignVertical: 'top' },
+  }),
+);

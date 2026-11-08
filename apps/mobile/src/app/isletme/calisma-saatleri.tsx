@@ -9,7 +9,7 @@ import { ShopPicker } from '@/components/ShopPicker';
 import { Alert, Button, Card, Chip, Screen, Text } from '@/components/ui';
 import { api, errorMessage } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 import type { Member } from '@/lib/types';
 
 type Window = { weekday: number; startMinute: number; endMinute: number };
@@ -336,12 +336,14 @@ export default function WorkingHoursScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  line: { borderBottomWidth: 1, borderBottomColor: colors.line },
-  dayHead: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 58, paddingHorizontal: 12, borderRadius: radius.sm },
-  editor: { gap: 12, paddingHorizontal: 12, paddingBottom: 16 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  breakRow: { padding: 8, borderRadius: radius.sm, backgroundColor: colors.surface2 },
-  remove: { width: 30, alignItems: 'center' },
-  everyone: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    line: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    dayHead: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 58, paddingHorizontal: 12, borderRadius: radius.sm },
+    editor: { gap: 12, paddingHorizontal: 12, paddingBottom: 16 },
+    row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+    breakRow: { padding: 8, borderRadius: radius.sm, backgroundColor: colors.surface2 },
+    remove: { width: 30, alignItems: 'center' },
+    everyone: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface },
+  }),
+);

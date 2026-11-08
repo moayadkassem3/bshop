@@ -17,7 +17,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fonts, radius, shadow } from '@/lib/theme';
+import { colors, fonts, radius, shadow, themed, themeScheme } from '@/lib/theme';
 import { FocusIn } from './motion';
 
 type Weight = 'regular' | 'medium' | 'semibold' | 'bold' | 'heavy';
@@ -49,7 +49,7 @@ export function Button(props: { title: string; onPress: () => void; kind?: Butto
     primary: { bg: colors.primary, border: colors.primary, fg: colors.white },
     secondary: { bg: colors.surface, border: colors.line, fg: colors.ink },
     danger: { bg: colors.danger, border: colors.danger, fg: colors.white },
-    dangerOutline: { bg: colors.surface, border: '#f2c9c9', fg: colors.danger },
+    dangerOutline: { bg: colors.surface, border: colors.dangerLine, fg: colors.danger },
     ghost: { bg: 'transparent', border: 'transparent', fg: colors.primary },
   };
   const c = palette[kind];
@@ -94,14 +94,14 @@ export function Card(props: { children: ReactNode; style?: StyleProp<ViewStyle>;
   return <View style={[styles.card, shadow, props.style]}>{props.children}</View>;
 }
 
-const TONES = {
-  info: { bg: colors.primarySoft, fg: colors.primary },
+const TONES = themed(() => ({
+  info: { bg: colors.primarySoft, fg: themeScheme() === 'dark' ? colors.primaryLight : colors.primary },
   success: { bg: colors.successSoft, fg: colors.success },
   warning: { bg: colors.warningSoft, fg: colors.warning },
   danger: { bg: colors.dangerSoft, fg: colors.danger },
   muted: { bg: colors.surface2, fg: colors.muted },
-};
-export type Tone = keyof typeof TONES;
+}));
+export type Tone = 'info' | 'success' | 'warning' | 'danger' | 'muted';
 
 export function Badge({ label, tone = 'muted' }: { label: string; tone?: Tone }) {
   return (
@@ -221,8 +221,8 @@ export function Segmented<T extends string>(props: { options: { value: T; label:
  * the brand blue and the others dark grey, so the choice stands out (founder, 5 November 2026).
  */
 export function Chip(props: { label: string; on: boolean; onPress: () => void; dark?: boolean }) {
-  const bg = props.dark ? (props.on ? colors.primary : colors.dark2) : props.on ? colors.ink : colors.surface;
-  const border = props.dark ? (props.on ? colors.primary : '#2c323c') : props.on ? colors.ink : colors.line;
+  const bg = props.dark ? (props.on ? colors.primary : colors.dark2) : props.on ? colors.chipOn : colors.surface;
+  const border = props.dark ? (props.on ? colors.primary : '#2c323c') : props.on ? colors.chipOn : colors.line;
   const fg = props.dark ? (props.on ? colors.white : colors.darkMuted) : props.on ? colors.white : colors.ink;
   return (
     <Pressable
@@ -272,30 +272,32 @@ export function Loading() {
   );
 }
 
-const styles = StyleSheet.create({
-  button: { minHeight: 50, paddingHorizontal: 20, borderRadius: radius.sm, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  buttonSmall: { minHeight: 40, paddingHorizontal: 14 },
-  card: { backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: 16 },
-  badge: { alignSelf: 'flex-start', paddingHorizontal: 9, paddingVertical: 3, borderRadius: radius.pill },
-  alert: { padding: 12, borderRadius: radius.sm },
-  header: { backgroundColor: colors.ink, paddingHorizontal: 16, paddingBottom: 22, gap: 6 },
-  body: { padding: 16, gap: 12 },
-  emptyIcon: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft, marginBottom: 10 },
-  footer: { position: 'absolute', left: 0, right: 0, bottom: 0, gap: 8, paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.line },
-  statusBand: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: colors.ink },
-  input: {
-    minHeight: 50,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-    fontFamily: fonts.regular,
-    fontSize: 16,
-    color: colors.ink,
-  },
-  segmented: { flexDirection: 'row', padding: 4, gap: 4, borderRadius: radius.sm, backgroundColor: colors.surface2, marginTop: 10 },
-  segment: { flex: 1, flexDirection: 'row', gap: 6, minHeight: 44, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  segBadge: { minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center' },
-  chip: { paddingHorizontal: 14, minHeight: 38, justifyContent: 'center', borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    button: { minHeight: 50, paddingHorizontal: 20, borderRadius: radius.sm, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+    buttonSmall: { minHeight: 40, paddingHorizontal: 14 },
+    card: { backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: 16 },
+    badge: { alignSelf: 'flex-start', paddingHorizontal: 9, paddingVertical: 3, borderRadius: radius.pill },
+    alert: { padding: 12, borderRadius: radius.sm },
+    header: { backgroundColor: colors.night, paddingHorizontal: 16, paddingBottom: 22, gap: 6 },
+    body: { padding: 16, gap: 12 },
+    emptyIcon: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft, marginBottom: 10 },
+    footer: { position: 'absolute', left: 0, right: 0, bottom: 0, gap: 8, paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.line },
+    statusBand: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: colors.night },
+    input: {
+      minHeight: 50,
+      paddingHorizontal: 14,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      borderRadius: radius.sm,
+      backgroundColor: colors.surface,
+      fontFamily: fonts.regular,
+      fontSize: 16,
+      color: colors.ink,
+    },
+    segmented: { flexDirection: 'row', padding: 4, gap: 4, borderRadius: radius.sm, backgroundColor: colors.surface2, marginTop: 10 },
+    segment: { flex: 1, flexDirection: 'row', gap: 6, minHeight: 44, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+    segBadge: { minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center' },
+    chip: { paddingHorizontal: 14, minHeight: 38, justifyContent: 'center', borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface },
+  }),
+);

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { api, errorMessage } from '@/lib/api';
 import { formatTime } from '@/lib/format';
-import { colors, fonts, radius } from '@/lib/theme';
+import { colors, fonts, radius, themed } from '@/lib/theme';
 import { SelectField } from './SelectField';
 import { Alert, Button, Card, Chip, Text } from './ui';
 
@@ -129,18 +129,20 @@ export function BlockForm(props: { shopId: string; date: string; members: Person
   );
 }
 
-const styles = StyleSheet.create({
-  closed: { gap: 8, backgroundColor: colors.surface2, borderStyle: 'dashed' },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  input: {
-    minHeight: 48,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-    fontFamily: fonts.regular,
-    fontSize: 16,
-    color: colors.ink,
-  },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    closed: { gap: 8, backgroundColor: colors.surface2, borderStyle: 'dashed' },
+    row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    input: {
+      minHeight: 48,
+      paddingHorizontal: 14,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      borderRadius: radius.sm,
+      backgroundColor: colors.surface,
+      fontFamily: fonts.regular,
+      fontSize: 16,
+      color: colors.ink,
+    },
+  }),
+);

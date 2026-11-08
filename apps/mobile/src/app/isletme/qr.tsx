@@ -10,7 +10,7 @@ import { StoryShare } from '@/components/StoryShare';
 import { Alert, Button, Screen, Text } from '@/components/ui';
 import { WEB_URL } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 
 const BRAND = 'Salon Randevu';
 
@@ -55,7 +55,7 @@ export default function QrScreen() {
             {/* The poster is captured exactly as drawn here. */}
             <View ref={poster} collapsable={false} style={styles.poster}>
               <QrCode text={`${link}?k=qr`} size={280} />
-              <Text size={18} weight="heavy" center style={{ marginTop: 12 }} numberOfLines={2}>
+              <Text size={18} weight="heavy" color="#0b1120" center style={{ marginTop: 12 }} numberOfLines={2}>
                 {shop.name} | {BRAND}
               </Text>
             </View>
@@ -79,6 +79,8 @@ export default function QrScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  poster: { alignSelf: 'center', alignItems: 'center', padding: 22, borderRadius: radius.md, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line, width: 330 },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    poster: { alignSelf: 'center', alignItems: 'center', padding: 22, borderRadius: radius.md, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line, width: 330 },
+  }),
+);

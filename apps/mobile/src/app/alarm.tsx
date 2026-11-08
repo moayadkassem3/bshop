@@ -12,7 +12,7 @@ import { api, ApiError, errorMessage } from '@/lib/api';
 import { formatLongDate, formatTime, TZ } from '@/lib/format';
 import { ANSWERABLE_KINDS } from '@/lib/push';
 import { useSession } from '@/lib/session';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 
 type Params = {
   kind?: string;
@@ -396,23 +396,25 @@ function initials(name: string): string {
   return letters.join('') || '?';
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.ink, paddingHorizontal: 20 },
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, backgroundColor: C.pill },
-  card: { padding: 20, gap: 16, borderRadius: 22, backgroundColor: C.card, borderWidth: 1, borderColor: C.cardLine },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  avatar: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: C.avatar },
-  divider: { height: 1, backgroundColor: C.cardLine },
-  tile: { width: 70, paddingVertical: 8, borderRadius: 16, alignItems: 'center', backgroundColor: C.tile },
-  iconBox: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: C.iconBox },
-  deadline: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 18, borderRadius: 18, borderWidth: 1, backgroundColor: C.amberBg, borderColor: C.amberLine },
-  buttons: { flexDirection: 'row', gap: 12 },
-  decline: { flex: 1, height: 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 18, borderWidth: 1, backgroundColor: C.redBg, borderColor: C.redLine },
-  confirm: { flex: 1.45, height: 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 18, backgroundColor: colors.primary },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  answer: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingVertical: 16, borderRadius: 18, borderWidth: 1, overflow: 'hidden' },
-  answerIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  undoLine: { position: 'absolute', left: 0, bottom: 0, height: 3 },
-  allLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 6 },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    page: { flex: 1, backgroundColor: colors.night, paddingHorizontal: 20 },
+    top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    pill: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, backgroundColor: C.pill },
+    card: { padding: 20, gap: 16, borderRadius: 22, backgroundColor: C.card, borderWidth: 1, borderColor: C.cardLine },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+    avatar: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: C.avatar },
+    divider: { height: 1, backgroundColor: C.cardLine },
+    tile: { width: 70, paddingVertical: 8, borderRadius: 16, alignItems: 'center', backgroundColor: C.tile },
+    iconBox: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: C.iconBox },
+    deadline: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 18, borderRadius: 18, borderWidth: 1, backgroundColor: C.amberBg, borderColor: C.amberLine },
+    buttons: { flexDirection: 'row', gap: 12 },
+    decline: { flex: 1, height: 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 18, borderWidth: 1, backgroundColor: C.redBg, borderColor: C.redLine },
+    confirm: { flex: 1.45, height: 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 18, backgroundColor: colors.primary },
+    pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
+    answer: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingVertical: 16, borderRadius: 18, borderWidth: 1, overflow: 'hidden' },
+    answerIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+    undoLine: { position: 'absolute', left: 0, bottom: 0, height: 3 },
+    allLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 6 },
+  }),
+);

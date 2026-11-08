@@ -10,7 +10,7 @@ import { api, errorMessage, WEB_URL } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
 import { daysLeft, formatFullDate, formatTime, turkeyDate } from '@/lib/format';
 import { useSession } from '@/lib/session';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 import type { BusinessShop, ShopAppointment } from '@/lib/types';
 import { usePolling } from '@/lib/usePolling';
 
@@ -248,23 +248,25 @@ export function SignInFirst() {
   );
 }
 
-const styles = StyleSheet.create({
-  tile: { flex: 1, padding: 16, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
-  tileAlert: { borderColor: '#f6d28a', backgroundColor: colors.warningSoft },
-  nextRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  notice: { padding: 14, borderRadius: radius.md, gap: 4 },
-  share: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    minHeight: 50,
-    paddingHorizontal: 18,
-    borderRadius: radius.sm,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    backgroundColor: colors.surface,
-  },
-  shortcut: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 12, borderRadius: radius.sm },
-  shortcutLine: { borderBottomWidth: 1, borderBottomColor: colors.line },
-  shortcutIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    tile: { flex: 1, padding: 16, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
+    tileAlert: { borderColor: colors.warningLine, backgroundColor: colors.warningSoft },
+    nextRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    notice: { padding: 14, borderRadius: radius.md, gap: 4 },
+    share: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      minHeight: 50,
+      paddingHorizontal: 18,
+      borderRadius: radius.sm,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      backgroundColor: colors.surface,
+    },
+    shortcut: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 12, borderRadius: radius.sm },
+    shortcutLine: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    shortcutIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  }),
+);

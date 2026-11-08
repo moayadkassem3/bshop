@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PopIn } from './motion';
 import { photoUrl } from './SalonCard';
 import { Text } from './ui';
-import { colors } from '@/lib/theme';
+import { colors, themed } from '@/lib/theme';
 
 type Photo = { id: string; width?: number; height?: number };
 
@@ -114,11 +114,13 @@ function Slide(props: { photo: Photo; i: number; x: SharedValue<number>; step: n
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(11,17,32,0.94)' },
-  top: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', zIndex: 1 },
-  close: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)' },
-  dots: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.35)' },
-  dotOn: { width: 18, backgroundColor: colors.white },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    backdrop: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(11,17,32,0.94)' },
+    top: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', zIndex: 1 },
+    close: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)' },
+    dots: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6 },
+    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.35)' },
+    dotOn: { width: 18, backgroundColor: colors.white },
+  }),
+);

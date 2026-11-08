@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { API_URL } from '@/lib/api';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 import type { HaircutPost, PopularPost } from '@/lib/types';
 import { PhotoTile } from './PhotoTile';
 import { Text } from './ui';
@@ -80,9 +80,11 @@ export function HaircutCard(props: { post: HaircutPost | PopularPost; liked: boo
   );
 }
 
-const styles = StyleSheet.create({
-  card: { borderRadius: radius.sm, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
-  tag: { position: 'absolute', left: 8, bottom: 8, maxWidth: '85%', paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.7)' },
-  footer: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingVertical: 8 },
-  like: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 2 },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    card: { borderRadius: radius.sm, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
+    tag: { position: 'absolute', left: 8, bottom: 8, maxWidth: '85%', paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.7)' },
+    footer: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingVertical: 8 },
+    like: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 2 },
+  }),
+);

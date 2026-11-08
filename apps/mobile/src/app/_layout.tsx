@@ -1,11 +1,11 @@
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, useFonts } from '@expo-google-fonts/inter';
 import { SplashScreen, Stack } from 'expo-router';
-import { useEffect } from 'react';
+import { Fragment, useEffect, useSyncExternalStore } from 'react';
 import { PushBridge } from '@/components/PushBridge';
 import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SessionProvider, useSession } from '@/lib/session';
-import { colors } from '@/lib/theme';
+import { colors, subscribeTheme, themeScheme } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -30,15 +30,17 @@ function Navigation({ fontsLoaded }: { fontsLoaded: boolean }) {
   useEffect(() => {
     if (fontsLoaded && ready) SplashScreen.hideAsync().catch(() => undefined);
   }, [fontsLoaded, ready]);
+  // Light or dark (Profil → Görünüm, or the phone's setting): a change redraws every screen.
+  const scheme = useSyncExternalStore(subscribeTheme, themeScheme);
   if (!fontsLoaded || !ready) return null;
   // iOS-style pushes on both platforms (the new page slides over, the old one drifts back), with
   // swipe-back from anywhere on iOS: the feel of Airbnb and other polished apps.
   return (
-    <>
+    <Fragment key={scheme}>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: 'ios_from_right', fullScreenGestureEnabled: true }}>
-        <Stack.Screen name="alarm" options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false, contentStyle: { backgroundColor: colors.ink } }} />
+        <Stack.Screen name="alarm" options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false, contentStyle: { backgroundColor: colors.night } }} />
       </Stack>
       <PushBridge />
-    </>
+    </Fragment>
   );
 }

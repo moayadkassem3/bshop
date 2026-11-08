@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Text } from './ui';
-import { colors } from '@/lib/theme';
+import { colors, themed } from '@/lib/theme';
 
 /** What a form tells its screen's save bar. */
 export type SaveBarState = {
@@ -67,20 +67,22 @@ export function SaveBar({ state, active = true }: { state: SaveBarState | null; 
   );
 }
 
-const styles = StyleSheet.create({
-  bar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-  row: { flexDirection: 'row', gap: 10 },
-  saved: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 50 },
-  tick: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.success },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    bar: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      gap: 10,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      backgroundColor: colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+    row: { flexDirection: 'row', gap: 10 },
+    saved: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 50 },
+    tick: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.success },
+  }),
+);

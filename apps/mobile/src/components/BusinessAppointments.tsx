@@ -7,7 +7,7 @@ import { runOnJS } from 'react-native-reanimated';
 import { api, errorMessage } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
 import { addDays, dayStart, formatLongDate, turkeyDate } from '@/lib/format';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 import type { Member, ShopAppointment } from '@/lib/types';
 import { usePolling } from '@/lib/usePolling';
 import { Icon } from './Icon';
@@ -270,8 +270,10 @@ export function BusinessAppointments() {
   );
 }
 
-const styles = StyleSheet.create({
-  dayBar: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  dropped: { flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: 16, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.line },
-  dayButton: { width: 46, height: 46, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    dayBar: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    dropped: { flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: 16, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.line },
+    dayButton: { width: 46, height: 46, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  }),
+);

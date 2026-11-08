@@ -10,7 +10,7 @@ import { Alert, Button, Card, Empty, Screen, Text } from '@/components/ui';
 import { api, API_URL, apiUpload, errorMessage } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
 import { pickPhotos } from '@/lib/photos';
-import { colors, fonts, radius } from '@/lib/theme';
+import { colors, fonts, radius, themed } from '@/lib/theme';
 import type { HaircutPost, HaircutStyle } from '@/lib/types';
 
 const haircutPhotoUrl = (id: string) => `${API_URL}/public/haircut-photos/${id}`;
@@ -185,35 +185,37 @@ export default function MyWorkScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  pick: {
-    flex: 1,
-    height: 120,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: colors.primaryLight,
-    backgroundColor: colors.surface2,
-  },
-  preview: { borderRadius: radius.md, overflow: 'hidden' },
-  change: { position: 'absolute', right: 10, bottom: 10, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.7)' },
-  input: {
-    minHeight: 48,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-    fontFamily: fonts.regular,
-    fontSize: 16,
-    color: colors.ink,
-  },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  cell: { width: '48.5%', borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
-  photoWrap: {},
-  styleTag: { position: 'absolute', left: 8, bottom: 8, maxWidth: '85%', paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.7)' },
-  cellFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 8 },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    pick: {
+      flex: 1,
+      height: 120,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: colors.primaryLight,
+      backgroundColor: colors.surface2,
+    },
+    preview: { borderRadius: radius.md, overflow: 'hidden' },
+    change: { position: 'absolute', right: 10, bottom: 10, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.7)' },
+    input: {
+      minHeight: 48,
+      paddingHorizontal: 14,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      borderRadius: radius.sm,
+      backgroundColor: colors.surface,
+      fontFamily: fonts.regular,
+      fontSize: 16,
+      color: colors.ink,
+    },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    cell: { width: '48.5%', borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
+    photoWrap: {},
+    styleTag: { position: 'absolute', left: 8, bottom: 8, maxWidth: '85%', paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.7)' },
+    cellFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 8 },
+  }),
+);

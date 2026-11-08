@@ -18,7 +18,7 @@ import { formatDuration, formatPrice } from '@/lib/format';
 import { formatPhone } from '@/lib/phone';
 import { useLikes } from '@/lib/likes';
 import { useSession } from '@/lib/session';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 import { AUDIENCE, type RatingsSummary, type ShopProfile } from '@/lib/types';
 
 const WEEKDAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
@@ -117,7 +117,7 @@ export default function SalonScreen() {
             ))}
           </ScrollView>
         ) : (
-          <View style={{ height: insets.top + 56, backgroundColor: colors.ink }} />
+          <View style={{ height: insets.top + 56, backgroundColor: colors.night }} />
         )}
         <Pressable onPress={() => router.back()} style={[styles.floatingBack, { top: insets.top + 10 }]} hitSlop={8} accessibilityLabel="Geri">
           <Icon name="back" size={22} color={colors.ink} strokeWidth={2.4} />
@@ -141,7 +141,7 @@ export default function SalonScreen() {
                   ) : null}
                 </Text>
                 <Pressable onPress={toggleFavorite} accessibilityLabel={favorite ? 'Favorilerimde' : 'Favorilere ekle'} style={[styles.heart, favorite && styles.heartOn]} hitSlop={6}>
-                  <Icon name="favoriler" size={22} color={favorite ? '#d1344a' : colors.ink} />
+                  <Icon name="favoriler" size={22} color={favorite ? colors.heart : colors.ink} />
                 </Pressable>
               </View>
               {profile.verified ? (
@@ -432,38 +432,40 @@ const initials = (name: string) =>
     .join('');
 const whatsappUrl = (phone: string) => `https://wa.me/${phone.replace(/^\+/, '')}`;
 
-const styles = StyleSheet.create({
-  floatingBack: { position: 'absolute', left: 14, width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' },
-  heart: { width: 46, height: 46, borderRadius: 23, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
-  heartOn: { borderColor: '#f4c7cf', backgroundColor: '#fdf0f2' },
-  today: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5, borderRadius: radius.pill, marginTop: 4 },
-  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 },
-  infoIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
-  line: { borderBottomWidth: 1, borderBottomColor: colors.line },
-  serviceRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
-  hourRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, paddingHorizontal: 8, marginHorizontal: -8, borderRadius: 10 },
-  hourToday: { backgroundColor: colors.primarySoft },
-  staffRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12 },
-  staffAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
-  staffBook: { paddingHorizontal: 16, minHeight: 40, justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.primarySoft },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  gridCell: { width: '31.5%' },
-  posts: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  track: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surface2, overflow: 'hidden' },
-  fill: { height: 8, borderRadius: 4, backgroundColor: colors.star },
-  reply: { padding: 10, borderRadius: radius.sm, backgroundColor: colors.surface2 },
-  bookBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-  action: { width: 52, height: 50, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    floatingBack: { position: 'absolute', left: 14, width: 42, height: 42, borderRadius: 21, backgroundColor: colors.float, alignItems: 'center', justifyContent: 'center' },
+    heart: { width: 46, height: 46, borderRadius: 23, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
+    heartOn: { borderColor: colors.heartLine, backgroundColor: colors.heartSoft },
+    today: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5, borderRadius: radius.pill, marginTop: 4 },
+    infoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 },
+    infoIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+    line: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    serviceRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
+    hourRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, paddingHorizontal: 8, marginHorizontal: -8, borderRadius: 10 },
+    hourToday: { backgroundColor: colors.primarySoft },
+    staffRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12 },
+    staffAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.night, alignItems: 'center', justifyContent: 'center' },
+    staffBook: { paddingHorizontal: 16, minHeight: 40, justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.primarySoft },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    gridCell: { width: '31.5%' },
+    posts: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    track: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surface2, overflow: 'hidden' },
+    fill: { height: 8, borderRadius: 4, backgroundColor: colors.star },
+    reply: { padding: 10, borderRadius: radius.sm, backgroundColor: colors.surface2 },
+    bookBar: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      flexDirection: 'row',
+      gap: 10,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      backgroundColor: colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+    action: { width: 52, height: 50, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
+  }),
+);

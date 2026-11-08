@@ -10,7 +10,7 @@ import { Alert, Button, Card, Text } from '@/components/ui';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { formatDuration, formatLongDate, formatPrice, formatTime, relativeDayTime, turkeyDate, turkeyHour, upcomingDays } from '@/lib/format';
 import { useSession } from '@/lib/session';
-import { colors, fonts, radius } from '@/lib/theme';
+import { colors, fonts, radius, themed } from '@/lib/theme';
 import type { Availability, BookingResult, CustomerAppointment, ShopProfile, Slot } from '@/lib/types';
 
 type Step = 'services' | 'staff' | 'time' | 'confirm' | 'done';
@@ -623,37 +623,39 @@ function DoneStep({ result }: { result: BookingResult }) {
   );
 }
 
-const styles = StyleSheet.create({
-  header: { backgroundColor: colors.ink, paddingHorizontal: 16, paddingBottom: 18, gap: 8 },
-  headerBack: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', maxWidth: '90%' },
-  progress: { flexDirection: 'row', gap: 8, marginTop: 6 },
-  progressBar: { height: 4, borderRadius: 2, backgroundColor: colors.dark2 },
-  option: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface },
-  optionOn: { borderColor: colors.primary, backgroundColor: colors.surface2 },
-  avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
-  check: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
-  day: { width: 64, paddingVertical: 10, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center' },
-  dayOn: { backgroundColor: colors.primary, borderColor: colors.primary },
-  slots: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  slot: { width: '23%', minHeight: 52, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  slotOn: { backgroundColor: colors.primary, borderColor: colors.primary },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line },
-  whom: { flex: 1, minHeight: 46, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
-  whomOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-  input: { minHeight: 50, paddingHorizontal: 14, borderWidth: 1.5, borderColor: colors.line, borderRadius: radius.sm, fontFamily: fonts.regular, fontSize: 16, color: colors.ink },
-  doneIcon: { width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center' },
-  bottomBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    header: { backgroundColor: colors.night, paddingHorizontal: 16, paddingBottom: 18, gap: 8 },
+    headerBack: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', maxWidth: '90%' },
+    progress: { flexDirection: 'row', gap: 8, marginTop: 6 },
+    progressBar: { height: 4, borderRadius: 2, backgroundColor: colors.dark2 },
+    option: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface },
+    optionOn: { borderColor: colors.primary, backgroundColor: colors.surface2 },
+    avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+    check: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
+    day: { width: 64, paddingVertical: 10, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center' },
+    dayOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+    slots: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    slot: { width: '23%', minHeight: 52, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+    slotOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+    totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line },
+    whom: { flex: 1, minHeight: 46, borderRadius: radius.sm, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
+    whomOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+    input: { minHeight: 50, paddingHorizontal: 14, borderWidth: 1.5, borderColor: colors.line, borderRadius: radius.sm, fontFamily: fonts.regular, fontSize: 16, color: colors.ink },
+    doneIcon: { width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center' },
+    bottomBar: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      backgroundColor: colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+  }),
+);

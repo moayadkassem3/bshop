@@ -1,7 +1,6 @@
 import QRCode from 'qrcode';
 import { useMemo } from 'react';
 import Svg, { Ellipse, G, Path, Rect } from 'react-native-svg';
-import { colors } from '@/lib/theme';
 
 /** A QR code with the app's scissors on a black tile in the middle (high error correction keeps it readable). */
 export function QrCode({ text, size }: { text: string; size: number }) {
@@ -20,7 +19,7 @@ export function QrCode({ text, size }: { text: string; size: number }) {
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${n} ${n}`}>
       <Rect width={n} height={n} fill="#fff" />
-      <Path d={path} fill={colors.ink} />
+      <Path d={path} fill="#0b1120" />
       <Rect x={x - pad} y={x - pad} width={tile + pad * 2} height={tile + pad * 2} rx={tile * 0.28} fill="#fff" />
       <Rect x={x} y={x} width={tile} height={tile} rx={tile * 0.24} fill="#000" />
       <G transform={`translate(${(n - glyphW) / 2} ${(n - glyphH) / 2}) scale(${glyphH / 220})`} fill="#fff">

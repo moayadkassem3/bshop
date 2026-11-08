@@ -98,7 +98,7 @@ export function PageSkeleton({ photo = false }: { photo?: boolean }) {
   const insets = useSafeAreaInsets();
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ height: photo ? 260 : insets.top + 96, backgroundColor: colors.ink }} />
+      <View style={{ height: photo ? 260 : insets.top + 96, backgroundColor: colors.night }} />
       <View style={{ padding: 16, gap: 14 }}>
         <Skeleton width="35%" height={12} />
         <Skeleton width="70%" height={26} />

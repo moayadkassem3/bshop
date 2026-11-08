@@ -3,7 +3,7 @@ import { Alert as NativeAlert, Linking, Pressable, StyleSheet, View } from 'reac
 import { api, errorMessage } from '@/lib/api';
 import { formatLongDate, formatPrice, formatTime } from '@/lib/format';
 import { formatPhone } from '@/lib/phone';
-import { colors } from '@/lib/theme';
+import { colors, themed } from '@/lib/theme';
 import type { ShopAppointment } from '@/lib/types';
 import { Alert, Badge, Button, Card, Text, type Tone } from './ui';
 
@@ -130,9 +130,11 @@ export function ShopAppointmentCard(props: { shopId: string; appointment: ShopAp
   );
 }
 
-const styles = StyleSheet.create({
-  top: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  pending: { borderColor: '#f6d28a', borderWidth: 1.5 },
-  dropped: { opacity: 0.75 },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 4 },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    top: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
+    pending: { borderColor: colors.warningLine, borderWidth: 1.5 },
+    dropped: { opacity: 0.75 },
+    actions: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  }),
+);

@@ -5,6 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AppearanceSwitch } from '@/components/AppearanceSwitch';
 import { Icon, type IconName } from '@/components/Icon';
 import { Appear, PopIn } from '@/components/motion';
 import { GenderChoice, SignIn } from '@/components/SignIn';
@@ -16,7 +17,7 @@ import { formatPhone } from '@/lib/phone';
 import type { BusinessShop } from '@/lib/types';
 import { testPush } from '@/lib/push';
 import { useSession } from '@/lib/session';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 
 /** Profil: sign-in when signed out; otherwise the account, the mode switch and sign-out. */
 export default function ProfileScreen() {
@@ -27,7 +28,7 @@ export default function ProfileScreen() {
 function SignedOut() {
   const insets = useSafeAreaInsets();
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.ink }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.night }}>
       <StatusBar style="light" />
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View style={[styles.hero, { paddingTop: insets.top + 36 }]}>
@@ -55,6 +56,12 @@ function SignedOut() {
             </Text>
             <Icon name="chevron" size={18} color={colors.primary} />
           </Pressable>
+          <View style={{ gap: 10, marginTop: 8 }}>
+            <Text size={13} weight="bold" color={colors.muted} style={{ letterSpacing: 1 }}>
+              GÖRÜNÜM
+            </Text>
+            <AppearanceSwitch />
+          </View>
         </Appear>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -142,6 +149,13 @@ function Account() {
           {business && me.portal === 'owner' ? <MenuRow icon="card" label="Aboneliğim" onPress={() => router.push('/isletme/abonelik')} /> : null}
           <PushTestRow />
           <MenuRow icon="doc" label="Yasal metinler" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/sozlesmeler`).catch(() => undefined)} last />
+        </Card>
+      </Appear>
+
+      <Appear index={2}>
+        <Section title="Görünüm" />
+        <Card>
+          <AppearanceSwitch />
         </Card>
       </Appear>
 
@@ -305,27 +319,39 @@ function MenuRow({ icon, label, onPress, last, open }: { icon: IconName; label: 
   );
 }
 
-const styles = StyleSheet.create({
-  hero: { alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingBottom: 36 },
-  mark: { width: 84, height: 84, borderRadius: 24, marginBottom: 12, borderWidth: 1.5, borderColor: colors.dark2 },
-  sheet: { flexGrow: 1, gap: 16, padding: 20, paddingBottom: 32, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colors.bg },
-  businessLink: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 16, marginTop: 4, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface },
-  avatar: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  section: { letterSpacing: 1, marginTop: 4, marginBottom: 8 },
-  menu: { padding: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 58, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.sm },
-  rowLine: { borderBottomWidth: 1, borderBottomColor: colors.line },
-  rowIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
-  form: { gap: 12, padding: 12, borderBottomWidth: 1, borderBottomColor: colors.line },
-  switch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    minHeight: 52,
-    borderRadius: radius.sm,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
-  },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    hero: { alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingBottom: 36 },
+    mark: { width: 84, height: 84, borderRadius: 24, marginBottom: 12, borderWidth: 1.5, borderColor: colors.dark2 },
+    sheet: { flexGrow: 1, gap: 16, padding: 20, paddingBottom: 32, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colors.bg },
+    businessLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      padding: 16,
+      marginTop: 4,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      backgroundColor: colors.surface,
+    },
+    avatar: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+    section: { letterSpacing: 1, marginTop: 4, marginBottom: 8 },
+    menu: { padding: 4 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 58, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.sm },
+    rowLine: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    rowIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+    form: { gap: 12, padding: 12, borderBottomWidth: 1, borderBottomColor: colors.line },
+    switch: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 10,
+      minHeight: 52,
+      borderRadius: radius.sm,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+      backgroundColor: colors.primarySoft,
+    },
+  }),
+);

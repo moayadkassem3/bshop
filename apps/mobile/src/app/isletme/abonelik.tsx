@@ -7,7 +7,7 @@ import { Alert, Card, Screen, Text } from '@/components/ui';
 import { api, errorMessage } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
 import { daysLeft, formatFullDate } from '@/lib/format';
-import { colors } from '@/lib/theme';
+import { colors, themed } from '@/lib/theme';
 import type { Subscription } from '@/lib/types';
 
 /**
@@ -119,8 +119,10 @@ function Status({ sub }: { sub: Subscription }) {
   );
 }
 
-const styles = StyleSheet.create({
-  label: { letterSpacing: 1 },
-  row: { gap: 2, paddingTop: 2 },
-  rowLine: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 10 },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    label: { letterSpacing: 1 },
+    row: { gap: 2, paddingTop: 2 },
+    rowLine: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 10 },
+  }),
+);

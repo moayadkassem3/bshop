@@ -15,7 +15,7 @@ import { useBusinessShops } from '@/lib/business';
 import { formatDuration, formatPrice } from '@/lib/format';
 import { formatPhone, formatPhoneInput, phoneComplete, phoneDigits } from '@/lib/phone';
 import { districtsOf, provinceCentre, PROVINCES } from '@/lib/provinces';
-import { colors, fonts, radius } from '@/lib/theme';
+import { colors, fonts, radius, themed } from '@/lib/theme';
 
 type Tab = 'salon' | 'hizmetler' | 'personel';
 type Audience = 'men' | 'women' | 'unisex';
@@ -896,34 +896,36 @@ function Box({ on }: { on: boolean }) {
   );
 }
 
-const styles = StyleSheet.create({
-  type: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface },
-  typeOn: { borderColor: colors.primary, backgroundColor: colors.surface2 },
-  input: {
-    minHeight: 50,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-    fontFamily: fonts.regular,
-    fontSize: 16,
-    color: colors.ink,
-  },
-  photos: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  photo: { width: '31.5%', aspectRatio: 1, borderRadius: radius.sm, overflow: 'hidden', backgroundColor: colors.surface2 },
-  cover: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.75)' },
-  line: { borderBottomWidth: 1, borderBottomColor: colors.line },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 58, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.sm },
-  fold: { flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: 16, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.line },
-  removedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.surface2 },
-  check: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  box: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.white },
-  search: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, minHeight: 46, borderRadius: radius.sm, backgroundColor: colors.surface2 },
-  searchInput: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: colors.ink, paddingVertical: 8 },
-  planBox: { gap: 2, padding: 14, borderRadius: radius.md, backgroundColor: colors.primarySoft },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
-  switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  segmented: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: radius.sm, backgroundColor: colors.surface2 },
-  segment: { flex: 1, minHeight: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    type: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface },
+    typeOn: { borderColor: colors.primary, backgroundColor: colors.surface2 },
+    input: {
+      minHeight: 50,
+      paddingHorizontal: 14,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      borderRadius: radius.sm,
+      backgroundColor: colors.surface,
+      fontFamily: fonts.regular,
+      fontSize: 16,
+      color: colors.ink,
+    },
+    photos: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    photo: { width: '31.5%', aspectRatio: 1, borderRadius: radius.sm, overflow: 'hidden', backgroundColor: colors.surface2 },
+    cover: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.75)' },
+    line: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 58, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.sm },
+    fold: { flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: 16, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.line },
+    removedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.surface2 },
+    check: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    box: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.white },
+    search: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, minHeight: 46, borderRadius: radius.sm, backgroundColor: colors.surface2 },
+    searchInput: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: colors.ink, paddingVertical: 8 },
+    planBox: { gap: 2, padding: 14, borderRadius: radius.md, backgroundColor: colors.primarySoft },
+    avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+    switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    segmented: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: radius.sm, backgroundColor: colors.surface2 },
+    segment: { flex: 1, minHeight: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  }),
+);

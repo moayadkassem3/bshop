@@ -4,7 +4,7 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, apiUpload, errorMessage } from '@/lib/api';
 import { pickPhotos } from '@/lib/photos';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 import { Appear, PopIn } from './motion';
 import { PhotoTile } from './PhotoTile';
 import { photoUrl } from './SalonCard';
@@ -191,13 +191,15 @@ function Viewer(props: { id: string; index: number; count: number; onClose: () =
   );
 }
 
-const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  cell: { width: '31.5%' },
-  photo: {},
-  cover: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.75)' },
-  viewer: { flex: 1, justifyContent: 'space-between', backgroundColor: '#08090b' },
-  viewerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
-  closeButton: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.12)' },
-  big: { width: '100%', aspectRatio: 3 / 4 },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    cell: { width: '31.5%' },
+    photo: {},
+    cover: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: 'rgba(11,17,32,0.75)' },
+    viewer: { flex: 1, justifyContent: 'space-between', backgroundColor: '#08090b' },
+    viewerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
+    closeButton: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.12)' },
+    big: { width: '100%', aspectRatio: 3 / 4 },
+  }),
+);

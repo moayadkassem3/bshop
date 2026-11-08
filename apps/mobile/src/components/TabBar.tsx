@@ -4,7 +4,7 @@ import { useEffect, useState, type ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fonts } from '@/lib/theme';
+import { colors, fonts, themed } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
 
 type TabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
@@ -84,10 +84,12 @@ function TabIcon({ name, focused, reduced }: { name: IconName; focused: boolean;
   );
 }
 
-const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', backgroundColor: colors.surface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line, paddingTop: 8 },
-  pill: { position: 'absolute', top: 8, left: 0, width: PILL, height: 34, borderRadius: 17, backgroundColor: colors.primarySoft },
-  tab: { flex: 1, alignItems: 'center', gap: 3 },
-  icon: { height: 34, justifyContent: 'center' },
-  label: { fontSize: 12 },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    bar: { flexDirection: 'row', backgroundColor: colors.surface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line, paddingTop: 8 },
+    pill: { position: 'absolute', top: 8, left: 0, width: PILL, height: 34, borderRadius: 17, backgroundColor: colors.primarySoft },
+    tab: { flex: 1, alignItems: 'center', gap: 3 },
+    icon: { height: 34, justifyContent: 'center' },
+    label: { fontSize: 12 },
+  }),
+);

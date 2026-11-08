@@ -31,7 +31,7 @@ export function AlarmSetup() {
   }
 
   return (
-    <Card style={{ gap: 10, borderColor: '#f3d6b0', backgroundColor: colors.warningSoft }}>
+    <Card style={{ gap: 10, borderColor: colors.warningLine, backgroundColor: colors.warningSoft }}>
       <Text weight="bold">{notificationsOff ? 'Randevu alarmı kapalı' : 'Kilit ekranında alarm kapalı'}</Text>
       <Text size={14} color={colors.ink2}>
         {notificationsOff

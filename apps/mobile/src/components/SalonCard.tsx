@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { API_URL } from '@/lib/api';
 import { formatDistance } from '@/lib/format';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, themed } from '@/lib/theme';
 import { AUDIENCE } from '@/lib/types';
 import { Card, Text } from './ui';
 
@@ -55,8 +55,10 @@ export function SalonCard({ salon: s, source = 'diger' }: { salon: Salon; source
   );
 }
 
-const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
-  thumb: { width: 56, height: 56, borderRadius: radius.sm },
-  initial: { backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    card: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
+    thumb: { width: 56, height: 56, borderRadius: radius.sm },
+    initial: { backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  }),
+);
