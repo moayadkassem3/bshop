@@ -90,8 +90,12 @@ type Row = {
   payload: { title?: string; data?: Record<string, unknown> };
 };
 
-/** Sends queued notifications. Safe to run from several workers at once. */
-export async function dispatchNotifications(deps: Deps, limit = 50): Promise<number> {
+/**
+ * Sends queued notifications. Safe to run from several workers at once. Appointment
+ * messages go before announcements, so a large announcement never delays an alarm; up to
+ * `parallel` are sent at the same time (founder, 8 November 2026: sending in groups).
+ */
+export async function dispatchNotifications(deps: Deps, limit = 100, parallel = 10): Promise<number> {
   return withTx(deps.db, async (tx) => {
     // Outside the salon's working hours a push arrives silently: no alarm for the salon,
     // no sound for the customer (founder, 7 November 2026). Looked up once per salon per pass.
@@ -103,10 +107,10 @@ export async function dispatchNotifications(deps: Deps, limit = 50): Promise<num
     };
     const { rows } = await tx.query<Row>(
       `SELECT id, shop_id, template, appointment_id, channel, recipient_user_id, recipient_phone, body, payload FROM notifications
-       WHERE status = 'queued' ORDER BY created_at LIMIT $1 FOR UPDATE SKIP LOCKED`,
+       WHERE status = 'queued' ORDER BY (template = 'announcement'), created_at LIMIT $1 FOR UPDATE SKIP LOCKED`,
       [limit],
     );
-    for (const n of rows) {
+    const send = async (n: Row) => {
       try {
         if (n.channel === 'sms') {
           await deps.sms.send(n.recipient_phone!, n.body);
@@ -133,7 +137,8 @@ export async function dispatchNotifications(deps: Deps, limit = 50): Promise<num
       } catch (err) {
         await tx.query(`UPDATE notifications SET status = 'failed', error = $2 WHERE id = $1`, [n.id, String(err)]);
       }
-    }
+    };
+    for (let i = 0; i < rows.length; i += parallel) await Promise.all(rows.slice(i, i + parallel).map(send));
     return rows.length;
   });
 }

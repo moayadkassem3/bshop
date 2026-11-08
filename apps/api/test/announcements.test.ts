@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { nextRepeat } from '../src/services/announcements.js';
+import { dispatchNotifications } from '../src/notifications.js';
+import { nextRepeat, runAnnouncements, SENDING } from '../src/services/announcements.js';
 import { PHONES, setupShop, useTestApp } from './helpers.js';
 
 const t = useTestApp();
@@ -110,6 +111,43 @@ describe('announcements from Yönetim (founder, 8 November 2026)', () => {
     expect((await t.call('POST', '/admin/announcements/test', { token: p.admin, body: { title: 'Test', body: 'Deneme' } })).body).toEqual({ sent: true, phones: 1 });
     await t.tick();
     expect(receivers()).toEqual([await userIdOf(PHONES.admin)]);
+  });
+
+  it('is sent group by group, only while the send queue is short, after appointment messages', async () => {
+    const p = await people();
+    const saved = { ...SENDING };
+    try {
+      SENDING.group = 3;
+      SENDING.backlog = 3;
+      const queued = async () => (await t.db.query("SELECT count(*)::int AS n FROM notifications WHERE template = 'announcement'")).rows[0].n as number;
+      await t.call('POST', '/admin/announcements', { token: p.admin, body: { title: 'Herkese', body: 'Merhaba', audience: 'all', repeat: 'once' } });
+
+      // First pass: the run starts and queues the first group of 3 of the 4 people.
+      expect(await runAnnouncements(t.deps)).toBe(3);
+      // The queue is full (3 waiting): no new group until they are sent.
+      expect(await runAnnouncements(t.deps)).toBe(0);
+      expect(await queued()).toBe(3);
+
+      // An appointment message queued after them is still sent first.
+      await t.db.query(
+        `INSERT INTO notifications (channel, recipient_user_id, template, body, payload, created_at) VALUES ('push', $1, 'request', 'Yeni randevu talebi', '{"title":"Talep"}', $2)`,
+        [await userIdOf(PHONES.owner), t.clock.now()],
+      );
+      await dispatchNotifications(t.deps, 1);
+      expect(t.push.messages.map((m) => m.title)).toEqual(['Talep']);
+
+      // Once sent, the next group goes: the last person, then the run is finished.
+      await dispatchNotifications(t.deps);
+      expect(await runAnnouncements(t.deps)).toBe(1);
+      await dispatchNotifications(t.deps);
+      expect(new Set(receivers()).size).toBe(4);
+      expect(await runAnnouncements(t.deps)).toBe(0);
+      const [row] = (await t.call('GET', '/admin/announcements', { token: p.admin })).body;
+      expect(row).toMatchObject({ last_sent_count: 4, total_sent: 4 });
+      expect((await t.db.query('SELECT count(*)::int AS n FROM announcement_runs WHERE finished_at IS NULL')).rows[0].n).toBe(0);
+    } finally {
+      Object.assign(SENDING, saved);
+    }
   });
 
   it('works out the next time across days and weeks', () => {

@@ -192,31 +192,111 @@ async function queueFor(q: Queryable, now: Date, a: { title: string; body: strin
   return r.rowCount ?? 0;
 }
 
-/** Worker: queues the pushes of announcements that are due, then sets the next time. */
+/**
+ * Sending in groups (founder, 8 November 2026), so a large send never loads the server at once:
+ * - `group`: people queued per worker pass (one group per pass, walking user ids from a bookmark);
+ * - `backlog`: no new group while this many announcement pushes still wait to be sent;
+ * - `maxRunHours`: a run not finished by then stops (never sent late into the evening).
+ * Appointment messages are always sent before announcements (dispatchNotifications).
+ */
+export const SENDING = { group: 500, backlog: 2000, maxRunHours: 3 };
+
+type Run = {
+  id: string;
+  announcement_id: string;
+  title: string;
+  body: string;
+  audience: Audience;
+  customer_gender: string | null;
+  shop_audience: string | null;
+  bookmark: string | null;
+  started_at: Date;
+};
+
+/** Worker: starts the runs of announcements that are due, then queues the next group of a run. */
 export async function runAnnouncements(deps: Deps) {
+  await startDueRuns(deps);
+  // One group's worth of people per pass; when a run finishes early, the next run continues.
+  let total = 0;
+  for (let i = 0; i < 10 && total < SENDING.group; i++) {
+    const step = await sendNextGroup(deps, SENDING.group - total);
+    total += step.count;
+    if (!step.finished) break;
+  }
+  return total;
+}
+
+async function startDueRuns(deps: Deps) {
   const now = deps.clock.now();
-  return withTx(deps.db, async (tx) => {
+  await withTx(deps.db, async (tx) => {
     const { rows } = await tx.query<Row>(
       `SELECT ${COLUMNS} FROM announcements WHERE active AND next_run_at <= $1 ORDER BY next_run_at FOR UPDATE SKIP LOCKED`,
       [now],
     );
-    let queued = 0;
     for (const a of rows) {
       // A worker that was down for hours does not send yesterday's morning message at night.
       const late = now.getTime() - a.next_run_at!.getTime() > 2 * 60 * 60_000 || !inWindow(minutesOf(now));
-      const count = late ? 0 : await queueFor(tx, now, a, recipientsSql(a.audience, { gender: '$4', shopAudience: '$5' }), filters(a));
-      queued += count;
+      if (!late) {
+        await tx.query(
+          `INSERT INTO announcement_runs (announcement_id, title, body, audience, customer_gender, shop_audience, started_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [a.id, a.title, a.body, a.audience, a.audience === 'customers' ? a.customer_gender : null, a.audience === 'businesses' ? a.shop_audience : null, now],
+        );
+      }
       const next = a.repeat === 'once' ? null : nextRepeat({ repeat: a.repeat, time_of_day: a.time_of_day!, weekdays: a.weekdays }, now);
       await tx.query(
         `UPDATE announcements SET next_run_at = $2, active = $3, updated_at = $4,
-           last_sent_at = CASE WHEN $6 THEN last_sent_at ELSE $4 END,
-           last_sent_count = CASE WHEN $6 THEN last_sent_count ELSE $5 END,
-           total_sent = total_sent + $5
+           last_sent_at = CASE WHEN $5 THEN last_sent_at ELSE $4 END,
+           last_sent_count = CASE WHEN $5 THEN last_sent_count ELSE 0 END
          WHERE id = $1`,
-        [a.id, next, next !== null, now, count, late],
+        [a.id, next, next !== null, now, late],
       );
     }
-    return queued;
+  });
+}
+
+/** Queues the next group (at most `size` people) of the oldest open run, if the send queue has room. */
+async function sendNextGroup(deps: Deps, size: number): Promise<{ count: number; finished: boolean }> {
+  const now = deps.clock.now();
+  return withTx(deps.db, async (tx) => {
+    const { rows } = await tx.query<Run>(
+      `SELECT id, announcement_id, title, body, audience, customer_gender, shop_audience, bookmark, started_at
+       FROM announcement_runs WHERE finished_at IS NULL ORDER BY started_at LIMIT 1 FOR UPDATE SKIP LOCKED`,
+    );
+    const run = rows[0];
+    if (!run) return { count: 0, finished: false };
+    if (now.getTime() - run.started_at.getTime() > SENDING.maxRunHours * 60 * 60_000 || !inWindow(minutesOf(now))) {
+      await tx.query('UPDATE announcement_runs SET finished_at = $2 WHERE id = $1', [run.id, now]);
+      return { count: 0, finished: true };
+    }
+    const waiting = await tx.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM (SELECT 1 FROM notifications WHERE status = 'queued' AND template = 'announcement' LIMIT $1) q`,
+      [SENDING.backlog],
+    );
+    if (waiting.rows[0]!.n >= SENDING.backlog) return { count: 0, finished: false };
+
+    // The next group: people after the bookmark, in user id order.
+    const group = `${recipientsSql(run.audience, { gender: '$4', shopAudience: '$5' })} AND ($6::uuid IS NULL OR u.id > $6) ORDER BY u.id LIMIT ${Number(size)}`;
+    const payload = { title: run.title, data: { kind: 'announcement', announcementId: run.announcement_id } };
+    const inserted = await tx.query<{ recipient_user_id: string }>(
+      `INSERT INTO notifications (shop_id, appointment_id, channel, recipient_user_id, template, body, payload, created_at)
+       SELECT NULL, NULL, 'push', r.id, 'announcement', $1, $2, $3 FROM (${group}) r
+       RETURNING recipient_user_id`,
+      [run.body, payload, now, run.customer_gender, run.shop_audience, run.bookmark],
+    );
+    const count = inserted.rowCount ?? 0;
+    const bookmark = inserted.rows.reduce<string | null>((max, r) => (max === null || r.recipient_user_id > max ? r.recipient_user_id : max), run.bookmark);
+    await tx.query('UPDATE announcement_runs SET bookmark = $2, queued = queued + $3, finished_at = CASE WHEN $4 THEN $5::timestamptz END WHERE id = $1', [
+      run.id,
+      bookmark,
+      count,
+      count < size,
+      now,
+    ]);
+    if (count) {
+      await tx.query('UPDATE announcements SET last_sent_count = COALESCE(last_sent_count, 0) + $2, total_sent = total_sent + $2 WHERE id = $1', [run.announcement_id, count]);
+    }
+    return { count, finished: count < size };
   });
 }
 
