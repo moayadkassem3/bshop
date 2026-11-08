@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert as NativeAlert, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { confirm } from '@/components/Dialogs';
 import { BackLink } from '@/components/BackLink';
 import { Icon } from '@/components/Icon';
 import { MapPickerModal, MapPreview, type MapFocus, type Point } from '@/components/MapPicker';
@@ -353,14 +354,14 @@ function ServicesTab({ shopId }: { shopId: string }) {
                       disabled={busy}
                       hitSlop={8}
                       onPress={() =>
-                        NativeAlert.alert('Hizmeti kaldır', `${s.name} müşterilere artık görünmez. Sonra geri ekleyebilirsiniz.`, [
-                          { text: 'Vazgeç', style: 'cancel' },
-                          {
-                            text: 'Kaldır',
-                            style: 'destructive',
-                            onPress: () => void run(() => api(`/staff/shops/${shopId}/services/${s.id}`, { method: 'PATCH', body: { active: false } })).then((ok) => ok && setEditing(null)),
-                          },
-                        ])
+                        confirm({
+                          title: 'Hizmeti kaldır',
+                          message: `${s.name} müşterilere artık görünmez. Sonra geri ekleyebilirsiniz.`,
+                          confirmLabel: 'Kaldır',
+                          danger: true,
+                          icon: 'trash',
+                          onConfirm: () => void run(() => api(`/staff/shops/${shopId}/services/${s.id}`, { method: 'PATCH', body: { active: false } })).then((ok) => ok && setEditing(null)),
+                        })
                       }
                     >
                       <Text weight="bold" color={colors.danger}>
@@ -792,10 +793,14 @@ function MemberEditor(props: {
           <Pressable
             hitSlop={8}
             onPress={() =>
-              NativeAlert.alert('Ekipten çıkar', `${m.display_name} ekipten çıkarılacak ve uygulamaya giremeyecek. Yaklaşan randevusu varsa önce onları iptal edin.`, [
-                { text: 'Vazgeç', style: 'cancel' },
-                { text: 'Evet, çıkar', style: 'destructive', onPress: props.onRemove },
-              ])
+              confirm({
+                title: 'Ekipten çıkar',
+                message: `${m.display_name} ekipten çıkarılacak ve uygulamaya giremeyecek. Yaklaşan randevusu varsa önce onları iptal edin.`,
+                confirmLabel: 'Evet, çıkar',
+                danger: true,
+                icon: 'profil',
+                onConfirm: props.onRemove,
+              })
             }
           >
             <Text weight="bold" color={colors.danger}>

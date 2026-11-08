@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert as NativeAlert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { confirm } from '@/components/Dialogs';
 import { BackLink } from '@/components/BackLink';
 import { Icon } from '@/components/Icon';
 import { Appear, SkeletonList } from '@/components/motion';
@@ -81,17 +82,17 @@ export default function MyWorkScreen() {
 
   function remove(post: HaircutPost) {
     if (!shop) return;
-    NativeAlert.alert('Paylaşımı kaldır', `${post.style_name} fotoğrafı kaldırılsın mı?`, [
-      { text: 'Vazgeç', style: 'cancel' },
-      {
-        text: 'Kaldır',
-        style: 'destructive',
-        onPress: () =>
-          void api(`/staff/shops/${shop.id}/posts/${post.id}`, { method: 'DELETE' })
-            .then(load)
-            .catch((err) => setError(errorMessage(err))),
-      },
-    ]);
+    confirm({
+      title: 'Paylaşımı kaldır',
+      message: `${post.style_name} fotoğrafı kaldırılsın mı?`,
+      confirmLabel: 'Kaldır',
+      danger: true,
+      icon: 'trash',
+      onConfirm: () =>
+        void api(`/staff/shops/${shop.id}/posts/${post.id}`, { method: 'DELETE' })
+          .then(load)
+          .catch((err) => setError(errorMessage(err))),
+    });
   }
 
   return (

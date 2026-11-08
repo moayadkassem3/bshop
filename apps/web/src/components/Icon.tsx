@@ -112,6 +112,14 @@ const ICONS = {
     </>
   ),
   swap: <path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" />,
+  trash: <path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6" />,
+  gallery: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+      <circle cx="9" cy="10" r="1.8" />
+      <path d="M20.5 16l-5-5-8.5 8.5" />
+    </>
+  ),
   // Profil → Görünüm: light, dark, and follow the device (a half-filled circle).
   sun: (
     <>

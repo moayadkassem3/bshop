@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Alert as NativeAlert, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
+import { chooseAction } from './Dialogs';
 import { api, API_URL, apiUpload, errorMessage } from '@/lib/api';
 import { pickPhotos } from '@/lib/photos';
 import { colors } from '@/lib/theme';
@@ -77,11 +78,15 @@ export function StaffPhotoPicker(props: { name: string; photoId: string | null; 
   }
 
   const choose = () =>
-    NativeAlert.alert('Profil fotoğrafı', undefined, [
-      { text: 'Galeriden seç', onPress: () => void upload(false) },
-      { text: 'Fotoğraf çek', onPress: () => void upload(true) },
-      { text: 'Vazgeç', style: 'cancel' },
-    ]);
+    chooseAction({
+      title: 'Profil fotoğrafı',
+      message: 'Müşteriler sizi bu fotoğrafla görür.',
+      options: [
+        { label: 'Galeriden seç', icon: 'gallery', onPress: () => void upload(false) },
+        { label: 'Fotoğraf çek', icon: 'camera', onPress: () => void upload(true) },
+        ...(props.photoId ? [{ label: 'Fotoğrafı kaldır', icon: 'trash' as const, danger: true, onPress: () => void remove() }] : []),
+      ],
+    });
 
   return (
     <View style={{ gap: 8 }}>

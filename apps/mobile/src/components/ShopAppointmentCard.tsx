@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert as NativeAlert, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { confirm } from './Dialogs';
 import { api, errorMessage } from '@/lib/api';
 import { formatLongDate, formatPrice, formatTime } from '@/lib/format';
 import { formatPhone } from '@/lib/phone';
@@ -51,10 +52,7 @@ export function ShopAppointmentCard(props: { shopId: string; appointment: ShopAp
   }
 
   const confirmFirst = (title: string, message: string, action: string, label: string) =>
-    NativeAlert.alert(title, message, [
-      { text: 'Vazgeç', style: 'cancel' },
-      { text: label, style: 'destructive', onPress: () => void act(action) },
-    ]);
+    confirm({ title, message, confirmLabel: label, danger: true, icon: action === 'cancel' ? 'calendarDots' : 'close', onConfirm: () => void act(action) });
 
   return (
     <Card style={[{ gap: 8 }, a.status === 'pending' && styles.pending, !live && !started && styles.dropped]}>

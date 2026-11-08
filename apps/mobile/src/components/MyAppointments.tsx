@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert as NativeAlert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { confirm } from './Dialogs';
 import { api, errorMessage } from '@/lib/api';
 import { formatLongDate, formatPrice, formatTime } from '@/lib/format';
 import { colors } from '@/lib/theme';
@@ -142,14 +143,14 @@ function AppointmentCard({ appointment: a, onChanged }: { appointment: CustomerA
           title="Randevuyu iptal et"
           disabled={Boolean(busy)}
           onPress={() =>
-            NativeAlert.alert(
-              'Randevuyu iptal et',
-              late ? 'Randevunuza salonun iptal süresinden az kaldı. Bu iptal “geç iptal” olarak kaydedilir.' : 'Randevuyu iptal etmek istediğinize emin misiniz?',
-              [
-                { text: 'Vazgeç', style: 'cancel' },
-                { text: 'Evet, iptal et', style: 'destructive', onPress: () => void post('cancel') },
-              ],
-            )
+            confirm({
+              title: 'Randevuyu iptal et',
+              message: late ? 'Randevunuza salonun iptal süresinden az kaldı. Bu iptal “geç iptal” olarak kaydedilir.' : 'Randevuyu iptal etmek istediğinize emin misiniz?',
+              confirmLabel: 'Evet, iptal et',
+              danger: true,
+              icon: 'calendarDots',
+              onConfirm: () => void post('cancel'),
+            })
           }
         />
       ) : null}

@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert as NativeAlert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { confirm } from '@/components/Dialogs';
 import { BackLink } from '@/components/BackLink';
 import { Icon } from '@/components/Icon';
 import { Appear, SkeletonList } from '@/components/motion';
@@ -148,10 +149,7 @@ export default function WorkingHoursScreen() {
   function choosePerson(id: string) {
     if (id === memberId) return;
     if (!changed) return setMemberId(id);
-    NativeAlert.alert('Kaydedilmemiş değişiklikler', 'Kaydedilmemiş değişiklikler silinsin mi?', [
-      { text: 'Vazgeç', style: 'cancel' },
-      { text: 'Sil', style: 'destructive', onPress: () => setMemberId(id) },
-    ]);
+    confirm({ title: 'Kaydedilmemiş değişiklikler', message: 'Kaydedilmemiş değişiklikler silinsin mi?', confirmLabel: 'Sil', danger: true, icon: 'edit', onConfirm: () => setMemberId(id) });
   }
 
   async function save() {
