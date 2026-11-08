@@ -1,9 +1,10 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
+import { BackHandler, Platform, Pressable, StyleSheet, View } from 'react-native';
+import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radius, themed } from '@/lib/theme';
+import { colors, radius, themed, themeScheme } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
 import { Button, Text } from './ui';
 
@@ -56,33 +57,60 @@ export function DialogHost() {
     },
     () => open,
   );
-  // Keeps the last dialog drawn while the modal fades out.
+  const reduced = useReducedMotion();
+  // Kept drawn while it animates out after closing.
   const [shown, setShown] = useState<Open>(null);
+  // 0 hidden → 1 open: drives the blurred, dimmed background, the card's pop and the sheet's slide.
+  const progress = useSharedValue(0);
+
   useEffect(() => {
-    if (current) setShown(current);
+    if (current) {
+      setShown(current);
+      progress.value = reduced ? 1 : withTiming(1, { duration: 260, easing: Easing.out(Easing.cubic) });
+    } else if (reduced) {
+      progress.value = 0;
+      setShown(null);
+    } else {
+      progress.value = withTiming(0, { duration: 200, easing: Easing.in(Easing.cubic) }, (done) => {
+        if (done) runOnJS(setShown)(null);
+      });
+    }
+  }, [current, progress, reduced]);
+
+  // Android's back button closes the dialog instead of leaving the screen.
+  useEffect(() => {
+    if (!current) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      set(null);
+      return true;
+    });
+    return () => sub.remove();
   }, [current]);
+
   const close = () => set(null);
-  // The action runs after the dialog has started closing, so a screen change does not stack on it.
+  // The action runs once the dialog has started closing, so a screen change does not stack on it.
   const run = (action: () => void) => {
     close();
     setTimeout(action, 0);
   };
+  const backdrop = useAnimatedStyle(() => ({ opacity: progress.value }));
 
+  if (!shown) return null;
   return (
-    <Modal visible={Boolean(current)} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={close} onDismiss={() => setShown(null)}>
-      {shown?.kind === 'confirm' ? <ConfirmCard key={shown.options.title} o={shown.options} onCancel={close} onConfirm={() => run(shown.options.onConfirm)} /> : null}
-      {shown?.kind === 'sheet' ? <Sheet key={shown.options.title} o={shown.options} onCancel={close} onChoose={(opt) => run(opt.onPress)} /> : null}
-    </Modal>
+    <View style={StyleSheet.absoluteFill} pointerEvents={current ? 'auto' : 'none'}>
+      {/* A little blur and a little dimming over the screen behind (founder, 9 November 2026). */}
+      <Animated.View style={[StyleSheet.absoluteFill, backdrop]} pointerEvents="none">
+        <BlurView style={StyleSheet.absoluteFill} intensity={Platform.OS === 'android' ? 24 : 16} tint={themeScheme() === 'dark' ? 'dark' : 'light'} experimentalBlurMethod="dimezisBlurView" />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]} />
+      </Animated.View>
+      {shown.kind === 'confirm' ? <ConfirmCard key={shown.options.title} o={shown.options} progress={progress} onCancel={close} onConfirm={() => run(shown.options.onConfirm)} /> : null}
+      {shown.kind === 'sheet' ? <Sheet key={shown.options.title} o={shown.options} progress={progress} onCancel={close} onChoose={(opt) => run(opt.onPress)} /> : null}
+    </View>
   );
 }
 
-function ConfirmCard({ o, onCancel, onConfirm }: { o: ConfirmOptions; onCancel: () => void; onConfirm: () => void }) {
-  const reduced = useReducedMotion();
-  const scale = useSharedValue(reduced ? 1 : 0.92);
-  useEffect(() => {
-    if (!reduced) scale.value = withSpring(1, { damping: 16, stiffness: 240 });
-  }, [reduced, scale]);
-  const pop = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+function ConfirmCard({ o, progress, onCancel, onConfirm }: { o: ConfirmOptions; progress: SharedValue<number>; onCancel: () => void; onConfirm: () => void }) {
+  const pop = useAnimatedStyle(() => ({ opacity: progress.value, transform: [{ scale: 0.92 + 0.08 * progress.value }] }));
   const tint = o.danger ? colors.danger : colors.primary;
   return (
     <View style={styles.center}>
@@ -108,18 +136,21 @@ function ConfirmCard({ o, onCancel, onConfirm }: { o: ConfirmOptions; onCancel: 
   );
 }
 
-function Sheet({ o, onCancel, onChoose }: { o: SheetOptions; onCancel: () => void; onChoose: (option: SheetOption) => void }) {
+function Sheet({ o, progress, onCancel, onChoose }: { o: SheetOptions; progress: SharedValue<number>; onCancel: () => void; onChoose: (option: SheetOption) => void }) {
   const insets = useSafeAreaInsets();
-  const reduced = useReducedMotion();
-  const offset = useSharedValue(reduced ? 0 : 320);
-  useEffect(() => {
-    if (!reduced) offset.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) });
-  }, [offset, reduced]);
-  const slide = useAnimatedStyle(() => ({ transform: [{ translateY: offset.value }] }));
+  // The sheet's own height, so it slides fully out of view.
+  const height = useSharedValue(420);
+  const slide = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - progress.value) * height.value }] }));
   return (
     <View style={styles.bottom}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessibilityLabel="Kapat" />
-      <Animated.View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }, slide]} accessibilityViewIsModal>
+      <Animated.View
+        style={[styles.sheet, { paddingBottom: insets.bottom + 16 }, slide]}
+        onLayout={(e) => {
+          height.value = e.nativeEvent.layout.height + 24;
+        }}
+        accessibilityViewIsModal
+      >
         <View style={styles.handle} />
         <View style={{ gap: 4, paddingHorizontal: 4, marginBottom: 6 }}>
           <Text size={19} weight="heavy">
@@ -157,7 +188,7 @@ function Sheet({ o, onCancel, onChoose }: { o: SheetOptions; onCancel: () => voi
 
 const styles = themed(() =>
   StyleSheet.create({
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.backdrop },
+    center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', padding: 24 },
     card: {
       width: '100%',
       maxWidth: 400,
@@ -172,7 +203,7 @@ const styles = themed(() =>
     },
     badge: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
     buttons: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', marginTop: 10 },
-    bottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: colors.backdrop },
+    bottom: { ...StyleSheet.absoluteFillObject, justifyContent: 'flex-end' },
     sheet: {
       gap: 12,
       paddingHorizontal: 16,

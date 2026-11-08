@@ -42,6 +42,8 @@ const LIGHT = {
   float: 'rgba(255,255,255,0.92)',
   /** Dimmed backdrop behind sheets and dialogs. */
   backdrop: 'rgba(11,17,32,0.45)',
+  /** Behind the app's dialogs, over a light blur: a little dimming. */
+  scrim: 'rgba(11,17,32,0.22)',
 };
 
 export type Palette = typeof LIGHT;
@@ -83,6 +85,7 @@ const DARK: Palette = {
   chipOn: '#3d6ef2',
   float: 'rgba(21,29,48,0.92)',
   backdrop: 'rgba(0,0,0,0.6)',
+  scrim: 'rgba(0,0,0,0.32)',
 };
 
 export type Scheme = 'light' | 'dark';
