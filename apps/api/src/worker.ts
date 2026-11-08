@@ -1,12 +1,14 @@
 import type { Deps } from './deps.js';
 import { dispatchNotifications } from './notifications.js';
+import { runAnnouncements } from './services/announcements.js';
 import { runTimers } from './services/timers.js';
 
-/** One worker pass: due reminders and automatic confirmations, then outgoing messages. */
+/** One worker pass: due reminders and automatic confirmations, due announcements, then outgoing messages. */
 export async function tick(deps: Deps) {
   const timers = await runTimers(deps);
+  const announced = await runAnnouncements(deps);
   const sent = await dispatchNotifications(deps);
-  return { ...timers, sent };
+  return { ...timers, announced, sent };
 }
 
 export function startWorker(deps: Deps, onError: (err: unknown) => void): () => void {

@@ -11,6 +11,7 @@ import { OverviewTab } from './OverviewTab';
 import { SalonsTab } from './SalonsTab';
 import { RequestsTab } from './RequestsTab';
 import { RatingsTab } from './RatingsTab';
+import { AnnouncementsTab } from './AnnouncementsTab';
 import styles from './admin.module.css';
 
 const TABS = [
@@ -18,6 +19,7 @@ const TABS = [
   { key: 'salonlar', label: 'Salonlar' },
   { key: 'talepler', label: 'Talepler' },
   { key: 'puanlar', label: 'Değerlendirmeler' },
+  { key: 'bildirimler', label: 'Bildirimler' },
 ] as const;
 export type AdminTab = (typeof TABS)[number]['key'];
 
@@ -106,6 +108,7 @@ export function AdminPanel() {
             {tab === 'salonlar' && <SalonsTab filter={filter} onFilter={setFilter} salonId={salonId} onSalon={setSalonId} />}
             {tab === 'talepler' && <RequestsTab onSalon={openSalon} />}
             {tab === 'puanlar' && <RatingsTab />}
+            {tab === 'bildirimler' && <AnnouncementsTab />}
           </>
         )}
       </main>

@@ -551,3 +551,145 @@
   background: var(--surface-2);
   font-weight: 750;
 }
+
+/* Bildirimler (founder, 8 November 2026) */
+.announce {
+  display: grid;
+  gap: 14px;
+}
+
+.announceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .announceGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.announceForm {
+  display: grid;
+  gap: 14px;
+}
+
+.announceField > span,
+.announceGroup > span {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.announceGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.counter {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.textarea {
+  min-height: 84px;
+  padding: 12px 14px;
+  resize: vertical;
+  font: inherit;
+}
+
+.time {
+  max-width: 140px;
+}
+
+.preview {
+  display: grid;
+  gap: 8px;
+  position: sticky;
+  top: 80px;
+}
+
+.previewLabel {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+/* An Android notification, as in the founder's example. */
+.phoneNote {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 24px;
+  background: #2b2d31;
+  color: #fff;
+}
+
+.phoneIcon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #0b1120;
+  color: #fff;
+}
+
+.phoneMeta {
+  font-size: 12px;
+  color: #b9bcc3;
+}
+
+.phoneNote strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.phoneNote p {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #e3e5ea;
+  overflow-wrap: anywhere;
+}
+
+.announceTitle {
+  margin: 10px 0 0;
+  font-size: 18px;
+}
+
+.announceRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  padding: 12px 16px;
+}
+
+.announceActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.linkBtn {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.linkDanger {
+  color: var(--danger);
+}

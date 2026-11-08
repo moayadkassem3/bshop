@@ -2,8 +2,8 @@ import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
-import { useCallback, useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppearanceSwitch } from '@/components/AppearanceSwitch';
 import { useKeyboardRoom } from '@/lib/keyboard';
@@ -161,6 +161,10 @@ function Account() {
         <Card>
           <AppearanceSwitch />
         </Card>
+        <Section title="Bildirimler" />
+        <Card>
+          <AnnouncementsSwitch />
+        </Card>
       </Appear>
 
       {business || me.has_business ? (
@@ -294,6 +298,41 @@ function MyBusinesses() {
         })}
       </Card>
     </Appear>
+  );
+}
+
+/**
+ * Profil → Bildirimler (founder, 8 November 2026): announcements from our team (Yönetim →
+ * Bildirimler) can be turned off; appointment notifications always come.
+ */
+function AnnouncementsSwitch() {
+  const [on, setOn] = useState<boolean | null>(null);
+  useEffect(() => {
+    api<{ on: boolean }>('/me/announcements')
+      .then((r) => setOn(r.on))
+      .catch(() => setOn(true));
+  }, []);
+  return (
+    <View style={{ gap: 6 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Text weight="semibold" style={{ flex: 1 }}>
+          Duyurular ve hatırlatmalar
+        </Text>
+        <Switch
+          value={on ?? true}
+          disabled={on === null}
+          onValueChange={(next) => {
+            setOn(next);
+            api('/me/announcements', { method: 'PUT', body: { on: next } }).catch(() => setOn(!next));
+          }}
+          trackColor={{ true: colors.primary, false: colors.line }}
+          thumbColor={colors.white}
+        />
+      </View>
+      <Text size={13} color={colors.muted}>
+        Ekibimizden ara sıra gelen haberler. Randevu bildirimleriniz her zaman gelir.
+      </Text>
+    </View>
   );
 }
 

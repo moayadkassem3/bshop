@@ -31,6 +31,8 @@ object Alerts {
   const val CHANNEL_DEFAULT = "bildirimler"
   /** Outside the salon's working hours: shown, but without sound, vibration or a banner. */
   const val CHANNEL_QUIET = "sessiz_bildirimler"
+  /** Announcements from our team (Yönetim → Bildirimler): their own channel, so people can mute them alone. */
+  const val CHANNEL_NEWS = "duyurular"
   const val EXTRA_PAYLOAD = "salonPushPayload"
   const val EXTRA_ACTION = "salonPushAction"
   const val EXTRA_NOTIFICATION_ID = "salonPushNotificationId"
@@ -69,6 +71,14 @@ object Alerts {
         },
       )
     }
+    if (manager.getNotificationChannel(CHANNEL_NEWS) == null) {
+      manager.createNotificationChannel(
+        NotificationChannel(CHANNEL_NEWS, "Duyurular", NotificationManager.IMPORTANCE_DEFAULT).apply {
+          description = "Ekibimizden haberler ve hatırlatmalar."
+          lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+        },
+      )
+    }
     if (manager.getNotificationChannel(CHANNEL_DEFAULT) == null) {
       manager.createNotificationChannel(
         NotificationChannel(CHANNEL_DEFAULT, "Bildirimler", NotificationManager.IMPORTANCE_HIGH).apply {
@@ -88,9 +98,10 @@ object Alerts {
     val quiet = data["quiet"] == "1"
     val alarm = kind in ALARM_KINDS && !quiet
     val answerable = kind in ANSWERABLE_KINDS
+    val news = kind == "announcement"
     val title = data["title"] ?: "Salon Randevu"
     val body = data["body"] ?: ""
-    val id = notificationIdFor(data["appointmentId"] ?: (title + body))
+    val id = notificationIdFor(data["appointmentId"] ?: data["announcementId"] ?: (title + body))
     val payload = JSONObject(data).toString()
     val launch = context.packageManager.getLaunchIntentForPackage(context.packageName)!!.apply {
       addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -110,6 +121,7 @@ object Alerts {
     val channel = when {
       alarm -> CHANNEL_ALARM
       quiet -> CHANNEL_QUIET
+      news -> CHANNEL_NEWS
       else -> CHANNEL_DEFAULT
     }
     val builder = NotificationCompat.Builder(context, channel)
@@ -121,6 +133,7 @@ object Alerts {
         when {
           alarm -> NotificationCompat.PRIORITY_MAX
           quiet -> NotificationCompat.PRIORITY_LOW
+          news -> NotificationCompat.PRIORITY_DEFAULT
           else -> NotificationCompat.PRIORITY_HIGH
         },
       )

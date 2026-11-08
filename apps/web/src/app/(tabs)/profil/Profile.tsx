@@ -15,6 +15,7 @@ import { VerifiedTick } from '@/components/VerifiedTick';
 import { FORWARD, TAB } from '@/lib/motion';
 import { useCanSell } from '@/lib/store';
 import { AppearanceSwitch } from '@/components/AppearanceSwitch';
+import { AnnouncementsSwitch } from '@/components/AnnouncementsSwitch';
 import { Icon, type IconName } from '@/components/Icon';
 import { StaffPhotoPicker } from '@/components/StaffAvatar';
 
@@ -183,6 +184,9 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
 
         <h2 className={styles.groupTitle}>Görünüm</h2>
         <AppearanceSwitch />
+
+        <h2 className={styles.groupTitle}>Bildirimler</h2>
+        <AnnouncementsSwitch />
 
         {/* Switching mode is its own action, kept apart from the settings list; sign-out stays last. */}
         {(mode !== 'customer' || me.has_business) && (

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { announcementsSetting, setAnnouncementsSetting } from '../services/announcements.js';
 import type { Deps } from '../deps.js';
 import { signOut, switchMode, updateProfile } from '../services/auth.js';
 import { cancelByCustomer, createBooking, listCustomerAppointments } from '../services/booking.js';
@@ -81,6 +82,10 @@ export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     await unlikePost(deps, user, z.object({ id }).parse(req.params).id);
     return reply.status(204).send();
   });
+
+  // Profil → Duyurular: announcements from our team can be turned off (founder, 8 November 2026).
+  app.get('/me/announcements', async (req) => announcementsSetting(deps, await auth(req)));
+  app.put('/me/announcements', async (req) => setAnnouncementsSetting(deps, await auth(req), z.object({ on: z.boolean() }).parse(req.body).on));
 
   app.patch('/me', async (req) => {
     const user = await auth(req);

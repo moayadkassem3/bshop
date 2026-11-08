@@ -21,7 +21,7 @@ export async function listMyNotifications(deps: Deps, user: User, input: { after
   const { rows } = await deps.db.query<InboxItem>(
     `SELECT id, shop_id, appointment_id, template, payload->>'title' AS title, body, created_at
      FROM notifications
-     WHERE (channel = 'push' OR appointment_id IS NOT NULL) AND recipient_user_id = $1
+     WHERE (channel = 'push' OR appointment_id IS NOT NULL) AND recipient_user_id = $1 AND template <> 'announcement'
        AND ($2::timestamptz IS NULL OR created_at > $2)
      ORDER BY created_at DESC LIMIT $3`,
     [user.id, input.after ?? null, input.limit ?? 50],

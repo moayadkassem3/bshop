@@ -18,6 +18,14 @@ import {
   setQuoteStatus,
   suspendShop,
 } from '../services/admin.js';
+import {
+  countRecipients,
+  createAnnouncement,
+  deleteAnnouncement,
+  listAnnouncements,
+  sendTestAnnouncement,
+  setAnnouncementActive,
+} from '../services/announcements.js';
 import type { AuthFn } from './app.js';
 import { id, shopParams, timestamp } from './schemas.js';
 
@@ -68,6 +76,39 @@ export function adminRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     await suspendShop(deps, await auth(req), shopId, reason);
     return reply.status(204).send();
   });
+  // Yönetim → Bildirimler (founder, 8 November 2026): announcements to customers and salons.
+  const audienceInput = z.object({
+    audience: z.enum(['customers', 'businesses', 'all']),
+    customerGender: z.enum(['male', 'female']).nullish(),
+    shopAudience: z.enum(['men', 'women', 'unisex']).nullish(),
+  });
+  const message = z.object({ title: z.string().trim().min(1).max(65), body: z.string().trim().min(1).max(240) });
+  app.get('/admin/announcements', async (req) => listAnnouncements(deps, await auth(req)));
+  app.get('/admin/announcements/recipients', async (req) => countRecipients(deps, await auth(req), audienceInput.parse(req.query)));
+  app.post('/admin/announcements', async (req, reply) => {
+    const body = message
+      .merge(audienceInput)
+      .extend({
+        repeat: z.enum(['once', 'daily', 'weekly']),
+        sendAt: timestamp.nullish(),
+        timeOfDay: z.number().int().min(0).max(1439).nullish(),
+        weekdays: z.array(z.number().int().min(1).max(7)).max(7).default([]),
+      })
+      .parse(req.body);
+    return reply.status(201).send(await createAnnouncement(deps, await auth(req), body));
+  });
+  app.post('/admin/announcements/test', async (req) => sendTestAnnouncement(deps, await auth(req), message.parse(req.body)));
+  app.put('/admin/announcements/:id/active', async (req, reply) => {
+    const { id: announcementId } = z.object({ id }).parse(req.params);
+    await setAnnouncementActive(deps, await auth(req), announcementId, z.object({ active: z.boolean() }).parse(req.body).active);
+    return reply.status(204).send();
+  });
+  app.delete('/admin/announcements/:id', async (req, reply) => {
+    const { id: announcementId } = z.object({ id }).parse(req.params);
+    await deleteAnnouncement(deps, await auth(req), announcementId);
+    return reply.status(204).send();
+  });
+
   app.get('/admin/requests', async (req) => adminRequests(deps, await auth(req)));
   app.put('/admin/quote-requests/:id', async (req, reply) => {
     const p = z.object({ id }).parse(req.params);
