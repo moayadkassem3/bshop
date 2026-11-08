@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { StaffAvatar } from '@/components/StaffAvatar';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { FavoriteButton } from '@/components/FavoriteButton';
@@ -68,17 +69,35 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
         <header className={styles.profileHeader}>
           {/* Each part leads to its listing page (v1.7): this type in this district, the district, the province. */}
           <p className={styles.kicker}>
-            {typeHref || districtHref ? <Link transitionTypes={BACK} href={(typeHref ?? districtHref)!}>{AUDIENCE[profile.audience]}</Link> : AUDIENCE[profile.audience]}
+            {typeHref || districtHref ? (
+              <Link transitionTypes={BACK} href={(typeHref ?? districtHref)!}>
+                {AUDIENCE[profile.audience]}
+              </Link>
+            ) : (
+              AUDIENCE[profile.audience]
+            )}
             {profile.district && (
               <>
                 {' · '}
-                {districtHref && districtHref !== cityHref ? <Link transitionTypes={BACK} href={districtHref}>{profile.district}</Link> : profile.district}
+                {districtHref && districtHref !== cityHref ? (
+                  <Link transitionTypes={BACK} href={districtHref}>
+                    {profile.district}
+                  </Link>
+                ) : (
+                  profile.district
+                )}
               </>
             )}
             {profile.city && (
               <>
                 {profile.district ? ', ' : ' · '}
-                {cityHref ? <Link transitionTypes={BACK} href={cityHref}>{profile.city}</Link> : profile.city}
+                {cityHref ? (
+                  <Link transitionTypes={BACK} href={cityHref}>
+                    {profile.city}
+                  </Link>
+                ) : (
+                  profile.city
+                )}
               </>
             )}
           </p>
@@ -96,9 +115,7 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
               <span>değerlendirme</span>
             </a>
           )}
-          <p className={today?.open ? styles.openNow : styles.closedNow}>
-            {today?.open ? `Bugün açık · ${today.open}–${today.close}` : 'Bugün kapalı'}
-          </p>
+          <p className={today?.open ? styles.openNow : styles.closedNow}>{today?.open ? `Bugün açık · ${today.open}–${today.close}` : 'Bugün kapalı'}</p>
           {profile.about && <p className={styles.about}>{profile.about}</p>}
         </header>
 
@@ -143,12 +160,7 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
             </a>
           )}
           {profile.instagram && (
-            <a
-              href={`https://instagram.com/${profile.instagram}`}
-              target="_blank"
-              rel="noreferrer"
-              className={styles.infoRow}
-            >
+            <a href={`https://instagram.com/${profile.instagram}`} target="_blank" rel="noreferrer" className={styles.infoRow}>
               <span className={styles.infoIcon} aria-hidden>
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -220,13 +232,7 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
             <ul className={styles.staffList} role="list">
               {profile.staff.map((m) => (
                 <li key={m.id}>
-                  <span className={styles.staffAvatar} aria-hidden>
-                    {m.display_name
-                      .split(/\s+/)
-                      .slice(0, 2)
-                      .map((p) => p[0])
-                      .join('')}
-                  </span>
+                  <StaffAvatar name={m.display_name} photoId={m.photo_id} className={styles.staffAvatar} />
                   <span className={styles.staffName}>{m.display_name}</span>
                   <Link transitionTypes={FORWARD} href={`${bookUrl}?personel=${m.id}`} className={styles.staffBook}>
                     Randevu al

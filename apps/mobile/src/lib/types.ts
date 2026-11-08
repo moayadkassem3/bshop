@@ -40,6 +40,9 @@ export type BusinessShop = {
   name: string;
   slug: string;
   member_id: string;
+  display_name?: string;
+  /** This person's staff photo here (founder, 8 November 2026). */
+  photo_id?: string | null;
   role: 'owner' | 'staff';
   subscription_status: 'none' | 'trial' | 'active' | 'past_due' | 'canceled';
   current_period_end: string | null;
@@ -138,7 +141,7 @@ export type ShopProfile = {
   photos: { id: string; width?: number; height?: number }[];
   openingHours: { weekday: number; open: string | null; close: string | null }[];
   services: { id: string; name: string; duration_minutes: number; price_kurus: number; price_is_starting_from: boolean }[];
-  staff: { id: string; display_name: string; service_ids: string[] }[];
+  staff: { id: string; display_name: string; photo_id?: string | null; service_ids: string[] }[];
   posts?: HaircutPost[];
   paymentAtShop?: boolean;
 };

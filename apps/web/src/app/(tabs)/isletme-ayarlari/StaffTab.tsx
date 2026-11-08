@@ -7,6 +7,7 @@ import { PhoneInput } from '@/components/PhoneInput';
 import { formatPrice } from '@/lib/format';
 import { phoneComplete } from '@/lib/phone';
 import { formatPhone } from '@/lib/shop';
+import { StaffAvatar, StaffPhotoPicker } from '@/components/StaffAvatar';
 import own from './settings.module.css';
 import { FORWARD } from '@/lib/motion';
 import { useCanSell } from '@/lib/store';
@@ -18,6 +19,7 @@ type Member = {
   display_name: string;
   bookable: boolean;
   active: boolean;
+  photo_id: string | null;
   phone: string;
 };
 type Plans = { plans: { id: string; name: string; maxStaff: number; monthlyPriceKurus: number }[]; terms: { customQuoteAboveStaff: number } };
@@ -89,7 +91,9 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
               <small>/ay</small>
             </span>
           ) : (
-            <Link transitionTypes={FORWARD} href={`/teklif-al?kaynak=ayarlar&personel=${bookable}`}>Teklif alın ›</Link>
+            <Link transitionTypes={FORWARD} href={`/teklif-al?kaynak=ayarlar&personel=${bookable}`}>
+              Teklif alın ›
+            </Link>
           )}
         </div>
       )}
@@ -99,6 +103,8 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
           editing === m.id ? (
             <li key={m.id} className={own.editRow}>
               <MemberEditor
+                shopId={shopId}
+                onPhoto={load}
                 member={m}
                 isMe={m.id === myMemberId}
                 busy={busy}
@@ -113,15 +119,15 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
             </li>
           ) : (
             <li key={m.id}>
-              <button type="button" className={own.row} onClick={() => { setEditing(m.id); setAdding(false); }}>
-                <span className={own.avatar} aria-hidden>
-                  {m.display_name
-                    .split(/\s+/)
-                    .slice(0, 2)
-                    .map((p) => p[0])
-                    .join('')
-                    .toLocaleUpperCase('tr')}
-                </span>
+              <button
+                type="button"
+                className={own.row}
+                onClick={() => {
+                  setEditing(m.id);
+                  setAdding(false);
+                }}
+              >
+                <StaffAvatar name={m.display_name} photoId={m.photo_id} className={own.avatar} />
                 <span className={own.rowMain}>
                   <strong>
                     {m.display_name}
@@ -150,7 +156,14 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
           }}
         />
       ) : (
-        <button type="button" className={`btn btn-block ${own.addOne}`} onClick={() => { setAdding(true); setEditing(null); }}>
+        <button
+          type="button"
+          className={`btn btn-block ${own.addOne}`}
+          onClick={() => {
+            setAdding(true);
+            setEditing(null);
+          }}
+        >
           + Personel veya ortak ekle
         </button>
       )}
@@ -184,6 +197,8 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
 }
 
 function MemberEditor(props: {
+  shopId: string;
+  onPhoto: () => void;
   member: Member;
   isMe: boolean;
   busy: boolean;
@@ -201,6 +216,7 @@ function MemberEditor(props: {
 
   return (
     <div className={`${own.fields} motion-reveal`}>
+      <StaffPhotoPicker name={name || m.display_name} photoId={m.photo_id} targets={[{ shopId: props.shopId, memberId: m.id }]} onChange={props.onPhoto} />
       <div className="field">
         <label htmlFor={`m-${m.id}`}>Müşterilerin göreceği ad</label>
         <input id={`m-${m.id}`} className="input" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />

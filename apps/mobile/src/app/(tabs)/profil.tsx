@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppearanceSwitch } from '@/components/AppearanceSwitch';
+import { StaffPhotoPicker } from '@/components/StaffAvatar';
 import { Icon, type IconName } from '@/components/Icon';
 import { Appear, PopIn } from '@/components/motion';
 import { GenderChoice, SignIn } from '@/components/SignIn';
@@ -228,6 +229,8 @@ function businessStatus(b: BusinessShop): { label: string; tone: Tone } {
 /** İşletmelerim: the salons this person works at, with their role and state; a row opens Salonum on it. */
 function MyBusinesses() {
   const { shops, selectShop } = useBusinessShops();
+  // Set here after an upload; until then the photo the server gave.
+  const [photo, setPhoto] = useState<{ id: string | null } | null>(null);
   if (!shops || shops.length === 0) return null;
   return (
     <Appear>
@@ -263,6 +266,19 @@ function MyBusinesses() {
             </Pressable>
           );
         })}
+      </Card>
+      {/* Staff photos (founder, 8 November 2026): one photo for every salon the person works at. */}
+      <Section title="Profil fotoğrafım" />
+      <Card style={{ gap: 10 }}>
+        <StaffPhotoPicker
+          name={shops[0]!.display_name ?? shops[0]!.name}
+          photoId={photo ? photo.id : (shops[0]!.photo_id ?? null)}
+          targets={shops.map((b) => ({ shopId: b.id, memberId: b.member_id }))}
+          onChange={(id) => setPhoto({ id })}
+        />
+        <Text size={13} color={colors.muted}>
+          Müşteriler salonunuzun sayfasında ve randevu alırken sizi bu fotoğrafla görür.
+        </Text>
       </Card>
     </Appear>
   );

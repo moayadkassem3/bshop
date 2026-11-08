@@ -16,6 +16,7 @@ import { FORWARD, TAB } from '@/lib/motion';
 import { useCanSell } from '@/lib/store';
 import { AppearanceSwitch } from '@/components/AppearanceSwitch';
 import { Icon, type IconName } from '@/components/Icon';
+import { StaffPhotoPicker } from '@/components/StaffAvatar';
 
 const MODE_LABEL = { customer: 'Müşteri', owner: 'İşletme sahibi', staff: 'Personel' } as const;
 
@@ -222,6 +223,9 @@ type MyBusiness = {
   current_period_end: string | null;
   visible: boolean;
   verified?: boolean;
+  member_id: string;
+  display_name: string;
+  photo_id: string | null;
 };
 
 function businessStatus(b: MyBusiness): { label: string; tone: string } {
@@ -280,6 +284,21 @@ function MyBusinesses() {
           );
         })}
       </ul>
+      {/* Staff photos (founder, 8 November 2026): one photo for every salon the person works at. */}
+      {shops.length > 0 && (
+        <>
+          <h2 className={styles.groupTitle}>Profil fotoğrafım</h2>
+          <div className={`card ${styles.photoCard}`}>
+            <StaffPhotoPicker
+              name={shops[0]!.display_name}
+              photoId={shops[0]!.photo_id}
+              targets={shops.map((b) => ({ shopId: b.id, memberId: b.member_id }))}
+              onChange={(photoId) => setShops((list) => list && list.map((b) => ({ ...b, photo_id: photoId })))}
+            />
+            <p className={styles.photoHint}>Müşteriler salonunuzun sayfasında ve randevu alırken sizi bu fotoğrafla görür.</p>
+          </div>
+        </>
+      )}
     </>
   );
 }

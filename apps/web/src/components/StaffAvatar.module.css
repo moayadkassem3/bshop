@@ -1,0 +1,52 @@
+.avatar {
+  overflow: hidden;
+}
+
+.img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.picker {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 4px 14px;
+}
+
+.large {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--night);
+  color: #fff;
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.remove {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--danger);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.error {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--danger);
+}

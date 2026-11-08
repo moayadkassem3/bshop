@@ -11,6 +11,7 @@ import { HaircutCard } from '@/components/HaircutCard';
 import { PhotoCarousel } from '@/components/PhotoCarousel';
 import { PhotoTile } from '@/components/PhotoTile';
 import { photoUrl } from '@/components/SalonCard';
+import { StaffAvatar } from '@/components/StaffAvatar';
 import { formatRating, StarRow } from '@/components/Stars';
 import { Alert, Button, Card, Text } from '@/components/ui';
 import { api, errorMessage } from '@/lib/api';
@@ -254,11 +255,7 @@ export default function SalonScreen() {
                 <SectionTitle>Personel</SectionTitle>
                 {profile.staff.map((m, i) => (
                   <View key={m.id} style={[styles.staffRow, i < profile.staff.length - 1 && styles.line]}>
-                    <View style={styles.staffAvatar}>
-                      <Text size={16} weight="heavy" color={colors.white}>
-                        {initials(m.display_name)}
-                      </Text>
-                    </View>
+                    <StaffAvatar name={m.display_name} photoId={m.photo_id} size={48} />
                     <Text size={17} weight="semibold" style={{ flex: 1 }} numberOfLines={1}>
                       {m.display_name}
                     </Text>
@@ -424,12 +421,6 @@ function RatingsCard({ data }: { data: RatingsSummary }) {
 }
 
 /** Full-screen photos, swiped left and right, opened from the grid. */
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toLocaleUpperCase('tr-TR') ?? '')
-    .join('');
 const whatsappUrl = (phone: string) => `https://wa.me/${phone.replace(/^\+/, '')}`;
 
 const styles = themed(() =>
@@ -445,7 +436,6 @@ const styles = themed(() =>
     hourRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, paddingHorizontal: 8, marginHorizontal: -8, borderRadius: 10 },
     hourToday: { backgroundColor: colors.primarySoft },
     staffRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12 },
-    staffAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.night, alignItems: 'center', justifyContent: 'center' },
     staffBook: { paddingHorizontal: 16, minHeight: 40, justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.primarySoft },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     gridCell: { width: '31.5%' },

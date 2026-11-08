@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
+import { initials, StaffAvatar } from '@/components/StaffAvatar';
 import { Appear, PageSkeleton, PopIn, Skeleton, SlideIn } from '@/components/motion';
 import { SignIn } from '@/components/SignIn';
 import { Alert, Button, Card, Text } from '@/components/ui';
@@ -202,7 +203,7 @@ export default function BookingScreen() {
   );
 }
 
-function Option(props: { selected: boolean; onPress: () => void; title: string; meta?: string; right?: string; avatar?: string }) {
+function Option(props: { selected: boolean; onPress: () => void; title: string; meta?: string; right?: string; avatar?: string; photoId?: string | null }) {
   return (
     <Pressable
       accessibilityRole="radio"
@@ -210,7 +211,9 @@ function Option(props: { selected: boolean; onPress: () => void; title: string; 
       onPress={props.onPress}
       style={({ pressed }) => [styles.option, props.selected && styles.optionOn, pressed && { transform: [{ scale: 0.98 }] }]}
     >
-      {props.avatar ? (
+      {props.photoId ? (
+        <StaffAvatar name={props.title} photoId={props.photoId} size={42} style={props.selected && { borderWidth: 2, borderColor: colors.primary }} />
+      ) : props.avatar ? (
         <View style={[styles.avatar, props.selected && { backgroundColor: colors.primary }]}>
           <Text weight="bold" color={props.selected ? colors.white : colors.primary}>
             {props.avatar}
@@ -261,13 +264,6 @@ function ServiceStep(props: { profile: ShopProfile; selected: string[]; onChange
   );
 }
 
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toLocaleUpperCase('tr'))
-    .join('');
-
 function StaffStep(props: { slug: string; staff: ShopProfile['staff']; serviceIds: string[]; value: string | null; onChange: (id: string | null) => void }) {
   const [nextFree, setNextFree] = useState<Record<string, string | null>>({});
   const key = props.serviceIds.join(',');
@@ -297,7 +293,7 @@ function StaffStep(props: { slug: string; staff: ShopProfile['staff']; serviceId
       </Appear>
       {props.staff.map((m, i) => (
         <Appear key={m.id} index={i + 1}>
-          <Option selected={props.value === m.id} onPress={() => props.onChange(m.id)} avatar={initials(m.display_name)} title={m.display_name} meta={meta(m.id)} />
+          <Option selected={props.value === m.id} onPress={() => props.onChange(m.id)} avatar={initials(m.display_name)} photoId={m.photo_id} title={m.display_name} meta={meta(m.id)} />
         </Appear>
       ))}
     </>

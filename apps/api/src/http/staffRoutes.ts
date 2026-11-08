@@ -32,7 +32,7 @@ import {
   updateService,
 } from '../services/team.js';
 import { AppError } from '../errors.js';
-import { addPhoto, deletePhoto, listPhotosForStaff, MAX_UPLOAD_BYTES, reorderPhotos } from '../services/photos.js';
+import { addPhoto, deletePhoto, deleteStaffPhoto, listPhotosForStaff, MAX_UPLOAD_BYTES, reorderPhotos, setStaffPhoto } from '../services/photos.js';
 import { addPost, deletePost, listShopPostsForStaff } from '../services/haircuts.js';
 import { STYLE_KEYS } from '../domain/styles.js';
 import type { AuthFn } from './app.js';
@@ -207,6 +207,17 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
       })
       .parse(req.body);
     await updateMember(deps, await auth(req), p.shopId, p.id, body);
+    return reply.status(204).send();
+  });
+  // A staff member's photo: their own, or anyone's for owners (founder, 8 November 2026).
+  app.post('/staff/shops/:shopId/members/:id/photo', async (req, reply) => {
+    const p = action.parse(req.params);
+    if (!Buffer.isBuffer(req.body)) throw new AppError(415, 'UNSUPPORTED_MEDIA', 'Send a JPEG, PNG, or WebP image');
+    return reply.status(201).send(await setStaffPhoto(deps, await auth(req), p.shopId, p.id, req.body));
+  });
+  app.delete('/staff/shops/:shopId/members/:id/photo', async (req, reply) => {
+    const p = action.parse(req.params);
+    await deleteStaffPhoto(deps, await auth(req), p.shopId, p.id);
     return reply.status(204).send();
   });
   app.get('/staff/shops/:shopId/members/:id/hours', async (req) => {

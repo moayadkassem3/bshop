@@ -2,6 +2,7 @@ import type { OpeningHours, ShopProfile } from './types';
 
 /** Shop photos are served by the backend through the /api rewrite. */
 export const photoUrl = (id: string) => `/api/public/photos/${id}`;
+export const staffPhotoUrl = (id: string) => `/api/public/staff-photos/${id}`;
 export const haircutPhotoUrl = (id: string) => `/api/public/haircut-photos/${id}`;
 
 /** Opens turn-by-turn directions in the phone's maps app (Google Maps link works on Android and iPhone). */

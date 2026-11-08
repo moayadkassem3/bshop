@@ -4,25 +4,12 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { relativeDayTime } from '@/lib/format';
 import type { Slot, StaffMember } from '@/lib/types';
+import { StaffAvatar } from '@/components/StaffAvatar';
 import styles from './booking.module.css';
 
 type FirstAvailable = { result: { date: string; slot: Slot } | null };
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toLocaleUpperCase('tr'))
-    .join('');
-}
-
-export function StaffStep(props: {
-  slug: string;
-  staff: StaffMember[];
-  serviceIds: string[];
-  value: string | null;
-  onChange: (staffId: string | null) => void;
-}) {
+export function StaffStep(props: { slug: string; staff: StaffMember[]; serviceIds: string[]; value: string | null; onChange: (staffId: string | null) => void }) {
   const [nextFree, setNextFree] = useState<Record<string, string | null>>({});
   const key = props.serviceIds.join(',');
 
@@ -40,8 +27,7 @@ export function StaffStep(props: {
     };
   }, [props.slug, props.staff, key]);
 
-  const nextLabel = (id: string) =>
-    id in nextFree ? (nextFree[id] ? `İlk boş saat: ${relativeDayTime(nextFree[id]!)}` : 'Yakında boş saat yok') : 'Boş saat aranıyor…';
+  const nextLabel = (id: string) => (id in nextFree ? (nextFree[id] ? `İlk boş saat: ${relativeDayTime(nextFree[id]!)}` : 'Yakında boş saat yok') : 'Boş saat aranıyor…');
 
   return (
     <section aria-labelledby="staff-title">
@@ -67,16 +53,8 @@ export function StaffStep(props: {
         {props.staff.map((member) => (
           <li key={member.id}>
             <label className={`${styles.option} ${props.value === member.id ? styles.optionSelected : ''}`}>
-              <input
-                type="radio"
-                name="staff"
-                className="sr-only"
-                checked={props.value === member.id}
-                onChange={() => props.onChange(member.id)}
-              />
-              <span className={styles.avatar} aria-hidden>
-                {initials(member.display_name)}
-              </span>
+              <input type="radio" name="staff" className="sr-only" checked={props.value === member.id} onChange={() => props.onChange(member.id)} />
+              <StaffAvatar name={member.display_name} photoId={member.photo_id} className={styles.avatar} />
               <span className={styles.optionBody}>
                 <span className={styles.optionName}>{member.display_name}</span>
                 <span className={styles.optionMeta}>{nextLabel(member.id)}</span>

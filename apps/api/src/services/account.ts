@@ -86,6 +86,7 @@ export async function deletionPlan(deps: Deps, user: User): Promise<DeletionPlan
  */
 export async function deleteAccount(deps: Deps, user: User) {
   const now = deps.clock.now();
+  const photoKeys: string[] = [];
   await withTx(deps.db, async (tx) => {
     await tx.query('SELECT 1 FROM users WHERE id = $1 FOR UPDATE', [user.id]);
     const plan = await planDeletion(tx, user.id, now);
@@ -122,7 +123,10 @@ export async function deleteAccount(deps: Deps, user: User) {
         await tx.query("UPDATE subscriptions SET status = 'canceled', updated_at = $2 WHERE shop_id = $1", [m.shop_id, now]);
         await tx.query('UPDATE shop_members SET active = false, bookable = false WHERE shop_id = $1', [m.shop_id]);
       }
-      await tx.query('UPDATE shop_members SET active = false, bookable = false, owner_label = NULL WHERE id = $1', [m.id]);
+      // Their staff photo goes with the account.
+      const photo = await tx.query<{ photo_key: string | null }>('SELECT photo_key FROM shop_members WHERE id = $1', [m.id]);
+      if (photo.rows[0]?.photo_key) photoKeys.push(photo.rows[0].photo_key);
+      await tx.query('UPDATE shop_members SET active = false, bookable = false, owner_label = NULL, photo_id = NULL, photo_key = NULL WHERE id = $1', [m.id]);
     }
 
     // The person's data.
@@ -149,4 +153,5 @@ export async function deleteAccount(deps: Deps, user: User) {
     await tx.query('DELETE FROM sessions WHERE user_id = $1', [user.id]);
     await tx.query('DELETE FROM push_devices WHERE user_id = $1', [user.id]);
   });
+  for (const key of photoKeys) await deps.photos.delete(key).catch(() => undefined);
 }

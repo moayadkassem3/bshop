@@ -279,3 +279,15 @@
 .deleteLink:hover {
   text-decoration: underline;
 }
+
+.photoCard {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.photoHint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}

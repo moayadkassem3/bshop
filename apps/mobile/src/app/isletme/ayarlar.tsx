@@ -9,6 +9,7 @@ import { PhotoManager } from '@/components/PhotoManager';
 import { SAVE_BAR_SPACE, SaveBar, type SaveBarState } from '@/components/SaveBar';
 import { SelectField } from '@/components/SelectField';
 import { ShopPicker } from '@/components/ShopPicker';
+import { StaffAvatar, StaffPhotoPicker } from '@/components/StaffAvatar';
 import { Alert, Badge, Button, Card, Field, Screen, Segmented, Text } from '@/components/ui';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
@@ -593,7 +594,7 @@ function CatalogPicker(props: { existing: Set<number>; busy: boolean; onCancel: 
 
 // ---------------------------------------------------------------- Personel
 
-type Member = { id: string; role: 'owner' | 'staff'; owner_label: 'owner' | 'co_owner' | null; display_name: string; bookable: boolean; active: boolean; phone: string };
+type Member = { id: string; role: 'owner' | 'staff'; owner_label: 'owner' | 'co_owner' | null; display_name: string; bookable: boolean; active: boolean; photo_id: string | null; phone: string };
 type Plans = { plans: { id: string; name: string; maxStaff: number }[]; terms: { customQuoteAboveStaff: number } };
 type Role = 'staff' | 'co_owner';
 const roleOf = (m: Member) => (m.owner_label === 'owner' ? 'Sahibi' : m.role === 'owner' ? 'Ortak' : 'Personel');
@@ -662,6 +663,8 @@ function StaffTab({ shopId, myMemberId }: { shopId: string; myMemberId: string }
             <View key={m.id} style={i < active.length - 1 && styles.line}>
               {editing === m.id ? (
                 <MemberEditor
+                  shopId={shopId}
+                  onPhoto={() => void load()}
                   member={m}
                   isMe={m.id === myMemberId}
                   busy={busy}
@@ -671,11 +674,14 @@ function StaffTab({ shopId, myMemberId }: { shopId: string; myMemberId: string }
                 />
               ) : (
                 <Pressable onPress={() => (setEditing(m.id), setAdding(false))} style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface2 }]}>
-                  <View style={styles.avatar}>
-                    <Text weight="bold" color={colors.primary}>
-                      {m.display_name.slice(0, 1).toLocaleUpperCase('tr-TR')}
-                    </Text>
-                  </View>
+                  <StaffAvatar
+                    name={m.display_name}
+                    photoId={m.photo_id}
+                    size={40}
+                    style={{ backgroundColor: colors.primarySoft }}
+                    textColor={colors.primary}
+                    letters={m.display_name.slice(0, 1).toLocaleUpperCase('tr-TR')}
+                  />
                   <View style={{ flex: 1 }}>
                     <Text weight="semibold">
                       {m.display_name}
@@ -744,6 +750,8 @@ function StaffTab({ shopId, myMemberId }: { shopId: string; myMemberId: string }
 }
 
 function MemberEditor(props: {
+  shopId: string;
+  onPhoto: () => void;
   member: Member;
   isMe: boolean;
   busy: boolean;
@@ -760,6 +768,7 @@ function MemberEditor(props: {
 
   return (
     <Appear style={{ gap: 10, padding: 12 }}>
+      <StaffPhotoPicker name={name || m.display_name} photoId={m.photo_id} targets={[{ shopId: props.shopId, memberId: m.id }]} onChange={props.onPhoto} />
       <Field label="Müşterilerin göreceği ad" value={name} maxLength={60} onChangeText={setName} />
       {canChangeRole ? <RolePicker value={role} onChange={setRole} /> : null}
       {role === 'co_owner' ? (
@@ -923,7 +932,6 @@ const styles = themed(() =>
     search: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, minHeight: 46, borderRadius: radius.sm, backgroundColor: colors.surface2 },
     searchInput: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: colors.ink, paddingVertical: 8 },
     planBox: { gap: 2, padding: 14, borderRadius: radius.md, backgroundColor: colors.primarySoft },
-    avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
     switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     segmented: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: radius.sm, backgroundColor: colors.surface2 },
     segment: { flex: 1, minHeight: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },

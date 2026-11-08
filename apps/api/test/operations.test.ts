@@ -449,6 +449,42 @@ describe('shop profile page (handoff v1.3)', () => {
     expect((await t.call('GET', `/public/photos/${reversed[0]}`)).status).toBe(404);
   });
 
+  it('staff photos: each sets their own, owners set anyone’s; customers see them (founder, 8 November 2026)', async () => {
+    const shop = await setupShop(t);
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
+    const photoOf = async (memberId: string) =>
+      (await t.call('GET', `/public/shops/${shop.slug}`)).body.staff.find((m: { id: string }) => m.id === memberId).photo_id as string | null;
+
+    // A staff member sets their own photo; it is cropped square and served without metadata.
+    const own = await t.call('POST', `${shop.base}/members/${shop.staff.cumali}/photo`, { token: cumali, body: await jpeg(1200, 800), contentType: 'image/jpeg' });
+    expect(own.status).toBe(201);
+    expect(await photoOf(shop.staff.cumali)).toBe(own.body.photo_id);
+    const image = await t.call('GET', `/public/staff-photos/${own.body.photo_id}`);
+    const meta = await sharp(image.raw).metadata();
+    expect([meta.format, meta.width, meta.height, meta.exif]).toEqual(['webp', 512, 512, undefined]);
+
+    // Not someone else's.
+    const other = await t.call('POST', `${shop.base}/members/${shop.staff.tahir}/photo`, { token: cumali, body: await jpeg(300, 300), contentType: 'image/jpeg' });
+    expect(other.status).toBe(403);
+
+    // The owner replaces it: the old file is gone.
+    const replaced = await t.call('POST', `${shop.base}/members/${shop.staff.cumali}/photo`, {
+      token: shop.tokens.owner,
+      body: await jpeg(300, 300),
+      contentType: 'image/jpeg',
+    });
+    expect(replaced.status).toBe(201);
+    expect((await t.call('GET', `/public/staff-photos/${own.body.photo_id}`)).status).toBe(404);
+    expect((await t.call('GET', `${shop.base}/members`, { token: shop.tokens.owner })).body.find((m: { id: string }) => m.id === shop.staff.cumali).photo_id).toBe(
+      replaced.body.photo_id,
+    );
+
+    // Removing it brings back the initials.
+    expect((await t.call('DELETE', `${shop.base}/members/${shop.staff.cumali}/photo`, { token: cumali })).status).toBe(204);
+    expect(await photoOf(shop.staff.cumali)).toBeNull();
+    expect((await t.call('GET', `/public/staff-photos/${replaced.body.photo_id}`)).status).toBe(404);
+  });
+
   it('rejects an invalid Instagram handle', async () => {
     const shop = await setupShop(t);
     const r = await t.call('PATCH', `${shop.base}/settings`, { token: shop.tokens.owner, body: { instagram: 'not a handle!' } });

@@ -3,7 +3,7 @@ import sharp from 'sharp';
 import type { Deps } from '../deps.js';
 import { withTx } from '../db.js';
 import { badRequest, conflict, notFound } from '../errors.js';
-import { requireMember, requireOwner } from './access.js';
+import { requireMember, requireOwner, requireSelfOrOwner } from './access.js';
 import type { User } from './auth.js';
 
 export const MAX_PHOTOS = 12;
@@ -22,6 +22,8 @@ export type Photo = { id: string; width: number; height: number };
 export const IMAGE_PRESETS = {
   photo: { maxSide: 1600, quality: 78, minQuality: 70, maxBytes: 300 * 1024 },
   post: { maxSide: 1280, quality: 78, minQuality: 70, maxBytes: 220 * 1024 },
+  // Staff photos are shown in small circles: cropped square around the middle.
+  avatar: { maxSide: 512, quality: 80, minQuality: 72, maxBytes: 80 * 1024 },
 } as const;
 export type ImageKind = keyof typeof IMAGE_PRESETS;
 
@@ -35,7 +37,11 @@ export async function processImage(data: Buffer, kind: ImageKind = 'photo'): Pro
   try {
     const upright = await sharp(data, { limitInputPixels: 50_000_000 })
       .rotate()
-      .resize({ width: preset.maxSide, height: preset.maxSide, fit: 'inside', withoutEnlargement: true })
+      .resize(
+        kind === 'avatar'
+          ? { width: preset.maxSide, height: preset.maxSide, fit: 'cover', position: 'attention' }
+          : { width: preset.maxSide, height: preset.maxSide, fit: 'inside', withoutEnlargement: true },
+      )
       .raw()
       .toBuffer({ resolveWithObject: true });
     const encode = (quality: number) =>
@@ -112,6 +118,52 @@ export async function listPhotosForStaff(deps: Deps, user: User, shopId: string)
 export async function readPhoto(deps: Deps, photoId: string): Promise<Buffer> {
   const { rows } = await deps.db.query<{ storage_key: string }>('SELECT storage_key FROM shop_photos WHERE id = $1', [photoId]);
   const data = rows[0] ? await deps.photos.get(rows[0].storage_key) : null;
+  if (!data) throw notFound('Photo');
+  return data;
+}
+
+/**
+ * A staff member's photo (founder, 8 November 2026): the staff member sets their own,
+ * the salon's owners set anyone's. Replacing or removing it deletes the old file.
+ */
+export async function setStaffPhoto(deps: Deps, user: User, shopId: string, memberId: string, data: Buffer): Promise<{ photo_id: string }> {
+  requireSelfOrOwner(await requireMember(deps.db, user, shopId), memberId);
+  const processed = await processImage(data, 'avatar');
+  const photoId = randomUUID();
+  const key = `${shopId}/staff/${photoId}.webp`;
+  await deps.photos.put(key, processed.data);
+  const old = await withTx(deps.db, async (tx) => {
+    const { rows } = await tx.query<{ photo_key: string | null }>(
+      'SELECT photo_key FROM shop_members WHERE id = $1 AND shop_id = $2 AND active FOR UPDATE',
+      [memberId, shopId],
+    );
+    if (!rows[0]) throw notFound('Member');
+    await tx.query('UPDATE shop_members SET photo_id = $2, photo_key = $3 WHERE id = $1', [memberId, photoId, key]);
+    return rows[0].photo_key;
+  }).catch(async (err) => {
+    await deps.photos.delete(key);
+    throw err;
+  });
+  if (old) await deps.photos.delete(old);
+  return { photo_id: photoId };
+}
+
+export async function deleteStaffPhoto(deps: Deps, user: User, shopId: string, memberId: string) {
+  requireSelfOrOwner(await requireMember(deps.db, user, shopId), memberId);
+  const { rows } = await deps.db.query<{ photo_key: string | null }>(
+    `UPDATE shop_members m SET photo_id = NULL, photo_key = NULL
+     FROM (SELECT id, photo_key FROM shop_members WHERE id = $1 AND shop_id = $2 FOR UPDATE) old
+     WHERE m.id = old.id RETURNING old.photo_key`,
+    [memberId, shopId],
+  );
+  if (!rows[0]) throw notFound('Member');
+  if (rows[0].photo_key) await deps.photos.delete(rows[0].photo_key);
+}
+
+/** Only photos of people who still work at the salon are served. */
+export async function readStaffPhoto(deps: Deps, photoId: string): Promise<Buffer> {
+  const { rows } = await deps.db.query<{ photo_key: string }>('SELECT photo_key FROM shop_members WHERE photo_id = $1 AND active', [photoId]);
+  const data = rows[0] ? await deps.photos.get(rows[0].photo_key) : null;
   if (!data) throw notFound('Photo');
   return data;
 }

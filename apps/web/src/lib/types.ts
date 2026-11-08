@@ -6,7 +6,7 @@ export type Service = {
   price_is_starting_from: boolean;
 };
 
-export type StaffMember = { id: string; display_name: string; service_ids: string[] };
+export type StaffMember = { id: string; display_name: string; photo_id?: string | null; service_ids: string[] };
 
 export type Photo = { id: string; width: number; height: number };
 

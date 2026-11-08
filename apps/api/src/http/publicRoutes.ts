@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Deps } from '../deps.js';
 import { requestOtp, verifyOtp } from '../services/auth.js';
 import { firstAvailable, getAvailability, getShopProfile } from '../services/availability.js';
-import { readPhoto } from '../services/photos.js';
+import { readPhoto, readStaffPhoto } from '../services/photos.js';
 import { shopSummaries } from '../services/favorites.js';
 import { LEGAL_DOCUMENTS } from '../domain/legal.js';
 import { PLAN_FEATURES, PLAN_TERMS, PLANS } from '../domain/plans.js';
@@ -129,6 +129,12 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.get('/public/photos/:id', async (req, reply) => {
     const { id: photoId } = z.object({ id }).parse(req.params);
     const data = await readPhoto(deps, photoId);
+    return reply.type('image/webp').header('cache-control', 'public, max-age=31536000, immutable').send(data);
+  });
+
+  app.get('/public/staff-photos/:id', async (req, reply) => {
+    const { id: photoId } = z.object({ id }).parse(req.params);
+    const data = await readStaffPhoto(deps, photoId);
     return reply.type('image/webp').header('cache-control', 'public, max-age=31536000, immutable').send(data);
   });
 

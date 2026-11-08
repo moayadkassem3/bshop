@@ -6,12 +6,14 @@ import * as ImagePicker from 'expo-image-picker';
  * or taken with the camera, then made smaller (longest side 1600 px, JPEG) so
  * uploads are quick on mobile data.
  */
-export async function pickPhotos(options: { camera?: boolean; multiple?: boolean; limit?: number } = {}): Promise<string[]> {
+/** `square`: the person crops a square first (staff photos). */
+export async function pickPhotos(options: { camera?: boolean; multiple?: boolean; limit?: number; square?: boolean } = {}): Promise<string[]> {
   const settings: ImagePicker.ImagePickerOptions = {
     mediaTypes: ['images'],
     quality: 1,
     allowsMultipleSelection: Boolean(options.multiple),
     selectionLimit: options.limit ?? 0,
+    ...(options.square ? { allowsEditing: true, aspect: [1, 1] as [number, number] } : {}),
   };
   if (options.camera) {
     const permission = await ImagePicker.requestCameraPermissionsAsync();

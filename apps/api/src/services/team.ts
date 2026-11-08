@@ -12,7 +12,7 @@ import { PUBLIC_CONDITION, type WeeklyWindowInput } from './shops.js';
 export async function listMyShops(deps: Deps, user: User) {
   if (user.portal === 'customer') throw forbidden('Sign in through staff or owner sign-in');
   const { rows } = await deps.db.query<{ id: string; name: string; slug: string; member_id: string; role: string; display_name: string; seats: number }>(
-    `SELECT s.id, s.name, s.slug, m.id AS member_id, m.role, m.owner_label, m.display_name,
+    `SELECT s.id, s.name, s.slug, m.id AS member_id, m.role, m.owner_label, m.display_name, m.photo_id,
        s.reviewed_at, s.suspended_at, s.suspended_reason, s.verified_at IS NOT NULL AS verified, sub.status AS subscription_status, sub.current_period_end, sub.grace_until,
        -- Whether customers can see and book the salon now (v1.7): a lapsed trial or subscription hides it.
        (${PUBLIC_CONDITION.replaceAll('$1', '$2')}) AS visible,
@@ -35,7 +35,7 @@ export async function listMyShops(deps: Deps, user: User) {
 export async function listMembers(deps: Deps, user: User, shopId: string) {
   await requireMember(deps.db, user, shopId);
   const { rows } = await deps.db.query(
-    `SELECT m.id, m.role, m.owner_label, m.display_name, m.bookable, m.active, u.phone
+    `SELECT m.id, m.role, m.owner_label, m.display_name, m.bookable, m.active, m.photo_id, u.phone
      FROM shop_members m JOIN users u ON u.id = m.user_id
      WHERE m.shop_id = $1
      -- Members added together (registration) share created_at: owner, then co-owners, then staff.
