@@ -14,6 +14,7 @@ import styles from './profile.module.css';
 import { VerifiedTick } from '@/components/VerifiedTick';
 import { FORWARD, TAB } from '@/lib/motion';
 import { useCanSell } from '@/lib/store';
+import { AppearanceSwitch } from '@/components/AppearanceSwitch';
 
 const MODE_LABEL = { customer: 'Müşteri', owner: 'İşletme sahibi', staff: 'Personel' } as const;
 
@@ -70,6 +71,8 @@ function SignIn(props: { onSignedIn: (me: Me) => void }) {
         <Link transitionTypes={FORWARD} href="/isletmeler" className={styles.businessLink}>
           <span>İşletmeyim</span> Salonumu kaydetmek istiyorum ›
         </Link>
+        <h2 className={styles.groupTitle}>Görünüm</h2>
+        <AppearanceSwitch />
       </div>
     </div>
   );
@@ -177,6 +180,9 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
           {me.is_platform_admin && <MenuLink href="/yonetim" label="Yönetim paneli" />}
         </ul>
         {message && <p className="alert alert-info">{message}</p>}
+
+        <h2 className={styles.groupTitle}>Görünüm</h2>
+        <AppearanceSwitch />
 
         {/* Switching mode is its own action, kept apart from the settings list; sign-out stays last. */}
         {(mode !== 'customer' || me.has_business) && (

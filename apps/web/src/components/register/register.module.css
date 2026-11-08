@@ -200,7 +200,7 @@
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid var(--line);
-  background: #e9edf3;
+  background: var(--map-bg);
 }
 
 .pickerLocate {
@@ -468,7 +468,7 @@
   height: 24px;
   border: 0;
   border-radius: 50%;
-  background: rgb(255 255 255 / 0.7);
+  background: var(--float);
   cursor: pointer;
 }
 
@@ -537,7 +537,7 @@
   gap: 12px;
   padding: 16px;
   border-radius: var(--radius);
-  background: var(--ink);
+  background: var(--night);
   color: #fff;
 }
 

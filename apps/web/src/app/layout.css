@@ -4,7 +4,7 @@
 
 /* Dark page header used by the tab pages (Randevular, Favoriler, Profil). */
 .page-header {
-  background: var(--ink);
+  background: var(--night);
   color: #fff;
   padding: calc(28px + env(safe-area-inset-top)) 0 24px;
 }

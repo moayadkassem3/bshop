@@ -25,6 +25,23 @@
   --warning-soft: #fdf0e1;
   --danger: #c62828;
   --danger-soft: #fdecec;
+  /* Red behind white text (buttons, the warning bar, counters). */
+  --danger-strong: #c62828;
+  /* Dark panels (headers, avatars, time badges): navy in both themes. */
+  --night: #0b1120;
+  /* A selected chip, day or tab. */
+  --chip-on: #0b1120;
+  /* Buttons floating over photos, the map's loading colour, favourites and notice borders. */
+  --float: rgb(255 255 255 / 0.92);
+  --map-bg: #e9edf3;
+  --heart: #d1344a;
+  --heart-soft: #fdf0f2;
+  --heart-line: #f4c7cf;
+  --success-line: #b9e4c5;
+  --warning-line: #f6d28a;
+  --danger-line: #f2c9c9;
+  --star: #f2a516;
+  color-scheme: light;
   --radius: 20px;
   --radius-sm: 14px;
   --shadow: 0 1px 2px rgb(11 17 32 / 0.04), 0 8px 24px rgb(11 17 32 / 0.05);
@@ -35,6 +52,43 @@
   --dur-2: 180ms;
   --dur-3: 240ms;
   --font: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Dark navy (founder, 8 November 2026): Profil → Görünüm. The website starts light; the
+   choice is kept in this browser and set on <html data-theme> before the page draws. */
+:root[data-theme='dark'] {
+  --bg: #0d1424;
+  --surface: #151d30;
+  --surface-2: #1a2439;
+  --ink: #eef1f6;
+  --ink-2: #c3cad6;
+  --muted: #8f99ab;
+  --line: #253149;
+  --primary: #3d6ef2;
+  --primary-hover: #3462e0;
+  --primary-soft: #1b2a52;
+  --primary-light: #8daeff;
+  --dark-2: #1a2439;
+  --success: #3cc47c;
+  --success-soft: #0f2a1f;
+  --warning: #f2b84b;
+  --warning-soft: #2d2210;
+  --danger: #f07f7f;
+  --danger-soft: #2e1418;
+  --danger-strong: #b73535;
+  --night: #0a0f1d;
+  --chip-on: #3d6ef2;
+  --float: rgb(21 29 48 / 0.92);
+  --map-bg: #0d1424;
+  --heart: #f0657a;
+  --heart-soft: #2e1620;
+  --heart-line: #4a2430;
+  --success-line: #1d4a33;
+  --warning-line: #5a4416;
+  --danger-line: #4a2428;
+  --star: #f2b84b;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.2), 0 8px 24px rgb(0 0 0 / 0.25);
+  color-scheme: dark;
 }
 
 * {

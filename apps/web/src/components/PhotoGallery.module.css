@@ -58,7 +58,7 @@
   max-width: 720px;
   margin: 0 auto;
   aspect-ratio: 16 / 7;
-  background: radial-gradient(circle at 30% 20%, var(--dark-2), var(--ink));
+  background: radial-gradient(circle at 30% 20%, var(--dark-2), var(--night));
   color: var(--primary-light);
   font-size: 44px;
   font-weight: 800;

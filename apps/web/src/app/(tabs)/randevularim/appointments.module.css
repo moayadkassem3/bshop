@@ -67,7 +67,7 @@
 }
 
 .chip.chipOn {
-  background: var(--ink);
+  background: var(--chip-on);
   border-color: var(--ink);
   color: #fff;
 }
@@ -183,7 +183,7 @@
 }
 
 .danger {
-  background: var(--danger);
+  background: var(--danger-strong);
   border-color: var(--danger);
   color: #fff;
 }
@@ -214,7 +214,7 @@
   height: 9px;
   margin-left: 6px;
   border-radius: 50%;
-  background: var(--danger);
+  background: var(--danger-strong);
   vertical-align: middle;
 }
 

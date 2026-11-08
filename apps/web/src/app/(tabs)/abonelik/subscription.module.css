@@ -28,7 +28,7 @@
 }
 
 .ok {
-  border-color: #b9e4c5;
+  border-color: var(--success-line);
   background: var(--success-soft);
 }
 
@@ -37,7 +37,7 @@
 }
 
 .warn {
-  border-color: #f6d28a;
+  border-color: var(--warning-line);
   background: var(--warning-soft);
 }
 
@@ -46,7 +46,7 @@
 }
 
 .bad {
-  border-color: #f2c9c9;
+  border-color: var(--danger-line);
   background: var(--danger-soft);
 }
 

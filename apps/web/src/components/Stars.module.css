@@ -12,7 +12,7 @@
 .badge svg {
   width: 14px;
   height: 14px;
-  fill: #f2a516;
+  fill: var(--star);
 }
 
 .badge strong {
@@ -40,7 +40,7 @@
 }
 
 .on {
-  fill: #f2a516;
+  fill: var(--star);
 }
 
 .off {
@@ -74,7 +74,7 @@
 }
 
 .input button.on svg {
-  fill: #f2a516;
+  fill: var(--star);
 }
 
 .input button.off svg {

@@ -22,9 +22,9 @@
 }
 
 .on {
-  color: #d1344a;
-  border-color: #f4c7cf;
-  background: #fdf0f2;
+  color: var(--heart);
+  border-color: var(--heart-line);
+  background: var(--heart-soft);
 }
 
 .withLabel {

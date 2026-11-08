@@ -8,6 +8,7 @@ import styles from './register.module.css';
 const KADIKOY = { lat: 40.9905, lng: 29.029 };
 
 import type { MapFocus } from './places';
+import { mapStyleUrl } from '@/lib/theme';
 
 type Point = { lat: number; lng: number };
 
@@ -35,7 +36,7 @@ export function LocationPicker(props: { value: Point | null; onChange: (point: P
       const start = props.value ?? props.focus ?? KADIKOY;
       const map = new maplibre.Map({
         container: container.current,
-        style: 'https://tiles.openfreemap.org/styles/liberty',
+        style: mapStyleUrl(),
         center: [start.lng, start.lat],
         zoom: props.value ? 16 : (props.focus?.zoom ?? 13),
         attributionControl: { compact: true },

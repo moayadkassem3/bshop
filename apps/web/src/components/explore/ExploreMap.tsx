@@ -19,11 +19,11 @@ import { VerifiedTick } from '@/components/VerifiedTick';
 import { FORWARD } from '@/lib/motion';
 import { SkeletonList } from '@/components/Skeleton';
 import { RatingBadge } from '@/components/Stars';
+import { mapStyleUrl } from '@/lib/theme';
 
 /** Before the customer shares their location, the map opens on Kadıköy, İstanbul. */
 const KADIKOY = { lat: 40.9905, lng: 29.029 };
 /** Free vector map tiles, no key needed; a paid provider can replace this at launch. */
-const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 
 export function ExploreMap() {
   const container = useRef<HTMLDivElement>(null);
@@ -74,7 +74,7 @@ export function ExploreMap() {
       const start = homeRef.current ?? last ?? KADIKOY;
       const map = new maplibre.Map({
         container: container.current,
-        style: MAP_STYLE,
+        style: mapStyleUrl(),
         center: [start.lng, start.lat],
         zoom: homeRef.current || last ? 15 : 14,
         attributionControl: { compact: true },

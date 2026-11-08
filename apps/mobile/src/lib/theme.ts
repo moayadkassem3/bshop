@@ -26,6 +26,8 @@ const LIGHT = {
   danger: '#c62828',
   dangerSoft: '#fdecec',
   dangerLine: '#f2c9c9',
+  /** Red behind white text (buttons, counters). */
+  dangerStrong: '#c62828',
   /** Waiting requests and notices that need attention. */
   warningLine: '#f6d28a',
   /** A favourite salon's heart. */
@@ -71,6 +73,7 @@ const DARK: Palette = {
   danger: '#f07f7f',
   dangerSoft: '#2e1418',
   dangerLine: '#4a2428',
+  dangerStrong: '#b73535',
   warningLine: '#5a4416',
   heart: '#f0657a',
   heartSoft: '#2e1620',

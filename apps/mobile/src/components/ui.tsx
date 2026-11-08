@@ -48,7 +48,7 @@ export function Button(props: { title: string; onPress: () => void; kind?: Butto
   const palette: Record<ButtonKind, { bg: string; border: string; fg: string }> = {
     primary: { bg: colors.primary, border: colors.primary, fg: colors.white },
     secondary: { bg: colors.surface, border: colors.line, fg: colors.ink },
-    danger: { bg: colors.danger, border: colors.danger, fg: colors.white },
+    danger: { bg: colors.dangerStrong, border: colors.dangerStrong, fg: colors.white },
     dangerOutline: { bg: colors.surface, border: colors.dangerLine, fg: colors.danger },
     ghost: { bg: 'transparent', border: 'transparent', fg: colors.primary },
   };
@@ -297,7 +297,7 @@ const styles = themed(() =>
     },
     segmented: { flexDirection: 'row', padding: 4, gap: 4, borderRadius: radius.sm, backgroundColor: colors.surface2, marginTop: 10 },
     segment: { flex: 1, flexDirection: 'row', gap: 6, minHeight: 44, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-    segBadge: { minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center' },
+    segBadge: { minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, backgroundColor: colors.dangerStrong, alignItems: 'center', justifyContent: 'center' },
     chip: { paddingHorizontal: 14, minHeight: 38, justifyContent: 'center', borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface },
   }),
 );

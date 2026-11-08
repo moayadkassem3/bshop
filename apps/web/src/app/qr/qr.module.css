@@ -4,7 +4,7 @@
 }
 
 .top {
-  background: var(--ink);
+  background: var(--night);
   color: #fff;
   padding: calc(16px + env(safe-area-inset-top)) 0 24px;
   margin-bottom: 20px;
@@ -103,7 +103,7 @@
   height: auto;
   aspect-ratio: 9 / 16;
   border-radius: 18px;
-  background: var(--ink);
+  background: var(--night);
   box-shadow: var(--shadow);
 }
 

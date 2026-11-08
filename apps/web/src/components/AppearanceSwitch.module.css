@@ -1,0 +1,39 @@
+.box {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.segmented button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 11px;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+}
+
+.segmented .on {
+  background: var(--primary);
+  color: #fff;
+}
+
+.hint {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 13px;
+  color: var(--muted);
+}

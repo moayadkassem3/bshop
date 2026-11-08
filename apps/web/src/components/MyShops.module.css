@@ -37,7 +37,7 @@
   flex-shrink: 0;
   border-radius: 12px;
   object-fit: cover;
-  background: var(--ink);
+  background: var(--night);
 }
 
 .text {
