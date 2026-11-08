@@ -17,5 +17,14 @@ export function StarRow({ value, size = 16 }: { value: number; size?: number }) 
   );
 }
 
+/** One filled star, for a rating shown as "4,7 ★". */
+export function StarIcon({ size = 14 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d={STAR} fill={colors.star} stroke={colors.star} strokeWidth={1.8} strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 /** "4,7". */
 export const formatRating = (value: number) => value.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });

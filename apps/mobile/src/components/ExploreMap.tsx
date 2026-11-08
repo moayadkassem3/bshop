@@ -20,6 +20,7 @@ import { LogoMark } from './LogoMark';
 import { MapCredit, mapStyle } from './MapPicker';
 import { Appear, SkeletonList } from './motion';
 import { photoUrl } from './SalonCard';
+import { formatRating, StarIcon } from './Stars';
 import { Alert, Button, Text } from './ui';
 
 type Audience = 'all' | 'men' | 'women';
@@ -219,7 +220,7 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
           {(sorted ?? []).map((s) => (
             <Marker key={s.slug} lngLat={[Number(s.longitude), Number(s.latitude)]} anchor="bottom" onPress={() => select(s.slug)}>
               <Pressable onPress={() => (selected === s.slug ? router.push(`/salon/${s.slug}?kaynak=kesfet`) : select(s.slug))} hitSlop={8} accessibilityLabel={s.name}>
-                <PinView label={selected === s.slug ? `${s.name} · ${formatDistance(s.distance_m)}` : null} selected={selected === s.slug} />
+                <PinView label={selected === s.slug ? { name: s.name, rating: s.rating ?? null, distance: formatDistance(s.distance_m) } : null} selected={selected === s.slug} />
               </Pressable>
             </Marker>
           ))}
@@ -436,8 +437,13 @@ function Thumb({ photo, name }: { photo: string | null; name: string }) {
   );
 }
 
-/** A salon on the map: the app's scissors in a round pin; the chosen one turns blue with its name above. */
-function PinView({ selected, mine, label }: { selected: boolean; mine?: boolean; label: string | null }) {
+type PinLabel = { name: string; rating: number | null; distance: string };
+
+/**
+ * A salon on the map: the app's scissors in a round pin; the chosen one turns blue with its
+ * name above and, below the name, its rating with a star (founder, 8 November 2026) and distance.
+ */
+function PinView({ selected, mine, label }: { selected: boolean; mine?: boolean; label: PinLabel | null }) {
   const bg = selected ? colors.primary : mine ? colors.night : colors.surface;
   const fg = selected || mine ? colors.white : colors.primary;
   return (
@@ -445,8 +451,24 @@ function PinView({ selected, mine, label }: { selected: boolean; mine?: boolean;
       {label ? (
         <View style={styles.label}>
           <Text size={13} weight="bold" color={colors.white} numberOfLines={1}>
-            {label}
+            {label.name}
           </Text>
+          <View style={styles.labelLine}>
+            {label.rating != null ? (
+              <>
+                <Text size={12} weight="bold" color={colors.white}>
+                  {formatRating(label.rating)}
+                </Text>
+                <StarIcon size={12} />
+                <Text size={12} color={colors.darkMuted}>
+                  ·
+                </Text>
+              </>
+            ) : null}
+            <Text size={12} color={colors.darkMuted}>
+              {label.distance}
+            </Text>
+          </View>
         </View>
       ) : null}
       <View style={[styles.pin, { backgroundColor: bg, borderColor: mine && !selected ? colors.ink : colors.primary }]}>
@@ -505,7 +527,8 @@ const styles = themed(() =>
     close: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-start' },
     myShop: { gap: 10, padding: 12, marginBottom: 12, borderRadius: radius.md, backgroundColor: colors.surface2 },
     pin: { width: 42, height: 42, borderRadius: 21, borderWidth: 3, alignItems: 'center', justifyContent: 'center', ...shadow },
-    label: { marginBottom: 6, maxWidth: 240, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: colors.night, ...shadow },
+    label: { alignItems: 'center', gap: 2, marginBottom: 6, maxWidth: 240, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, backgroundColor: colors.night, ...shadow },
+    labelLine: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     userHalo: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(31,72,201,0.2)', alignItems: 'center', justifyContent: 'center' },
     userDot: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.primary, borderWidth: 3, borderColor: colors.white },
   }),

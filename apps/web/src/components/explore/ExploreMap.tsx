@@ -18,7 +18,7 @@ import { ShareShop } from '@/components/ShareShop';
 import { VerifiedTick } from '@/components/VerifiedTick';
 import { FORWARD } from '@/lib/motion';
 import { SkeletonList } from '@/components/Skeleton';
-import { RatingBadge } from '@/components/Stars';
+import { formatRating, RatingBadge, STAR } from '@/components/Stars';
 import { mapStyleUrl } from '@/lib/theme';
 
 /** Before the customer shares their location, the map opens on Kadıköy, İstanbul. */
@@ -118,9 +118,7 @@ export function ExploreMap() {
   const sorted = useMemo(() => {
     if (!shops) return null;
     if (!user) return shops;
-    return shops
-      .map((s) => ({ ...s, distance_m: Math.round(distanceMeters(user, { lat: s.latitude, lng: s.longitude })) }))
-      .sort((a, b) => a.distance_m - b.distance_m);
+    return shops.map((s) => ({ ...s, distance_m: Math.round(distanceMeters(user, { lat: s.latitude, lng: s.longitude })) })).sort((a, b) => a.distance_m - b.distance_m);
   }, [shops, user]);
 
   // Tapping a pin highlights the shop in the list without covering the map.
@@ -160,7 +158,7 @@ export function ExploreMap() {
         }
         marker.getElement().classList.toggle(styles.pinSelected, shop.slug === selected);
         marker.getElement().classList.toggle(styles.pinMine, shop.slug === mineSlug);
-        marker.getElement().dataset.label = `${shop.name} · ${formatDistance(shop.distance_m)}`;
+        setPinLabel(marker.getElement(), shop.name, shop.rating ?? null, formatDistance(shop.distance_m));
       }
     })();
   }, [sorted, selected, select, mineSlug]);
@@ -216,13 +214,7 @@ export function ExploreMap() {
     <div className={styles.page}>
       <div ref={container} className={styles.map} aria-label="Kuaför haritası" />
 
-      <button
-        type="button"
-        className={styles.locateButton}
-        onClick={() => (home ? goHome() : locate())}
-        aria-label={home ? 'Salonuma git' : 'Konumuma git'}
-        disabled={locating}
-      >
+      <button type="button" className={styles.locateButton} onClick={() => (home ? goHome() : locate())} aria-label={home ? 'Salonuma git' : 'Konumuma git'} disabled={locating}>
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
           <circle cx="12" cy="12" r="3.5" />
           <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
@@ -289,26 +281,26 @@ export function ExploreMap() {
           aria-labelledby="nearby-title"
         >
           <div className={styles.grab} {...sheetDrag.handlers}>
-          <button type="button" className={styles.handle} onClick={sheetDrag.onHandleClick} aria-expanded={sheetOpen}>
-            {/* A wide arrow: tap to open the list (points up) or close it (points down). */}
-            <svg className={styles.handleArrow} viewBox="0 0 48 16" width="48" height="16" aria-hidden>
-              <path d="M5 12 24 4l19 8" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="sr-only">{sheetOpen ? 'Listeyi küçült' : 'Listeyi büyüt'}</span>
-          </button>
-          {home && myShop && <MyShopCard shop={myShop} />}
-          <h1 id="nearby-title" className={home ? styles.sheetSubtitle : styles.sheetTitle}>
-            {home ? 'Çevredeki salonlar' : 'Yakındaki kuaförler'}
-          </h1>
-          <p className={styles.sheetMeta}>
-            {listed ? (
-              <>
-                {home ? 'Salonunuzun çevresinde' : user ? 'Yakınınızda' : 'Bu bölgede'} <strong>{listed.length} kuaför</strong> · en yakından uzağa
-              </>
-            ) : (
-              'Kuaförler yükleniyor…'
-            )}
-          </p>
+            <button type="button" className={styles.handle} onClick={sheetDrag.onHandleClick} aria-expanded={sheetOpen}>
+              {/* A wide arrow: tap to open the list (points up) or close it (points down). */}
+              <svg className={styles.handleArrow} viewBox="0 0 48 16" width="48" height="16" aria-hidden>
+                <path d="M5 12 24 4l19 8" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="sr-only">{sheetOpen ? 'Listeyi küçült' : 'Listeyi büyüt'}</span>
+            </button>
+            {home && myShop && <MyShopCard shop={myShop} />}
+            <h1 id="nearby-title" className={home ? styles.sheetSubtitle : styles.sheetTitle}>
+              {home ? 'Çevredeki salonlar' : 'Yakındaki kuaförler'}
+            </h1>
+            <p className={styles.sheetMeta}>
+              {listed ? (
+                <>
+                  {home ? 'Salonunuzun çevresinde' : user ? 'Yakınınızda' : 'Bu bölgede'} <strong>{listed.length} kuaför</strong> · en yakından uzağa
+                </>
+              ) : (
+                'Kuaförler yükleniyor…'
+              )}
+            </p>
           </div>
           {!user && !business && (
             <div className={styles.locationHint}>
@@ -368,6 +360,33 @@ export function ExploreMap() {
 // The app logo's scissors, so every salon on the map carries the brand mark.
 const PIN_ICON = logoGlyphSvg(22);
 
+/**
+ * The chosen pin's label: the salon's name, and below it the rating with a star
+ * (founder, 8 November 2026) and the distance. Built with textContent: names are typed by salons.
+ */
+function setPinLabel(pin: HTMLElement, name: string, rating: number | null, distance: string) {
+  const key = `${name}|${rating}|${distance}`;
+  if (pin.dataset.labelKey === key) return;
+  pin.dataset.labelKey = key;
+  pin.querySelector(`.${styles.pinLabel}`)?.remove();
+  const label = document.createElement('span');
+  label.className = styles.pinLabel;
+  label.setAttribute('aria-hidden', 'true');
+  const title = document.createElement('strong');
+  title.textContent = name;
+  const line = document.createElement('span');
+  if (rating != null) {
+    const value = document.createElement('b');
+    value.textContent = formatRating(rating);
+    line.append(value);
+    line.insertAdjacentHTML('beforeend', `<svg viewBox="0 0 24 24" width="12" height="12"><path d="${STAR}" /></svg>`);
+    line.append(' · ');
+  }
+  line.append(distance);
+  label.append(title, line);
+  pin.append(label);
+}
+
 /** "Salonum" at the top of the sheet in business mode: the salon as customers see it, one tap away. */
 function MyShopCard({ shop }: { shop: BusinessShop }) {
   const [note, setNote] = useState<string | null>(null);
@@ -400,9 +419,7 @@ function MyShopCard({ shop }: { shop: BusinessShop }) {
             Müşteri gözüyle gör
           </Link>
         ) : (
-          <span className={styles.myShopPending}>
-            {shop.reviewed_at ? 'Salonunuz abonelik başlayana kadar müşterilere görünmüyor.' : 'Salon sayfanız onaydan sonra açılır.'}
-          </span>
+          <span className={styles.myShopPending}>{shop.reviewed_at ? 'Salonunuz abonelik başlayana kadar müşterilere görünmüyor.' : 'Salon sayfanız onaydan sonra açılır.'}</span>
         )}
         {shop.reviewed_at && shop.visible && <ShareShop shop={shop} onDone={setNote} />}
       </div>
