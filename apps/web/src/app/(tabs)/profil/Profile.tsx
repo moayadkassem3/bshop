@@ -153,6 +153,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
               <MenuLabel icon="edit" label="Profili düzenle" />
               <Icon name="chevron" size={18} className={`${styles.chevron} ${editing ? styles.chevronOpen : ''}`} />
             </button>
+            {editing && mode !== 'customer' && <MyStaffPhoto />}
             {editing && (
               <div className={styles.nameForm}>
                 <div className="field">
@@ -284,22 +285,32 @@ function MyBusinesses() {
           );
         })}
       </ul>
-      {/* Staff photos (founder, 8 November 2026): one photo for every salon the person works at. */}
-      {shops.length > 0 && (
-        <>
-          <h2 className={styles.groupTitle}>Profil fotoğrafım</h2>
-          <div className={`card ${styles.photoCard}`}>
-            <StaffPhotoPicker
-              name={shops[0]!.display_name}
-              photoId={shops[0]!.photo_id}
-              targets={shops.map((b) => ({ shopId: b.id, memberId: b.member_id }))}
-              onChange={(photoId) => setShops((list) => list && list.map((b) => ({ ...b, photo_id: photoId })))}
-            />
-            <p className={styles.photoHint}>Müşteriler salonunuzun sayfasında ve randevu alırken sizi bu fotoğrafla görür.</p>
-          </div>
-        </>
-      )}
     </>
+  );
+}
+
+/**
+ * Profili düzenle → the staff photo (founder, 8 November 2026): business mode only, one photo
+ * for every salon the person works at. Saved straight away, apart from the name's Kaydet.
+ */
+function MyStaffPhoto() {
+  const [shops, setShops] = useState<MyBusiness[] | null>(null);
+  useEffect(() => {
+    api<MyBusiness[]>('/staff/shops')
+      .then(setShops)
+      .catch(() => setShops([]));
+  }, []);
+  if (!shops?.length) return null;
+  return (
+    <div className={styles.photoField}>
+      <StaffPhotoPicker
+        name={shops[0]!.display_name}
+        photoId={shops[0]!.photo_id}
+        targets={shops.map((b) => ({ shopId: b.id, memberId: b.member_id }))}
+        onChange={(photoId) => setShops((list) => list && list.map((b) => ({ ...b, photo_id: photoId })))}
+      />
+      <p className={styles.photoHint}>Müşteriler salonunuzun sayfasında ve randevu alırken sizi bu fotoğrafla görür.</p>
+    </div>
   );
 }
 

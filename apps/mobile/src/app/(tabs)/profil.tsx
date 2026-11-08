@@ -142,7 +142,7 @@ function Account() {
           />
           {editing ? (
             <Appear>
-              <EditProfile onDone={() => setEditing(false)} />
+              <EditProfile business={business} onDone={() => setEditing(false)} />
             </Appear>
           ) : null}
           {/* Salon owners manage their salon from İşletmelerim instead (as on the website). */}
@@ -182,7 +182,7 @@ function Account() {
 }
 
 /** Ad, soyad and gender, as on the website's "Profili düzenle". */
-function EditProfile({ onDone }: { onDone: () => void }) {
+function EditProfile({ business, onDone }: { business: boolean; onDone: () => void }) {
   const { me, refresh } = useSession();
   const [firstName, setFirstName] = useState(me?.first_name ?? '');
   const [lastName, setLastName] = useState(me?.last_name ?? '');
@@ -206,11 +206,36 @@ function EditProfile({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={styles.form}>
+      {business ? <MyStaffPhoto /> : null}
       <Field label="Ad" value={firstName} onChangeText={setFirstName} autoCapitalize="words" textContentType="givenName" />
       <Field label="Soyad" value={lastName} onChangeText={setLastName} autoCapitalize="words" textContentType="familyName" />
       <GenderChoice value={gender} onChange={setGender} />
       {error ? <Alert text={error} /> : null}
       <Button title="Kaydet" onPress={() => void save()} busy={busy} disabled={!firstName.trim() || !lastName.trim()} />
+    </View>
+  );
+}
+
+/**
+ * Profili düzenle → the staff photo (founder, 8 November 2026): business mode only, one photo
+ * for every salon the person works at. Saved straight away, apart from the name's Kaydet.
+ */
+function MyStaffPhoto() {
+  const { shops } = useBusinessShops();
+  // Set here after an upload; until then the photo the server gave.
+  const [photo, setPhoto] = useState<{ id: string | null } | null>(null);
+  if (!shops?.length) return null;
+  return (
+    <View style={{ gap: 8, paddingBottom: 4 }}>
+      <StaffPhotoPicker
+        name={shops[0]!.display_name ?? shops[0]!.name}
+        photoId={photo ? photo.id : (shops[0]!.photo_id ?? null)}
+        targets={shops.map((b) => ({ shopId: b.id, memberId: b.member_id }))}
+        onChange={(id) => setPhoto({ id })}
+      />
+      <Text size={13} color={colors.muted}>
+        Müşteriler salonunuzun sayfasında ve randevu alırken sizi bu fotoğrafla görür.
+      </Text>
     </View>
   );
 }
@@ -229,8 +254,6 @@ function businessStatus(b: BusinessShop): { label: string; tone: Tone } {
 /** İşletmelerim: the salons this person works at, with their role and state; a row opens Salonum on it. */
 function MyBusinesses() {
   const { shops, selectShop } = useBusinessShops();
-  // Set here after an upload; until then the photo the server gave.
-  const [photo, setPhoto] = useState<{ id: string | null } | null>(null);
   if (!shops || shops.length === 0) return null;
   return (
     <Appear>
@@ -266,19 +289,6 @@ function MyBusinesses() {
             </Pressable>
           );
         })}
-      </Card>
-      {/* Staff photos (founder, 8 November 2026): one photo for every salon the person works at. */}
-      <Section title="Profil fotoğrafım" />
-      <Card style={{ gap: 10 }}>
-        <StaffPhotoPicker
-          name={shops[0]!.display_name ?? shops[0]!.name}
-          photoId={photo ? photo.id : (shops[0]!.photo_id ?? null)}
-          targets={shops.map((b) => ({ shopId: b.id, memberId: b.member_id }))}
-          onChange={(id) => setPhoto({ id })}
-        />
-        <Text size={13} color={colors.muted}>
-          Müşteriler salonunuzun sayfasında ve randevu alırken sizi bu fotoğrafla görür.
-        </Text>
       </Card>
     </Appear>
   );

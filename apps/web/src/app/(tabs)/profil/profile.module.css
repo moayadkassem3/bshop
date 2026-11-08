@@ -280,10 +280,10 @@
   text-decoration: underline;
 }
 
-.photoCard {
+.photoField {
   display: grid;
   gap: 10px;
-  padding: 14px 16px;
+  padding: 0 16px 14px;
 }
 
 .photoHint {
