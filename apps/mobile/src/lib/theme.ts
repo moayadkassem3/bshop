@@ -44,6 +44,8 @@ const LIGHT = {
   backdrop: 'rgba(11,17,32,0.45)',
   /** Behind the app's dialogs, over a light blur: a little dimming. */
   scrim: 'rgba(11,17,32,0.22)',
+  /** A soft shadow under the app's dialogs and sheets, for contrast with the blurred page. */
+  dialogShadow: 'rgba(11,17,32,0.16)',
 };
 
 export type Palette = typeof LIGHT;
@@ -86,6 +88,7 @@ const DARK: Palette = {
   float: 'rgba(21,29,48,0.92)',
   backdrop: 'rgba(0,0,0,0.6)',
   scrim: 'rgba(0,0,0,0.32)',
+  dialogShadow: 'rgba(0,0,0,0.45)',
 };
 
 export type Scheme = 'light' | 'dark';

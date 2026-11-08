@@ -200,6 +200,8 @@ const styles = themed(() =>
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.line,
+      // A very soft shadow for contrast with the blurred page (founder, 9 November 2026).
+      boxShadow: `0px 10px 28px ${colors.dialogShadow}`,
     },
     badge: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
     buttons: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', marginTop: 10 },
@@ -214,6 +216,7 @@ const styles = themed(() =>
       borderWidth: 1,
       borderBottomWidth: 0,
       borderColor: colors.line,
+      boxShadow: `0px -6px 22px ${colors.dialogShadow}`,
     },
     handle: { alignSelf: 'center', width: 40, height: 5, borderRadius: radius.pill, backgroundColor: colors.line, marginBottom: 6 },
     options: { borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', backgroundColor: colors.surface },
