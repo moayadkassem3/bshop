@@ -10,7 +10,8 @@ import type { User } from './auth.js';
  * Yönetim → Bildirimler, e.g. "Bugün anlık çağrıları kaçırma" to salons on a Sunday
  * morning. Sent once (now or at a set time) or repeated every day / on chosen weekdays
  * at a time of day, Istanbul time. They reach people who use the app (a push needs a
- * phone) and have not turned announcements off in Profil; never at night.
+ * phone and their permission); never at night. `users.announcements_off` stops them for
+ * someone who asks our team (there is no switch in the app: founder, 8 November 2026).
  */
 
 const ZONE = 'Europe/Istanbul';
@@ -90,7 +91,7 @@ function validate(input: AnnouncementInput, now: Date): { nextRunAt: Date; timeO
 }
 
 /**
- * Who gets it: people with the app on a phone who have not turned announcements off.
+ * Who gets it: people with the app on a phone, unless our team stopped announcements for them.
  * Customers are people who do not work at a salon; salons are owners, co-owners and staff.
  */
 function recipientsSql(audience: Audience, p: { gender: string; shopAudience: string }) {
@@ -298,15 +299,4 @@ async function sendNextGroup(deps: Deps, size: number): Promise<{ count: number;
     }
     return { count, finished: count < size };
   });
-}
-
-/** Profil → Duyurular. */
-export async function announcementsSetting(deps: Deps, user: User) {
-  const { rows } = await deps.db.query<{ off: boolean }>('SELECT announcements_off AS off FROM users WHERE id = $1', [user.id]);
-  return { on: !rows[0]?.off };
-}
-
-export async function setAnnouncementsSetting(deps: Deps, user: User, on: boolean) {
-  await deps.db.query('UPDATE users SET announcements_off = $2 WHERE id = $1', [user.id, !on]);
-  return { on };
 }

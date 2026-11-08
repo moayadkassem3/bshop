@@ -60,16 +60,14 @@ describe('announcements from Yönetim (founder, 8 November 2026)', () => {
     expect((await t.call('GET', '/me/notifications', { token: p.cumali })).body).toEqual([]);
   });
 
-  it('customers can be chosen by gender, and anyone can turn announcements off', async () => {
+  it('customers can be chosen by gender; someone our team stopped them for gets none', async () => {
     const p = await people();
-    expect((await t.call('GET', '/me/announcements', { token: p.mehmet })).body).toEqual({ on: true });
-    await t.call('PUT', '/me/announcements', { token: p.ayse, body: { on: false } });
-    expect((await t.call('GET', '/me/announcements', { token: p.ayse })).body).toEqual({ on: false });
+    await t.db.query('UPDATE users SET announcements_off = true WHERE phone = $1', [PHONES.customer]);
 
     await t.call('POST', '/admin/announcements', { token: p.admin, body: { title: 'Kadınlara', body: 'x', audience: 'customers', customerGender: 'female', repeat: 'once' } });
     await t.call('POST', '/admin/announcements', { token: p.admin, body: { title: 'Erkeklere', body: 'y', audience: 'customers', customerGender: 'male', repeat: 'once' } });
     await t.tick();
-    // Ayşe turned them off; Mehmet gets the one for men only; staff are not customers.
+    // Ayşe asked not to get them; Mehmet gets the one for men only; staff are not customers.
     expect(t.push.messages.filter((m) => m.data?.kind === 'announcement').map((m) => [m.userId, m.title])).toEqual([[await userIdOf(PHONES.customer2), 'Erkeklere']]);
   });
 

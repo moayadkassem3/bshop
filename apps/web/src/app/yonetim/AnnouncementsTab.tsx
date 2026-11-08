@@ -75,7 +75,7 @@ function status(a: Announcement): { label: string; tone: string } {
 /**
  * Bildirimler (founder, 8 November 2026): push notifications from our team to salons,
  * customers or everyone, now, at a set time, every day or on chosen weekdays. They reach
- * people with the app who have not turned announcements off (Profil → Duyurular).
+ * people with the app; on Android they can mute the "Duyurular" category in the phone's settings.
  */
 export function AnnouncementsTab() {
   const [list, setList] = useState<Announcement[] | null>(null);
@@ -229,7 +229,7 @@ export function AnnouncementsTab() {
                   ))}
                 </div>
               )}
-              <p className={styles.hint}>{reach === null ? 'Hesaplanıyor…' : `Şu anda ${reach.toLocaleString('tr-TR')} kişiye ulaşır`} (uygulaması olan ve duyuruları kapatmamış kişiler).</p>
+              <p className={styles.hint}>{reach === null ? 'Hesaplanıyor…' : `Şu anda ${reach.toLocaleString('tr-TR')} kişiye ulaşır`} (uygulaması olan ve bildirimlere izin vermiş kişiler).</p>
             </div>
 
             <div className={styles.announceGroup}>
@@ -265,9 +265,7 @@ export function AnnouncementsTab() {
               <p className={styles.hint}>Saatler Türkiye saatidir. Bildirimler yalnızca 09:00–21:00 arasında gönderilir.</p>
             </div>
 
-            <p className={styles.hint}>
-              Uygulamada görünür: abonelik, paket fiyatı veya ödeme bağlantısı yazmayın (App Store ve Google Play kuralları). Müşterilere reklam niteliğinde mesajlar için onay gerekir.
-            </p>
+            <p className={styles.hint}>Uygulamada görünür: abonelik, paket fiyatı veya ödeme bağlantısı yazmayın (App Store ve Google Play kuralları).</p>
             {error && <p className="alert alert-danger">{error}</p>}
             {note && <p className="alert alert-info">{note}</p>}
             <div className={styles.panelActions}>
