@@ -1,6 +1,6 @@
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-/** Line icons on a 24-unit grid with a 1.8 stroke: the same drawings as the website's tab bar. */
+/** Line icons on a 24-unit grid with a 1.8 stroke: the same drawings as the website (apps/web/src/components/Icon.tsx); keep the two in step. */
 const ICONS = {
   salonum: (
     <>
@@ -111,13 +111,27 @@ const ICONS = {
     </>
   ),
   swap: <Path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" />,
+  // Profil → Görünüm: light, dark, and follow the device (a half-filled circle).
+  sun: (
+    <>
+      <Circle cx="12" cy="12" r="4" />
+      <Path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
+    </>
+  ),
+  moon: <Path d="M20 13.5A8.5 8.5 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5z" />,
+  auto: (
+    <>
+      <Circle cx="12" cy="12" r="8.5" />
+      <Path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" />
+    </>
+  ),
 };
 
 export type IconName = keyof typeof ICONS;
 
 export function Icon({ name, size = 24, color, strokeWidth = 1.8 }: { name: IconName; size?: number; color: string; strokeWidth?: number }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={size} height={size} color={color} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
       {ICONS[name]}
     </Svg>
   );

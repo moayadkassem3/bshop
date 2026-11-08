@@ -15,9 +15,9 @@ export function AppearanceSwitch() {
         value={pref}
         onChange={setThemePref}
         options={[
-          { value: 'system', label: 'Otomatik' },
-          { value: 'light', label: 'Açık' },
-          { value: 'dark', label: 'Koyu' },
+          { value: 'system', label: 'Otomatik', icon: 'auto' },
+          { value: 'light', label: 'Açık', icon: 'sun' },
+          { value: 'dark', label: 'Koyu', icon: 'moon' },
         ]}
       />
       <Text size={13} color={colors.muted}>

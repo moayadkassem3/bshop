@@ -15,6 +15,7 @@ import { VerifiedTick } from '@/components/VerifiedTick';
 import { FORWARD, TAB } from '@/lib/motion';
 import { useCanSell } from '@/lib/store';
 import { AppearanceSwitch } from '@/components/AppearanceSwitch';
+import { Icon, type IconName } from '@/components/Icon';
 
 const MODE_LABEL = { customer: 'Müşteri', owner: 'İşletme sahibi', staff: 'Personel' } as const;
 
@@ -110,11 +111,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
       setToken(r.token, r.user.portal);
       onChange({ ...me, ...r.user });
     } catch (err) {
-      setMessage(
-        err instanceof ApiError && err.code === 'NOT_BUSINESS'
-          ? 'Bu numara henüz bir işletmeye kayıtlı değil. Aşağıdan işletmenizi kaydedebilirsiniz.'
-          : errorMessage(err),
-      );
+      setMessage(err instanceof ApiError && err.code === 'NOT_BUSINESS' ? 'Bu numara henüz bir işletmeye kayıtlı değil. Aşağıdan işletmenizi kaydedebilirsiniz.' : errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -142,8 +139,8 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
           <>
             <h2 className={styles.groupTitle}>İşlemlerim</h2>
             <ul className={`card ${styles.menu}`} role="list">
-              <MenuLink href="/randevularim" label="Randevu ve taleplerim" />
-              <MenuLink href="/favoriler" label="Favorilerim" />
+              <MenuLink href="/randevularim" icon="randevular" label="Randevu ve taleplerim" />
+              <MenuLink href="/favoriler" icon="favoriler" label="Favorilerim" />
             </ul>
           </>
         )}
@@ -151,8 +148,9 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
         <h2 className={styles.groupTitle}>Hesap</h2>
         <ul className={`card ${styles.menu}`} role="list">
           <li>
-            <button type="button" className={styles.menuItem} onClick={() => setEditing((e) => !e)}>
-              Profili düzenle <span aria-hidden>›</span>
+            <button type="button" className={styles.menuItem} onClick={() => setEditing((e) => !e)} aria-expanded={editing}>
+              <MenuLabel icon="edit" label="Profili düzenle" />
+              <Icon name="chevron" size={18} className={`${styles.chevron} ${editing ? styles.chevronOpen : ''}`} />
             </button>
             {editing && (
               <div className={styles.nameForm}>
@@ -172,12 +170,12 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
             )}
           </li>
           {/* Salon owners edit their salon from its card in İşletmelerim instead (v1.7). */}
-          {!me.owns_shop && <MenuLink href="/isletme-kaydi" label="İşletmenizi kaydedin" />}
-          {me.owns_shop && <MenuLink href="/abonelik" label="Aboneliğim" />}
-          {canSell === true && <MenuLink href="/isletmeler" label="Paketler ve fiyatlar" />}
-          <MenuLink href="/sozlesmeler" label="Yasal metinler" />
+          {!me.owns_shop && <MenuLink href="/isletme-kaydi" icon="salonum" label="İşletmenizi kaydedin" />}
+          {me.owns_shop && <MenuLink href="/abonelik" icon="card" label="Aboneliğim" />}
+          {canSell === true && <MenuLink href="/isletmeler" icon="card" label="Paketler ve fiyatlar" />}
+          <MenuLink href="/sozlesmeler" icon="doc" label="Yasal metinler" />
           {/* Our team only (v1.7). */}
-          {me.is_platform_admin && <MenuLink href="/yonetim" label="Yönetim paneli" />}
+          {me.is_platform_admin && <MenuLink href="/yonetim" icon="settings" label="Yönetim paneli" />}
         </ul>
         {message && <p className="alert alert-info">{message}</p>}
 
@@ -187,9 +185,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
         {/* Switching mode is its own action, kept apart from the settings list; sign-out stays last. */}
         {(mode !== 'customer' || me.has_business) && (
           <button type="button" className={styles.switchMode} onClick={() => switchMode(mode === 'customer' ? 'business' : 'customer')} disabled={busy}>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" />
-            </svg>
+            <Icon name="swap" size={20} strokeWidth={2} />
             {mode === 'customer' ? 'İşletme moduna geç' : 'Müşteri moduna geç'}
           </button>
         )}
@@ -263,16 +259,21 @@ function MyBusinesses() {
           return (
             <li key={b.id}>
               <Link transitionTypes={TAB} href="/salonum" className={`${styles.menuItem} ${styles.business}`} onClick={() => rememberShop(b.id)}>
-                <span>
-                  <strong>
-                    {b.name}
-                    {b.verified && <VerifiedTick kind="salon" size={14} />}
-                  </strong>
-                  <span className="muted">{label}</span>
+                <span className={styles.menuLabel}>
+                  <span className={styles.menuIcon}>
+                    <Icon name="salonum" size={20} />
+                  </span>
+                  <span className={styles.businessText}>
+                    <strong>
+                      {b.name}
+                      {b.verified && <VerifiedTick kind="salon" size={14} />}
+                    </strong>
+                    <span className="muted">{label}</span>
+                  </span>
                 </span>
                 <span className={styles.businessEnd}>
                   <span className={`badge ${status.tone}`}>{status.label}</span>
-                  <span aria-hidden>›</span>
+                  <Icon name="chevron" size={18} className={styles.chevron} />
                 </span>
               </Link>
             </li>
@@ -283,13 +284,26 @@ function MyBusinesses() {
   );
 }
 
-function MenuLink({ href, label }: { href: string; label: string }) {
+/** A menu row like the app's: the icon in a soft blue square, the label, a chevron. */
+function MenuLink({ href, icon, label }: { href: string; icon: IconName; label: string }) {
   return (
     <li>
       <Link transitionTypes={FORWARD} href={href} className={styles.menuItem}>
-        {label} <span aria-hidden>›</span>
+        <MenuLabel icon={icon} label={label} />
+        <Icon name="chevron" size={18} className={styles.chevron} />
       </Link>
     </li>
+  );
+}
+
+function MenuLabel({ icon, label }: { icon: IconName; label: string }) {
+  return (
+    <span className={styles.menuLabel}>
+      <span className={styles.menuIcon}>
+        <Icon name={icon} size={20} />
+      </span>
+      {label}
+    </span>
   );
 }
 

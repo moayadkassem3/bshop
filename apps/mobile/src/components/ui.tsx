@@ -183,7 +183,7 @@ export function Field(props: TextInputProps & { label: string }) {
 }
 
 /** Two or more options in a dark pill, like the website's Talepler | Takvim switch. */
-export function Segmented<T extends string>(props: { options: { value: T; label: string; badge?: number }[]; value: T; onChange: (v: T) => void; dark?: boolean }) {
+export function Segmented<T extends string>(props: { options: { value: T; label: string; badge?: number; icon?: IconName }[]; value: T; onChange: (v: T) => void; dark?: boolean }) {
   return (
     <View style={[styles.segmented, props.dark && { backgroundColor: colors.dark2 }]}>
       {props.options.map((o) => {
@@ -199,6 +199,7 @@ export function Segmented<T extends string>(props: { options: { value: T; label:
             }}
             style={[styles.segment, on && { backgroundColor: colors.primary }]}
           >
+            {o.icon ? <Icon name={o.icon} size={18} color={on ? colors.white : props.dark ? colors.darkMuted : colors.ink2} /> : null}
             <Text weight="bold" size={15} color={on ? colors.white : props.dark ? colors.darkMuted : colors.ink2}>
               {o.label}
             </Text>
