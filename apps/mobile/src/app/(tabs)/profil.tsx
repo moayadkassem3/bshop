@@ -2,10 +2,11 @@ import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
-import { useCallback, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppearanceSwitch } from '@/components/AppearanceSwitch';
+import { useKeyboardRoom } from '@/lib/keyboard';
 import { StaffPhotoPicker } from '@/components/StaffAvatar';
 import { Icon, type IconName } from '@/components/Icon';
 import { Appear, PopIn } from '@/components/motion';
@@ -28,10 +29,12 @@ export default function ProfileScreen() {
 
 function SignedOut() {
   const insets = useSafeAreaInsets();
+  const scroll = useRef<ScrollView>(null);
+  const keyboard = useKeyboardRoom(scroll);
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.night }}>
+    <View style={{ flex: 1, backgroundColor: colors.night }}>
       <StatusBar style="light" />
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scroll} onScroll={keyboard.onScroll} scrollEventThrottle={16} contentContainerStyle={{ flexGrow: 1, paddingBottom: keyboard.room }} keyboardShouldPersistTaps="handled">
         <View style={[styles.hero, { paddingTop: insets.top + 36 }]}>
           <PopIn>
             <Image source={require('../../../assets/icon.png')} style={styles.mark} contentFit="cover" accessibilityIgnoresInvertColors />
@@ -65,7 +68,7 @@ function SignedOut() {
           </View>
         </Appear>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

@@ -2,7 +2,8 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { BackHandler, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { useKeyboardRoom } from '@/lib/keyboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { MapPickerModal, MapPreview, type MapFocus, type Point } from '@/components/MapPicker';
@@ -258,8 +259,11 @@ function Shell(props: {
   scrollRef?: React.RefObject<ScrollView | null>;
 }) {
   const insets = useSafeAreaInsets();
+  const ownScroll = useRef<ScrollView>(null);
+  const scroll = props.scrollRef ?? ownScroll;
+  const keyboard = useKeyboardRoom(scroll);
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style="light" />
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -285,11 +289,17 @@ function Shell(props: {
           </View>
         ) : null}
       </View>
-      <ScrollView ref={props.scrollRef} contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 130 + insets.bottom }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        ref={scroll}
+        onScroll={keyboard.onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 130 + insets.bottom + keyboard.room }}
+        keyboardShouldPersistTaps="handled"
+      >
         {props.children}
       </ScrollView>
       {props.footer}
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

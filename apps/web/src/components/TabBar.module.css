@@ -102,3 +102,8 @@
     width: 52px;
   }
 }
+
+/* Out of the way while the phone keyboard is open (components/KeyboardGuard.tsx). */
+:global(:root[data-typing]) .bar {
+  display: none;
+}

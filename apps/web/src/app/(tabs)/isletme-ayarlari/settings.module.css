@@ -412,3 +412,8 @@
   color: var(--primary);
   text-decoration: none;
 }
+
+/* Out of the way while the phone keyboard is open (components/KeyboardGuard.tsx). */
+:global(:root[data-typing]) .saveBar {
+  display: none;
+}

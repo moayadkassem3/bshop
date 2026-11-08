@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { revealFocusedField } from '@/lib/keyboard';
 import { api, errorMessage } from '@/lib/api';
 import { formatTime } from '@/lib/format';
 import { colors, fonts, radius, themed } from '@/lib/theme';
@@ -115,7 +116,7 @@ export function BlockForm(props: { shopId: string; date: string; members: Person
         <Text size={14} weight="semibold" color={colors.ink2}>
           Not (isteğe bağlı)
         </Text>
-        <TextInput value={note} onChangeText={setNote} maxLength={200} placeholder="Örn. Doktor randevusu" placeholderTextColor={colors.muted} style={styles.input} />
+        <TextInput value={note} onChangeText={setNote} onFocus={revealFocusedField} maxLength={200} placeholder="Örn. Doktor randevusu" placeholderTextColor={colors.muted} style={styles.input} />
       </View>
       <Text size={13} color={colors.muted}>
         Müşteriler bu saatte randevu alamaz. Bu saatte randevu varsa önce onları iptal edin.

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
+import { revealFocusedField, useKeyboardRoom } from '@/lib/keyboard';
 import { initials, StaffAvatar } from '@/components/StaffAvatar';
 import { Appear, PageSkeleton, PopIn, Skeleton, SlideIn } from '@/components/motion';
 import { SignIn } from '@/components/SignIn';
@@ -43,6 +44,7 @@ export default function BookingScreen() {
   const [result, setResult] = useState<BookingResult | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const scroll = useRef<ScrollView>(null);
+  const keyboard = useKeyboardRoom(scroll);
 
   useEffect(() => {
     api<ShopProfile>(`/public/shops/${slug}`)
@@ -151,7 +153,13 @@ export default function BookingScreen() {
         ) : null}
       </View>
 
-      <ScrollView ref={scroll} contentContainerStyle={{ padding: 16, paddingBottom: 140 + insets.bottom }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        ref={scroll}
+        onScroll={keyboard.onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ padding: 16, paddingBottom: 140 + insets.bottom + keyboard.room }}
+        keyboardShouldPersistTaps="handled"
+      >
         {notice ? <Alert tone="info" text={notice} /> : null}
         <SlideIn key={step} from={dir === 'forward' ? 'right' : 'left'} style={{ gap: 12, marginTop: notice ? 12 : 0 }}>
           {step === 'services' ? (
@@ -521,7 +529,15 @@ function ConfirmStep(props: {
               ))}
             </View>
             {forWhom === 'other' ? (
-              <TextInput value={guestName} onChangeText={setGuestName} placeholder="Adı (örn. Oğlum Can)" placeholderTextColor={colors.muted} style={styles.input} maxLength={60} />
+              <TextInput
+                value={guestName}
+                onChangeText={setGuestName}
+                onFocus={revealFocusedField}
+                placeholder="Adı (örn. Oğlum Can)"
+                placeholderTextColor={colors.muted}
+                style={styles.input}
+                maxLength={60}
+              />
             ) : null}
           </Card>
           {needsTerms ? <Alert tone="info" text="Devam ederek Kullanıcı Sözleşmesi’ni kabul etmiş olursunuz." /> : null}

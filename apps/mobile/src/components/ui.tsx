@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { Icon, type IconName } from './Icon';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -17,6 +17,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { revealFocusedField, useKeyboardRoom } from '@/lib/keyboard';
 import { colors, fonts, radius, shadow, themed, themeScheme } from '@/lib/theme';
 import { FocusIn } from './motion';
 
@@ -139,11 +140,16 @@ export function Screen(props: {
   footer?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
+  const scroll = useRef<ScrollView>(null);
+  const keyboard = useKeyboardRoom(scroll);
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style="light" />
       <ScrollView
-        contentContainerStyle={{ paddingBottom: props.footer ? 130 + insets.bottom : 32 }}
+        ref={scroll}
+        onScroll={keyboard.onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingBottom: (props.footer ? 130 + insets.bottom : 32) + keyboard.room }}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           props.onRefresh ? <RefreshControl refreshing={Boolean(props.refreshing)} onRefresh={() => void props.onRefresh?.()} tintColor={colors.primary} colors={[colors.primary]} /> : undefined
@@ -177,7 +183,15 @@ export function Field(props: TextInputProps & { label: string }) {
       <Text size={14} weight="semibold" color={colors.ink2}>
         {label}
       </Text>
-      <TextInput placeholderTextColor={colors.muted} style={[styles.input, style]} {...rest} />
+      <TextInput
+        placeholderTextColor={colors.muted}
+        style={[styles.input, style]}
+        {...rest}
+        onFocus={(e) => {
+          revealFocusedField();
+          rest.onFocus?.(e);
+        }}
+      />
     </View>
   );
 }

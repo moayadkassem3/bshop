@@ -613,3 +613,8 @@
     translate: 0 8px;
   }
 }
+
+/* Out of the way while the phone keyboard is open (components/KeyboardGuard.tsx). */
+:global(:root[data-typing]) .bottomBar {
+  display: none;
+}

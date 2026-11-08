@@ -4,6 +4,7 @@ import { BRAND } from '@/lib/config';
 import './globals.css';
 import './layout.css';
 import { THEME_BOOT } from '@/lib/themeBoot';
+import { KeyboardGuard } from '@/components/KeyboardGuard';
 
 export const metadata: Metadata = {
   title: { default: `${BRAND} — Kuaför randevusu`, template: `%s · ${BRAND}` },
@@ -19,7 +20,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <KeyboardGuard />
+      </body>
     </html>
   );
 }

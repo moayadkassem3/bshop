@@ -743,3 +743,8 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
+
+/* Out of the way while the phone keyboard is open (components/KeyboardGuard.tsx). */
+:global(:root[data-typing]) .actions {
+  display: none;
+}
