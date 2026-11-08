@@ -135,33 +135,14 @@ export function Salonum() {
                   <ShareShop shop={shop} onDone={setNote} />
                 </div>
               ) : (
-                <p className={`card ${styles.closed}`}>
-                  {shop.reviewed_at ? 'Salon sayfanız abonelik başlayana kadar müşterilere kapalı.' : 'Salon sayfanız onaydan sonra açılır.'}
-                </p>
+                <p className={`card ${styles.closed}`}>{shop.reviewed_at ? 'Salon sayfanız abonelik başlayana kadar müşterilere kapalı.' : 'Salon sayfanız onaydan sonra açılır.'}</p>
               )}
               {note && (
                 <p className="muted" role="status">
                   {note}
                 </p>
               )}
-              <ul className={`card ${styles.links}`} role="list">
-                <ShortcutLink href="/?harita" icon="map" label="Haritada gör" hint="Salonunuz ve çevredeki salonlar" />
-                {owner && <ShortcutLink href="/qr" icon="qr" label="QR kod" hint="Salonunuza asın, müşteriler okutup randevu alsın" />}
-                <ShortcutLink href="/calisma-saatleri" icon="clock" label="Çalışma saatleri" hint={owner ? 'Ekibin haftalık saatleri ve molaları' : 'Haftalık saatleriniz ve molalarınız'} />
-                <ShortcutLink href="/calismalar" icon="camera" label="Kesim fotoğrafı paylaş" hint="Popüler kesimler’de görünür" />
-                {owner && <ShortcutLink href="/istatistikler" icon="chart" label="İstatistikler" hint="Sayfa ziyaretleri ve randevular, ay ay" />}
-                <ShortcutLink href="/degerlendirmeler" icon="star" label="Değerlendirmeler" hint={owner ? 'Müşteri puanları ve yanıtlarınız' : 'Müşterilerin salona verdiği puanlar'} />
-                {owner && <ShortcutLink href="/abonelik" icon="card" label="Aboneliğim" hint="Paketiniz ve abonelik durumunuz" />}
-                {owner && (
-                  <ShortcutLink
-                    href="/isletme-ayarlari"
-                    icon="settings"
-                    label="Salon bilgileri"
-                    hint="Adres, fotoğraflar, hizmetler, personel"
-                    onClick={() => rememberShop(shop.id)}
-                  />
-                )}
-              </ul>
+              <ShortcutGroups owner={owner} onSettings={() => rememberShop(shop.id)} />
             </section>
           </>
         )}
@@ -209,6 +190,45 @@ const ICONS = {
     </>
   ),
 };
+
+type ShortcutItem = { href: string; icon: keyof typeof ICONS; label: string; hint: string; onClick?: () => void };
+
+/**
+ * The salon's tools (founder, 8 November 2026; the app's list matches). Owners and co-owners see four
+ * groups as separate cards: promote the salon, see how it is doing, set it up, the subscription.
+ * Staff see their five tools in one card, in the same order (single-row cards would look broken up).
+ */
+function ShortcutGroups({ owner, onSettings }: { owner: boolean; onSettings: () => void }) {
+  const groups: (ShortcutItem | false)[][] = [
+    [
+      { href: '/?harita', icon: 'map', label: 'Haritada gör', hint: 'Salonunuz ve çevredeki salonlar' },
+      { href: '/qr', icon: 'qr', label: 'QR kod', hint: 'Salonunuza asın, müşteriler okutup randevu alsın' },
+      { href: '/calismalar', icon: 'camera', label: 'Kesim fotoğrafı paylaş', hint: 'Popüler kesimler’de görünür' },
+    ],
+    [
+      owner && { href: '/istatistikler', icon: 'chart', label: 'İstatistikler', hint: 'Sayfa ziyaretleri ve randevular, ay ay' },
+      { href: '/degerlendirmeler', icon: 'star', label: 'Değerlendirmeler', hint: owner ? 'Müşteri puanları ve yanıtlarınız' : 'Müşterilerin salona verdiği puanlar' },
+    ],
+    [
+      { href: '/calisma-saatleri', icon: 'clock', label: 'Çalışma saatleri', hint: owner ? 'Ekibin haftalık saatleri ve molaları' : 'Haftalık saatleriniz ve molalarınız' },
+      owner && { href: '/isletme-ayarlari', icon: 'settings', label: 'Salon bilgileri', hint: 'Adres, fotoğraflar, hizmetler, personel', onClick: onSettings },
+    ],
+    [owner && { href: '/abonelik', icon: 'card', label: 'Aboneliğim', hint: 'Paketiniz ve abonelik durumunuz' }],
+  ];
+  const shown = groups.map((g) => g.filter((item): item is ShortcutItem => Boolean(item))).filter((g) => g.length);
+  const cards = owner ? shown : [shown.flat()];
+  return (
+    <div className={styles.groups}>
+      {cards.map((items, i) => (
+        <ul key={i} className={`card ${styles.links}`} role="list">
+          {items.map((item) => (
+            <ShortcutLink key={item.href} {...item} />
+          ))}
+        </ul>
+      ))}
+    </div>
+  );
+}
 
 function ShortcutLink(props: { href: string; icon: keyof typeof ICONS; label: string; hint?: string; onClick?: () => void }) {
   return (

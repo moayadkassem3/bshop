@@ -134,6 +134,11 @@
   color: var(--muted);
 }
 
+.groups {
+  display: grid;
+  gap: 12px;
+}
+
 .links {
   margin: 0;
   padding: 0;

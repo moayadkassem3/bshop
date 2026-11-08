@@ -1,4 +1,4 @@
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, Share, StyleSheet, View } from 'react-native';
 import { AlarmSetup } from '@/components/AlarmSetup';
@@ -115,28 +115,7 @@ export default function SalonumScreen() {
             </Appear>
           ) : null}
           <Appear index={3}>
-            {/* The website's list, in its order; owner-only tools only for owners. */}
-            <Card style={{ padding: 4 }}>
-              <Shortcut icon="map" label="Haritada gör" hint="Salonunuz ve çevredeki salonlar" onPress={() => router.push('/isletme/harita')} />
-              {owner ? <Shortcut icon="qr" label="QR kod" hint="Salonunuza asın, müşteriler okutup randevu alsın" onPress={() => router.push('/isletme/qr')} /> : null}
-              <Shortcut
-                icon="clock"
-                label="Çalışma saatleri"
-                hint={owner ? 'Ekibin haftalık saatleri ve molaları' : 'Haftalık saatleriniz ve molalarınız'}
-                onPress={() => router.push('/isletme/calisma-saatleri')}
-              />
-              <Shortcut icon="camera" label="Kesim fotoğrafı paylaş" hint="Popüler kesimler’de görünür" onPress={() => router.push('/isletme/kesimler')} />
-              {owner ? <Shortcut icon="chart" label="İstatistikler" hint="Sayfa ziyaretleri ve randevular, ay ay" onPress={() => router.push('/isletme/istatistikler')} /> : null}
-              <Shortcut
-                icon="star"
-                label="Değerlendirmeler"
-                hint={owner ? 'Müşteri puanları ve yanıtlarınız' : 'Müşterilerin salona verdiği puanlar'}
-                onPress={() => router.push('/isletme/degerlendirmeler')}
-                last={!owner}
-              />
-              {owner ? <Shortcut icon="card" label="Aboneliğim" hint="Paketiniz ve abonelik durumunuz" onPress={() => router.push('/isletme/abonelik')} /> : null}
-              {owner ? <Shortcut icon="settings" label="Salon bilgileri" hint="Adres, fotoğraflar, hizmetler, personel" onPress={() => router.push('/isletme/ayarlar')} last /> : null}
-            </Card>
+            <ShortcutGroups owner={owner} />
           </Appear>
         </>
       ) : null}
@@ -205,6 +184,45 @@ function ShareButton({ shop }: { shop: BusinessShop }) {
       <Icon name="share" size={18} color={colors.ink} strokeWidth={2.2} />
       <Text weight="bold">Paylaş</Text>
     </Pressable>
+  );
+}
+
+type ShortcutItem = { icon: IconName; label: string; hint: string; path: Href };
+
+/**
+ * The salon's tools (founder, 8 November 2026; as on the website). Owners and co-owners see four
+ * groups as separate cards: promote the salon, see how it is doing, set it up, the subscription.
+ * Staff see their five tools in one card, in the same order (single-row cards would look broken up).
+ */
+function ShortcutGroups({ owner }: { owner: boolean }) {
+  const groups: (ShortcutItem | false)[][] = [
+    [
+      { icon: 'map', label: 'Haritada gör', hint: 'Salonunuz ve çevredeki salonlar', path: '/isletme/harita' },
+      { icon: 'qr', label: 'QR kod', hint: 'Salonunuza asın, müşteriler okutup randevu alsın', path: '/isletme/qr' },
+      { icon: 'camera', label: 'Kesim fotoğrafı paylaş', hint: 'Popüler kesimler’de görünür', path: '/isletme/kesimler' },
+    ],
+    [
+      owner && { icon: 'chart', label: 'İstatistikler', hint: 'Sayfa ziyaretleri ve randevular, ay ay', path: '/isletme/istatistikler' },
+      { icon: 'star', label: 'Değerlendirmeler', hint: owner ? 'Müşteri puanları ve yanıtlarınız' : 'Müşterilerin salona verdiği puanlar', path: '/isletme/degerlendirmeler' },
+    ],
+    [
+      { icon: 'clock', label: 'Çalışma saatleri', hint: owner ? 'Ekibin haftalık saatleri ve molaları' : 'Haftalık saatleriniz ve molalarınız', path: '/isletme/calisma-saatleri' },
+      owner && { icon: 'settings', label: 'Salon bilgileri', hint: 'Adres, fotoğraflar, hizmetler, personel', path: '/isletme/ayarlar' },
+    ],
+    [owner && { icon: 'card', label: 'Aboneliğim', hint: 'Paketiniz ve abonelik durumunuz', path: '/isletme/abonelik' }],
+  ];
+  const shown = groups.map((g) => g.filter((item): item is ShortcutItem => Boolean(item))).filter((g) => g.length);
+  const cards = owner ? shown : [shown.flat()];
+  return (
+    <View style={{ gap: 12 }}>
+      {cards.map((items, i) => (
+        <Card key={i} style={{ padding: 4 }}>
+          {items.map((item, j) => (
+            <Shortcut key={item.label} icon={item.icon} label={item.label} hint={item.hint} onPress={() => router.push(item.path)} last={j === items.length - 1} />
+          ))}
+        </Card>
+      ))}
+    </View>
   );
 }
 
