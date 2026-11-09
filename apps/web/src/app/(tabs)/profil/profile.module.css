@@ -291,3 +291,30 @@
   font-size: 13px;
   color: var(--muted);
 }
+
+/* Ekip daveti (founder, 9 November 2026) */
+.invite {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1.5px solid var(--primary);
+}
+
+.inviteText {
+  display: grid;
+  gap: 2px;
+}
+
+.inviteText span {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.inviteActions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+}

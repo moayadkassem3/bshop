@@ -663,7 +663,7 @@ function StaffStep({ draft, update, me }: StepProps & { me: Me }) {
       ))}
       <Button kind="secondary" title="+ Personel veya ortak ekle" onPress={() => update({ members: [...draft.members, { displayName: '', phone: '', role: 'staff', bookable: true }] })} />
       <Text size={13} color={colors.muted}>
-        Eklediğiniz kişiler kendi telefon numaralarıyla giriş yapar.
+        Eklediğiniz kişilere davet gönderilir (uygulamayı kullanmıyorlarsa SMS ile); daveti kabul edince ekibe katılırlar. Bir kişi yalnızca bir salonda çalışabilir.
       </Text>
       <PlanName count={staffCount(draft)} plans={plans} />
     </>
@@ -868,7 +868,7 @@ function DoneScreen({ slug }: { slug: string }) {
       </View>
       <Card style={{ gap: 8 }}>
         <Text>1. Salonum → QR kod’dan kodunuzu indirip salona asın.</Text>
-        <Text>2. Personeliniz kendi numarasıyla giriş yapar.</Text>
+        <Text>2. Personeliniz davetini kabul edip kendi numarasıyla giriş yapar.</Text>
         <Text>3. Hizmetleri, saatleri ve fotoğrafları Salonum’dan istediğiniz zaman düzenleyin.</Text>
       </Card>
       <Text color={colors.muted} center>

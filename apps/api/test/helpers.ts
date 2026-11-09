@@ -10,6 +10,8 @@ import type { Deps } from '../src/deps.js';
 import { buildApp } from '../src/http/app.js';
 import type { PushMessage, PushProvider, SmsProvider } from '../src/notifications.js';
 import { diskStorage } from '../src/storage.js';
+import { acceptInvite } from '../src/services/invites.js';
+import type { User } from '../src/services/auth.js';
 import { tick } from '../src/worker.js';
 
 export class TestClock {
@@ -49,7 +51,7 @@ export const MONDAY_9AM = '2026-10-26T06:00:00.000Z';
 /** Istanbul local time on Monday 26 October 2026, as an ISO instant. */
 export const at = (hhmm: string, date = '2026-10-26') => new Date(`${date}T${hhmm}:00+03:00`).toISOString();
 
-const TABLES = `announcement_runs, announcements, push_devices, subscription_reminders, payments, subscription_requests, quote_requests, shop_ratings, haircut_likes, haircut_posts, photo_blobs, consents, customer_favorites, shop_photos, notifications, appointment_services, appointments, booking_groups, shop_customers, member_services,
+const TABLES = `staff_invites, announcement_runs, announcements, push_devices, subscription_reminders, payments, subscription_requests, quote_requests, shop_ratings, haircut_likes, haircut_posts, photo_blobs, consents, customer_favorites, shop_photos, notifications, appointment_services, appointments, booking_groups, shop_customers, member_services,
   services, auto_confirm_hours, time_off, working_hours, shop_members, subscriptions, shops, sessions, otp_codes, users`;
 
 export function useTestApp() {
@@ -108,7 +110,7 @@ export function useTestApp() {
       const req = await ctx.call('POST', '/auth/otp/request', { body: { phone, portal } });
       if (req.status !== 204) throw new Error(`OTP request failed: ${JSON.stringify(req.body)}`);
       await tick(deps);
-      const text = sms.to(phone).at(-1)!;
+      const text = sms.to(phone).filter((m) => m.includes('kodunuz')).at(-1)!;
       const code = text.match(/(\d{6})/)![1];
       const consents =
         portal === 'customer' && opts.acceptTerms !== false ? [{ key: 'kullanici-sozlesmesi', version: currentVersion('kullanici-sozlesmesi') }] : undefined;
@@ -149,7 +151,7 @@ export const PHONES = {
  * (bookable), staff Cumali and Tahir, open 10:00–21:00 every day, with three
  * services. Tahir does not do beards.
  */
-export async function setupShop(t: TestCtx, opts: { slug?: string; ownerPhone?: string } = {}) {
+export async function setupShop(t: TestCtx, opts: { slug?: string; ownerPhone?: string; staffPhones?: [string, string] } = {}) {
   const slug = opts.slug ?? 'nirvana-for-men';
   await t.db.query(
     `INSERT INTO users (phone, first_name, last_name, is_platform_admin) VALUES ($1, 'Platform', 'Admin', true)
@@ -193,12 +195,13 @@ export async function setupShop(t: TestCtx, opts: { slug?: string; ownerPhone?: 
   });
   const [haircut, beard, combo] = imported.body.serviceIds as string[];
 
-  const cumaliId = (
-    await t.call('POST', `${base}/members`, { token: owner, body: { phone: PHONES.cumali, displayName: 'Cumali Esen' } })
-  ).body.memberId as string;
-  const tahirId = (
-    await t.call('POST', `${base}/members`, { token: owner, body: { phone: PHONES.tahir, displayName: 'Tahir Ali Esen' } })
-  ).body.memberId as string;
+  // Staff join by invite (founder, 9 November 2026): invited, then they accept.
+  // One person works at one salon: a second test salon has its own staff numbers.
+  const [cumaliPhone, tahirPhone] = opts.staffPhones ?? (opts.ownerPhone && opts.ownerPhone !== PHONES.owner ? ['+905320000097', '+905320000098'] : [PHONES.cumali, PHONES.tahir]);
+  const cumaliId = await inviteAndAccept(t, base, owner, cumaliPhone, 'Cumali Esen');
+  const tahirId = await inviteAndAccept(t, base, owner, tahirPhone, 'Tahir Ali Esen');
+  // The invites' own messages are not part of what the other tests look at.
+  await t.db.query("DELETE FROM notifications WHERE template IN ('staff_invite', 'staff_invite_answer')");
 
   const everyDay = [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, startMinute: 600, endMinute: 1260 }));
   for (const memberId of [salihId, cumaliId, tahirId]) {
@@ -217,6 +220,17 @@ export async function setupShop(t: TestCtx, opts: { slug?: string; ownerPhone?: 
     staff: { salih: salihId, cumali: cumaliId, tahir: tahirId },
     services: { haircut: haircut!, beard: beard!, combo: combo! },
   };
+}
+
+/** Invites someone to the team and accepts it as them; returns their member id. */
+export async function inviteAndAccept(t: TestCtx, base: string, owner: string, phone: string, displayName: string, role: 'staff' | 'co_owner' = 'staff') {
+  const invited = await t.call('POST', `${base}/members`, { token: owner, body: { phone, displayName, role } });
+  if (invited.status !== 201) throw new Error(`Invite failed: ${JSON.stringify(invited.body)}`);
+  const { rows } = await t.db.query<{ id: string; phone: string; first_name: string | null; last_name: string | null; is_platform_admin: boolean; gender: null }>(
+    'SELECT id, phone, first_name, last_name, is_platform_admin, gender FROM users WHERE phone = $1',
+    [phone],
+  );
+  return (await acceptInvite(t.deps, { ...rows[0]!, portal: 'customer' } as User, invited.body.inviteId)).memberId;
 }
 
 export type ShopFixture = Awaited<ReturnType<typeof setupShop>>;

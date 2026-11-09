@@ -22,6 +22,8 @@ type Member = {
   photo_id: string | null;
   phone: string;
 };
+type Invite = { id: string; display_name: string; role: 'owner' | 'staff'; sent_via: string; sent_at: string; phone: string };
+const viaLabel = (via: string) => (via === 'push' ? 'uygulama bildirimi' : via === 'sms' ? 'SMS' : 'bildirim ve SMS');
 type Plans = { plans: { id: string; name: string; maxStaff: number; monthlyPriceKurus: number }[]; terms: { customQuoteAboveStaff: number } };
 type Role = 'staff' | 'co_owner';
 
@@ -34,6 +36,8 @@ const roleOf = (m: Member) => (m.owner_label === 'owner' ? 'Sahibi' : m.role ===
  */
 export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMemberId: string; visible: boolean }) {
   const [members, setMembers] = useState<Member[] | null>(null);
+  const [invites, setInvites] = useState<Invite[]>([]);
+  const [note, setNote] = useState<string | null>(null);
   const [plans, setPlans] = useState<Plans | null>(null);
   const canSell = useCanSell();
   const [editing, setEditing] = useState<string | null>(null);
@@ -44,6 +48,7 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
   const load = useCallback(async () => {
     try {
       setMembers(await api<Member[]>(`/staff/shops/${shopId}/members`));
+      setInvites(await api<Invite[]>(`/staff/shops/${shopId}/invites`).catch(() => []));
     } catch (err) {
       setError(errorMessage(err));
     }
@@ -59,6 +64,7 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
     setError(null);
+    setNote(null);
     try {
       await action();
       await load();
@@ -78,7 +84,7 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
 
   return (
     <div hidden={!visible}>
-      {error && <p className="alert alert-danger">{error}</p>}
+      {error && !adding && <p className="alert alert-danger">{error}</p>}
       {plans && canSell !== null && (
         <div className={own.planBox}>
           <div>
@@ -147,15 +153,57 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
         )}
       </ul>
 
+      {invites.length > 0 && (
+        <>
+          <h3 className={own.subTitle}>Bekleyen davetler</h3>
+          <ul className={`card ${own.list}`} role="list">
+            {invites.map((i) => (
+              <li key={i.id} className={own.removedRow}>
+                <span className={own.rowMain}>
+                  <strong>
+                    {i.display_name} <em>({i.role === 'staff' ? 'Personel' : 'Ortak'})</em>
+                  </strong>
+                  <span>
+                    {formatPhone(i.phone)} · {viaLabel(i.sent_via)} ile gönderildi
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  className={own.link}
+                  disabled={busy}
+                  onClick={() =>
+                    run(async () => {
+                      const r = await api<{ sentVia: string }>(`/staff/shops/${shopId}/invites/${i.id}/resend`, { method: 'POST' });
+                      setNote(`Davet tekrar gönderildi (${viaLabel(r.sentVia)}).`);
+                    })
+                  }
+                >
+                  Tekrar gönder
+                </button>
+                <button type="button" className={`${own.link} ${own.linkDanger}`} disabled={busy} onClick={() => run(() => api(`/staff/shops/${shopId}/invites/${i.id}`, { method: 'DELETE' }))}>
+                  İptal et
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
       {adding ? (
         <NewMember
           busy={busy}
           onCancel={() => setAdding(false)}
           onAdd={async (body) => {
-            if (await run(() => api(`/staff/shops/${shopId}/members`, { method: 'POST', body }))) setAdding(false);
+            const ok = await run(async () => {
+              const r = await api<{ sentVia: string }>(`/staff/shops/${shopId}/members`, { method: 'POST', body });
+              setNote(`${body.displayName} davet edildi (${viaLabel(r.sentVia)}). Daveti kabul edince ekibe katılır.`);
+            });
+            if (ok) setAdding(false);
           }}
         />
-      ) : (
+      ) : null}
+      {adding && error ? <p className="alert alert-danger">{error}</p> : null}
+      {adding ? null : (
         <button
           type="button"
           className={`btn btn-block ${own.addOne}`}
@@ -167,7 +215,11 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
           + Personel veya ortak ekle
         </button>
       )}
-      <p className={own.intro}>Eklediğiniz kişiler kendi telefon numaralarıyla “İşletmeyim” girişinden girer. Yeni kişiler salonun saatleri ve tüm hizmetlerle başlar.</p>
+      {note && <p className="alert alert-info">{note}</p>}
+      <p className={own.intro}>
+        Eklediğiniz kişiye davet gönderilir: uygulamayı kullanıyorsa bildirim, kullanmıyorsa SMS. Daveti kabul edince ekibe katılır ve salonun saatleri ile tüm hizmetlerle başlar. Bir kişi yalnızca
+        bir salonda çalışabilir.
+      </p>
 
       {removed.length > 0 && (
         <details className={own.removed}>
@@ -183,9 +235,17 @@ export function StaffTab({ shopId, myMemberId, visible }: { shopId: string; myMe
                   type="button"
                   className={own.link}
                   disabled={busy}
-                  onClick={() => run(() => api(`/staff/shops/${shopId}/members`, { method: 'POST', body: { phone: m.phone, displayName: m.display_name, role: 'staff', bookable: true } }))}
+                  onClick={() =>
+                    run(async () => {
+                      const r = await api<{ sentVia: string }>(`/staff/shops/${shopId}/members`, {
+                        method: 'POST',
+                        body: { phone: m.phone, displayName: m.display_name, role: 'staff', bookable: true },
+                      });
+                      setNote(`${m.display_name} davet edildi (${viaLabel(r.sentVia)}).`);
+                    })
+                  }
                 >
-                  Geri ekle
+                  Davet gönder
                 </button>
               </li>
             ))}
@@ -315,7 +375,7 @@ function NewMember(props: { busy: boolean; onCancel: () => void; onAdd: (body: {
           Vazgeç
         </button>
         <button type="button" className="btn btn-primary" disabled={props.busy || !ok} onClick={() => props.onAdd({ displayName: name.trim(), phone, role, bookable })}>
-          Ekle
+          Davet gönder
         </button>
       </div>
     </div>

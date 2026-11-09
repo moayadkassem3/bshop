@@ -46,49 +46,46 @@ export async function listMembers(deps: Deps, user: User, shopId: string) {
   return rows;
 }
 
-export async function addMember(
-  deps: Deps,
-  user: User,
-  shopId: string,
-  input: { phone: string; displayName: string; role: 'owner' | 'co_owner' | 'staff'; bookable: boolean },
-) {
-  await requireOwner(deps.db, user, shopId);
+export type JoinInput = { displayName: string; role: 'owner' | 'co_owner' | 'staff'; bookable: boolean };
+
+/**
+ * Puts someone on a salon's team, or brings back someone removed earlier with their
+ * history (v1.7). Used when an invite is accepted (invites.ts) and by the demo seed.
+ */
+export async function joinShop(tx: pg.PoolClient, shopId: string, userId: string, input: JoinInput): Promise<string> {
   // "Ortak" (co-owner) has the owner's permissions; only the label differs (v1.6).
   const role = input.role === 'staff' ? 'staff' : 'owner';
   const label = input.role === 'staff' ? null : input.role;
-  return withTx(deps.db, async (tx) => {
-    const userId = await upsertUserByPhone(tx, normalizePhone(input.phone));
-    const existing = await tx.query<{ id: string; active: boolean }>(
-      'SELECT id, active FROM shop_members WHERE shop_id = $1 AND user_id = $2',
-      [shopId, userId],
+  const existing = await tx.query<{ id: string; active: boolean }>('SELECT id, active FROM shop_members WHERE shop_id = $1 AND user_id = $2', [shopId, userId]);
+  if (existing.rows[0]?.active) throw conflict('ALREADY_MEMBER', 'This phone number is already on the team');
+  let memberId: string;
+  if (existing.rows[0]) {
+    memberId = existing.rows[0].id;
+    await tx.query('UPDATE shop_members SET active = true, role = $2, owner_label = $3, display_name = $4, bookable = $5 WHERE id = $1', [
+      memberId,
+      role,
+      label,
+      input.displayName,
+      input.bookable,
+    ]);
+  } else {
+    const { rows } = await tx.query<{ id: string }>(
+      `INSERT INTO shop_members (shop_id, user_id, role, owner_label, display_name, bookable)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+      [shopId, userId, role, label, input.displayName, input.bookable],
     );
-    let memberId: string;
-    if (existing.rows[0]?.active) throw conflict('ALREADY_MEMBER', 'This phone number is already on the team');
-    if (existing.rows[0]) {
-      // Someone removed earlier comes back with their history (v1.7).
-      memberId = existing.rows[0].id;
-      await tx.query(
-        'UPDATE shop_members SET active = true, role = $2, owner_label = $3, display_name = $4, bookable = $5 WHERE id = $1',
-        [memberId, role, label, input.displayName, input.bookable],
-      );
-    } else {
-      const { rows } = await tx.query<{ id: string }>(
-        `INSERT INTO shop_members (shop_id, user_id, role, owner_label, display_name, bookable)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-        [shopId, userId, role, label, input.displayName, input.bookable],
-      );
-      memberId = rows[0]!.id;
-    }
-    if (input.bookable) await giveShopDefaults(tx, shopId, memberId);
-    return { memberId };
-  });
+    memberId = rows[0]!.id;
+  }
+  if (input.bookable) await giveShopDefaults(tx, shopId, memberId);
+  return memberId;
 }
 
-/**
- * A new person who takes appointments starts with the salon's hours (copied from
- * the longest-serving bookable member) and every active service, so customers can
- * book them at once; they adjust both later. Existing settings are kept.
- */
+/** Adds someone straight away, without an invite: only the demo seed uses this. */
+export async function addMember(deps: Deps, user: User, shopId: string, input: JoinInput & { phone: string }) {
+  await requireOwner(deps.db, user, shopId);
+  return withTx(deps.db, async (tx) => ({ memberId: await joinShop(tx, shopId, await upsertUserByPhone(tx, normalizePhone(input.phone)), input) }));
+}
+
 async function giveShopDefaults(tx: pg.PoolClient, shopId: string, memberId: string) {
   const hasHours = await tx.query('SELECT 1 FROM working_hours WHERE member_id = $1 LIMIT 1', [memberId]);
   if (!hasHours.rowCount) {

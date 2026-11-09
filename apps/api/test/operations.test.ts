@@ -360,25 +360,24 @@ describe('separate sign-in for owners and staff', () => {
     expect((await t.call('GET', '/staff/shops', { token: web })).status).toBe(403);
   });
 
-  it('owner powers need owner sign-in', async () => {
+  it('owner powers need owner sign-in; one person works at one salon', async () => {
     const shop = await setupShop(t);
-    // Salih owns this shop and is also staff at another one, so he can use both entrances.
+    // Salih owns this salon, so another salon cannot invite him as staff (founder, 9 November 2026).
     const other = await setupShop(t, { slug: 'other-shop', ownerPhone: '+905320000099' });
-    await t.call('POST', `${other.base}/members`, { token: other.tokens.owner, body: { phone: PHONES.owner, displayName: 'Salih' } });
+    const invited = await t.call('POST', `${other.base}/members`, { token: other.tokens.owner, body: { phone: PHONES.owner, displayName: 'Salih' } });
+    expect(invited.body.error).toBe('STAFF_ELSEWHERE');
+    // Nor Cumali, who is staff here, even as Ortak.
+    const asPartner = await t.call('POST', `${other.base}/members`, { token: other.tokens.owner, body: { phone: PHONES.cumali, displayName: 'Cumali', role: 'co_owner' } });
+    expect(asPartner.body.error).toBe('STAFF_ELSEWHERE');
 
-    const asStaff = await t.login(PHONES.owner, { portal: 'staff' });
+    // Staff sign-in has no owner powers.
+    const asStaff = await t.login(PHONES.cumali, { portal: 'staff' });
     const shops = await t.call('GET', '/staff/shops', { token: asStaff });
     expect(shops.body.every((s: { role: string }) => s.role === 'staff')).toBe(true);
-    const price = await t.call('PATCH', `${shop.base}/services/${shop.services.haircut}`, {
-      token: asStaff,
-      body: { priceKurus: 1 },
-    });
+    const price = await t.call('PATCH', `${shop.base}/services/${shop.services.haircut}`, { token: asStaff, body: { priceKurus: 1 } });
     expect(price.status).toBe(403);
 
-    const ok = await t.call('PATCH', `${shop.base}/services/${shop.services.haircut}`, {
-      token: shop.tokens.owner,
-      body: { priceKurus: 50000 },
-    });
+    const ok = await t.call('PATCH', `${shop.base}/services/${shop.services.haircut}`, { token: shop.tokens.owner, body: { priceKurus: 50000 } });
     expect(ok.status).toBe(204);
   });
 });

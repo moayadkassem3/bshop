@@ -417,3 +417,13 @@
 :global(:root[data-typing]) .saveBar {
   display: none;
 }
+
+/* Bekleyen davetler (founder, 9 November 2026) */
+.subTitle {
+  margin: 18px 0 8px;
+  font-size: 15px;
+}
+
+.linkDanger {
+  color: var(--danger);
+}

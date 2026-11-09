@@ -33,8 +33,9 @@ export function PushBridge() {
       const data = parsePushData(alert.payload);
       if (ALARM_KINDS.has(data.kind ?? '')) showAlarm(data, alert.notificationId, alert.action);
       // Customer news in customer mode, salon news in business mode: both are on Randevular.
-      // An announcement from our team just opens the app.
-      else if (data.kind === 'announcement') return;
+      // An announcement from our team just opens the app; a team invite opens Profil, where it is answered.
+      else if (data.kind === 'announcement' || data.kind === 'team') return;
+      else if (data.kind === 'invite') router.navigate('/profil');
       else if ((data.kind === 'customer') !== state.current.business) router.navigate('/randevular');
     };
 

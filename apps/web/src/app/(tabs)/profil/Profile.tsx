@@ -81,6 +81,7 @@ function SignIn(props: { onSignedIn: (me: Me) => void }) {
 }
 
 function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }) {
+  const router = useRouter();
   const canSell = useCanSell();
   const [editing, setEditing] = useState(!me.first_name);
   const [firstName, setFirstName] = useState(me.first_name ?? '');
@@ -101,6 +102,19 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
       setMessage(errorMessage(err));
     } finally {
       setBusy(false);
+    }
+  }
+
+  // Accepted a salon's invite: on to business mode and that salon's Salonum.
+  async function joined(shopId: string) {
+    rememberShop(shopId);
+    try {
+      const r = await api<{ token: string; user: Me }>('/me/switch', { method: 'POST', body: { to: 'business' } });
+      setToken(r.token, r.user.portal);
+      onChange({ ...me, ...r.user, has_business: true });
+      router.push('/salonum');
+    } catch (err) {
+      setMessage(errorMessage(err));
     }
   }
 
@@ -133,6 +147,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
       </header>
 
       <div className="container narrow">
+        <TeamInvites onJoined={joined} />
         {mode !== 'customer' && <MyBusinesses />}
 
         {/* Favorites are a customer thing; in business mode the salon's tools above take their place. */}
@@ -311,6 +326,64 @@ function MyStaffPhoto() {
       />
       <p className={styles.photoHint}>Müşteriler salonunuzun sayfasında ve randevu alırken sizi bu fotoğrafla görür.</p>
     </div>
+  );
+}
+
+type TeamInvite = { id: string; shop_id: string; shop_name: string; role: 'owner' | 'staff'; invited_by: string | null };
+
+/**
+ * Ekip daveti (founder, 9 November 2026): a salon invited this person to its team. They join
+ * with "Katıl" (and the site switches to business mode), or turn it down.
+ */
+function TeamInvites({ onJoined }: { onJoined: (shopId: string) => void }) {
+  const [invites, setInvites] = useState<TeamInvite[]>([]);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    api<TeamInvite[]>('/me/invites')
+      .then(setInvites)
+      .catch(() => undefined);
+  }, []);
+  async function answer(invite: TeamInvite, accept: boolean) {
+    setBusy(invite.id);
+    setError(null);
+    try {
+      await api(`/me/invites/${invite.id}/${accept ? 'accept' : 'decline'}`, { method: 'POST' });
+      setInvites((list) => list.filter((i) => i.id !== invite.id));
+      if (accept) onJoined(invite.shop_id);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(null);
+    }
+  }
+  if (!invites.length) return null;
+  return (
+    <section aria-label="Ekip davetleri">
+      <h2 className={styles.groupTitle}>Ekip daveti</h2>
+      {invites.map((i) => (
+        <div key={i.id} className={`card ${styles.invite}`}>
+          <span className={styles.menuIcon}>
+            <Icon name="salonum" size={20} />
+          </span>
+          <div className={styles.inviteText}>
+            <strong>{i.shop_name}</strong>
+            <span>
+              {i.invited_by ? `${i.invited_by} sizi` : 'Sizi'} ekibine {i.role === 'staff' ? 'personel' : 'ortak'} olarak davet etti.
+            </span>
+          </div>
+          <div className={styles.inviteActions}>
+            <button type="button" className="btn" disabled={busy !== null} onClick={() => answer(i, false)}>
+              Reddet
+            </button>
+            <button type="button" className="btn btn-primary" disabled={busy !== null} onClick={() => answer(i, true)}>
+              {busy === i.id ? 'Katılınıyor…' : 'Katıl'}
+            </button>
+          </div>
+        </div>
+      ))}
+      {error && <p className="alert alert-danger">{error}</p>}
+    </section>
   );
 }
 

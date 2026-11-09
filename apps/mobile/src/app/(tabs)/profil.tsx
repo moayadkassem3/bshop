@@ -6,6 +6,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppearanceSwitch } from '@/components/AppearanceSwitch';
+import { confirm } from '@/components/Dialogs';
 import { useKeyboardRoom } from '@/lib/keyboard';
 import { StaffPhotoPicker } from '@/components/StaffAvatar';
 import { Icon, type IconName } from '@/components/Icon';
@@ -119,6 +120,12 @@ function Account() {
       }
       onRefresh={refresh}
     >
+      <TeamInvites
+        onJoined={async () => {
+          if (!business) await switchMode('business');
+          router.replace('/salonum');
+        }}
+      />
       {business ? <MyBusinesses /> : null}
 
       {/* Favourites are a customer thing; in business mode the salons above take their place (as on the website). */}
@@ -297,6 +304,78 @@ function MyBusinesses() {
   );
 }
 
+type TeamInvite = { id: string; shop_id: string; shop_name: string; role: 'owner' | 'staff'; invited_by: string | null };
+
+/**
+ * Ekip daveti (founder, 9 November 2026): a salon invited this person to its team. "Katıl"
+ * joins it and opens Salonum in business mode; "Reddet" turns it down.
+ */
+function TeamInvites({ onJoined }: { onJoined: () => Promise<void> }) {
+  const [invites, setInvites] = useState<TeamInvite[]>([]);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(() => {
+    api<TeamInvite[]>('/me/invites')
+      .then(setInvites)
+      .catch(() => undefined);
+  }, []);
+  useFocusEffect(load);
+  async function answer(invite: TeamInvite, accept: boolean) {
+    setBusy(invite.id);
+    setError(null);
+    try {
+      await api(`/me/invites/${invite.id}/${accept ? 'accept' : 'decline'}`, { method: 'POST' });
+      setInvites((list) => list.filter((i) => i.id !== invite.id));
+      if (accept) await onJoined();
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(null);
+    }
+  }
+  if (!invites.length) return null;
+  return (
+    <Appear>
+      <Section title="Ekip daveti" />
+      {invites.map((i) => (
+        <Card key={i.id} style={styles.invite}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={styles.rowIcon}>
+              <Icon name="salonum" size={20} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text weight="bold">{i.shop_name}</Text>
+              <Text size={14} color={colors.ink2}>
+                {i.invited_by ? `${i.invited_by} sizi` : 'Sizi'} ekibine {i.role === 'staff' ? 'personel' : 'ortak'} olarak davet etti.
+              </Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Button
+              kind="secondary"
+              title="Reddet"
+              disabled={busy !== null}
+              style={{ flex: 1 }}
+              onPress={() =>
+                confirm({
+                  title: 'Daveti reddet',
+                  message: `${i.shop_name} ekibine katılmayacaksınız. Salon size yeniden davet gönderebilir.`,
+                  confirmLabel: 'Reddet',
+                  danger: true,
+                  icon: 'close',
+                  onConfirm: () => void answer(i, false),
+                })
+              }
+            />
+            <Button title="Katıl" busy={busy === i.id} disabled={busy !== null} style={{ flex: 2 }} onPress={() => void answer(i, true)} />
+          </View>
+        </Card>
+      ))}
+      {error ? <Alert text={error} /> : null}
+    </Appear>
+  );
+}
+
 function Section({ title }: { title: string }) {
   return (
     <Text size={13} weight="bold" color={colors.muted} style={styles.section}>
@@ -369,6 +448,7 @@ const styles = themed(() =>
     menu: { padding: 4 },
     row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 58, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.sm },
     rowLine: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    invite: { gap: 14, borderWidth: 1.5, borderColor: colors.primary, marginBottom: 8 },
     rowIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
     form: { gap: 12, padding: 12, borderBottomWidth: 1, borderBottomColor: colors.line },
     switch: {

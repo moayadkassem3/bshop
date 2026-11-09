@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import type { Deps } from '../deps.js';
 import { withTx } from '../db.js';
+import { inviteAtRegistration } from './invites.js';
 import { badRequest, conflict } from '../errors.js';
 import { shopLinkCandidates } from '../domain/slug.js';
 import { slugIsFree } from './shops.js';
@@ -100,21 +101,10 @@ export async function registerShop(deps: Deps, user: User, input: RegistrationIn
       [shop.id, user.id, input.owner.displayName.trim(), input.owner.bookable],
     );
     memberIds.push({ id: owner.rows[0]!.id, bookable: input.owner.bookable });
+    // Staff and Ortak get an invite and join when they accept it (founder, 9 November 2026).
     for (const [i, m] of input.members.entries()) {
       const userId = await upsertUserByPhone(tx, phones[i]!);
-      const row = await tx.query<{ id: string }>(
-        `INSERT INTO shop_members (shop_id, user_id, role, owner_label, display_name, bookable)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-        [
-          shop.id,
-          userId,
-          m.role === 'co_owner' ? 'owner' : 'staff',
-          m.role === 'co_owner' ? 'co_owner' : null,
-          m.displayName.trim(),
-          m.role === 'staff' ? true : m.bookable,
-        ],
-      );
-      memberIds.push({ id: row.rows[0]!.id, bookable: m.role === 'staff' || m.bookable });
+      await inviteAtRegistration(deps, tx, shop.id, user.id, { phone: phones[i]!, userId, displayName: m.displayName, role: m.role, bookable: m.role === 'staff' ? true : m.bookable });
     }
 
     const serviceIds: string[] = [];

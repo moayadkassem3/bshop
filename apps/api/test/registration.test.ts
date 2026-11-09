@@ -3,7 +3,8 @@ import { improveShopLinks } from '../src/services/shops.js';
 import { currentVersion } from '../src/domain/legal.js';
 import { slugify } from '../src/domain/slug.js';
 import { databaseStorage } from '../src/storage.js';
-import { at, book, PHONES, setupShop, useTestApp } from './helpers.js';
+import { at, book, inviteAndAccept, PHONES, setupShop, useTestApp } from './helpers.js';
+import { acceptInvite } from '../src/services/invites.js';
 
 const t = useTestApp();
 const businessConsents = ['isletme-sozlesmesi', 'veri-isleme-sozlesmesi'].map((key) => ({ key, version: currentVersion(key) }));
@@ -57,6 +58,17 @@ describe('self-service shop registration (v1.6)', () => {
 
     // The returned token is an owner session: the owner can add photos and see the team right away.
     const base = `/staff/shops/${r.body.shopId}`;
+    // Staff and Ortak were invited by SMS (they had never signed up) and join when they accept.
+    const invites = (await t.call('GET', `${base}/invites`, { token: r.body.token })).body;
+    expect(invites.map((i: { display_name: string; role: string; sent_via: string }) => [i.display_name, i.role, i.sent_via])).toEqual([
+      ['Ayşe', 'owner', 'sms'],
+      ['Mert', 'staff', 'sms'],
+    ]);
+    expect(t.sms.to('+905322222222').at(-1)).toContain('sizi ekibine personel olarak davet etti');
+    for (const i of invites) {
+      const u = (await t.db.query('SELECT id, phone FROM users WHERE id = (SELECT user_id FROM staff_invites WHERE id = $1)', [i.id])).rows[0];
+      await acceptInvite(t.deps, { ...u, portal: 'customer' }, i.id);
+    }
     const members = (await t.call('GET', `${base}/members`, { token: r.body.token })).body;
     expect(members.map((m: { display_name: string; role: string; owner_label: string | null; bookable: boolean }) => [m.display_name, m.role, m.owner_label, m.bookable])).toEqual([
       ['Çağrı Usta', 'owner', 'owner', true],
@@ -158,11 +170,7 @@ describe('agreements at sign-up (v1.6)', () => {
 describe('co-owner (Ortak) (v1.6)', () => {
   it('has the same permissions as the owner', async () => {
     const shop = await setupShop(t);
-    const added = await t.call('POST', `${shop.base}/members`, {
-      token: shop.tokens.owner,
-      body: { phone: '+905320000055', displayName: 'Ortak Bey', role: 'co_owner', bookable: false },
-    });
-    expect(added.status).toBe(201);
+    await inviteAndAccept(t, shop.base, shop.tokens.owner, '+905320000055', 'Ortak Bey', 'co_owner');
     const coOwner = await t.login('+905320000055', { portal: 'business' });
     expect((await t.call('GET', '/me', { token: coOwner })).body.portal).toBe('owner');
     const price = await t.call('PATCH', `${shop.base}/services/${shop.services.haircut}`, { token: coOwner, body: { priceKurus: 55000 } });

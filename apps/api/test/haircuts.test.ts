@@ -2,7 +2,7 @@ import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { currentVersion } from '../src/domain/legal.js';
 import { IMAGE_PRESETS, processImage } from '../src/services/photos.js';
-import { at, book, PHONES, setupShop, useTestApp } from './helpers.js';
+import { at, book, inviteAndAccept, PHONES, setupShop, useTestApp } from './helpers.js';
 
 const t = useTestApp();
 const jpeg = () => sharp({ create: { width: 300, height: 400, channels: 3, background: '#334' } }).jpeg().toBuffer();
@@ -136,8 +136,7 @@ describe('managing services and staff (v1.7)', () => {
   it('a new staff member starts with the salon hours and services; removal is guarded', async () => {
     const shop = await setupShop(t);
     const owner = shop.tokens.owner;
-    const added = await t.call('POST', `${shop.base}/members`, { token: owner, body: { phone: '0532 444 44 44', displayName: 'Emre', role: 'staff' } });
-    expect(added.status).toBe(201);
+    const added = { body: { memberId: await inviteAndAccept(t, shop.base, owner, '+905324444444', 'Emre') } };
     const profile = (await t.call('GET', `/public/shops/${shop.slug}`)).body;
     const emre = profile.staff.find((m: { display_name: string }) => m.display_name === 'Emre');
     expect(emre.service_ids.length).toBe(profile.services.length);
@@ -153,9 +152,8 @@ describe('managing services and staff (v1.7)', () => {
     await t.call('POST', `${shop.base}/appointments/${appts[0].id}/cancel`, { token: owner });
     expect((await remove()).status).toBe(204);
 
-    // Coming back restores the same person instead of failing.
-    const again = await t.call('POST', `${shop.base}/members`, { token: owner, body: { phone: '0532 444 44 44', displayName: 'Emre', role: 'staff' } });
-    expect(again.body.memberId).toBe(added.body.memberId);
+    // Coming back (invited again, accepted) restores the same person instead of failing.
+    expect(await inviteAndAccept(t, shop.base, owner, '+905324444444', 'Emre')).toBe(added.body.memberId);
   });
 
   it('staff can become co-owners; the founding owner cannot be removed by a co-owner', async () => {

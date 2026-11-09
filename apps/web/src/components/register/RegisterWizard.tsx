@@ -704,7 +704,7 @@ function StaffStep({ draft, update, me }: StepProps & { me: Me }) {
         >
           + Personel veya ortak ekle
         </button>
-        <p className={styles.help}>Eklediğiniz kişiler kendi telefon numaralarıyla “İşletmeyim” girişinden girer.</p>
+        <p className={styles.help}>Eklediğiniz kişilere davet gönderilir (uygulamayı kullanmıyorlarsa SMS ile); daveti kabul edince ekibe katılırlar. Bir kişi yalnızca bir salonda çalışabilir.</p>
         <PlanBox count={staffCount(draft)} plans={plans} quote={quoteHref(draft, staffCount(draft))} />
       </div>
     </>
@@ -955,7 +955,7 @@ function Done({ slug }: { slug: string }) {
         <p className={styles.lead}>Müşteriler salonunuzu haritada ve kendi sayfasında görüp hemen randevu alabilir. Ücretsiz denemeniz bugün başladı.</p>
         <ol className={`card ${styles.doneSteps}`}>
           <li>Salonum → QR kod’dan kodunuzu indirip salona asın.</li>
-          <li>Personeliniz kendi numarasıyla giriş yapar.</li>
+          <li>Personeliniz davetini kabul edip kendi numarasıyla giriş yapar.</li>
           <li>Hizmetleri, saatleri ve fotoğrafları Salonum’dan istediğiniz zaman düzenleyin.</li>
         </ol>
         <p className="muted">

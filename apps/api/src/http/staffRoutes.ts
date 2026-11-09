@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { cancelInvite, inviteMember, listInvites, resendInvite } from '../services/invites.js';
 import type { Deps } from '../deps.js';
 import { applyAbsence, getAbsence, markAbsence } from '../services/absence.js';
 import { shopStats } from '../services/stats.js';
@@ -17,7 +18,6 @@ import {
   removeTimeOff,
 } from '../services/staffActions.js';
 import {
-  addMember,
   createService,
   importCatalog,
   listCatalog,
@@ -194,7 +194,21 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
         bookable: z.boolean().default(true),
       })
       .parse(req.body);
-    return reply.status(201).send(await addMember(deps, user, shopId, body));
+    // An invite, not a member yet (founder, 9 November 2026): they join when they accept.
+    return reply.status(201).send(await inviteMember(deps, user, shopId, body));
+  });
+  app.get('/staff/shops/:shopId/invites', async (req) => {
+    const { shopId } = shopParams.parse(req.params);
+    return listInvites(deps, await auth(req), shopId);
+  });
+  app.delete('/staff/shops/:shopId/invites/:id', async (req, reply) => {
+    const p = action.parse(req.params);
+    await cancelInvite(deps, await auth(req), p.shopId, p.id);
+    return reply.status(204).send();
+  });
+  app.post('/staff/shops/:shopId/invites/:id/resend', async (req) => {
+    const p = action.parse(req.params);
+    return resendInvite(deps, await auth(req), p.shopId, p.id);
   });
   app.patch('/staff/shops/:shopId/members/:id', async (req, reply) => {
     const p = action.parse(req.params);

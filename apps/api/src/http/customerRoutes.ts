@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { acceptInvite, declineInvite, myInvites } from '../services/invites.js';
 import type { Deps } from '../deps.js';
 import { signOut, switchMode, updateProfile } from '../services/auth.js';
 import { cancelByCustomer, createBooking, listCustomerAppointments } from '../services/booking.js';
@@ -79,6 +80,14 @@ export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.delete('/me/likes/:id', async (req, reply) => {
     const user = await auth(req);
     await unlikePost(deps, user, z.object({ id }).parse(req.params).id);
+    return reply.status(204).send();
+  });
+
+  // Ekip daveti (founder, 9 November 2026): invites to a salon's team, for the person invited.
+  app.get('/me/invites', async (req) => myInvites(deps, await auth(req)));
+  app.post('/me/invites/:id/accept', async (req) => acceptInvite(deps, await auth(req), z.object({ id: z.string().uuid() }).parse(req.params).id));
+  app.post('/me/invites/:id/decline', async (req, reply) => {
+    await declineInvite(deps, await auth(req), z.object({ id: z.string().uuid() }).parse(req.params).id);
     return reply.status(204).send();
   });
 

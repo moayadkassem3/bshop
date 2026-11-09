@@ -600,8 +600,14 @@ type Plans = { plans: { id: string; name: string; maxStaff: number }[]; terms: {
 type Role = 'staff' | 'co_owner';
 const roleOf = (m: Member) => (m.owner_label === 'owner' ? 'Sahibi' : m.role === 'owner' ? 'Ortak' : 'Personel');
 
+type Invite = { id: string; display_name: string; role: 'owner' | 'staff'; sent_via: string; sent_at: string; phone: string };
+const viaLabel = (via: string) => (via === 'push' ? 'uygulama bildirimi' : via === 'sms' ? 'SMS' : 'bildirim ve SMS');
+
 function StaffTab({ shopId, myMemberId }: { shopId: string; myMemberId: string }) {
   const [members, setMembers] = useState<Member[] | null>(null);
+  // Staff invites (founder, 9 November 2026): people join when they accept.
+  const [invites, setInvites] = useState<Invite[]>([]);
+  const [note, setNote] = useState<string | null>(null);
   const [plans, setPlans] = useState<Plans | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -612,6 +618,7 @@ function StaffTab({ shopId, myMemberId }: { shopId: string; myMemberId: string }
   const load = useCallback(async () => {
     try {
       setMembers(await api<Member[]>(`/staff/shops/${shopId}/members`));
+      setInvites(await api<Invite[]>(`/staff/shops/${shopId}/invites`).catch(() => []));
     } catch (err) {
       setError(errorMessage(err));
     }
@@ -627,6 +634,7 @@ function StaffTab({ shopId, myMemberId }: { shopId: string; myMemberId: string }
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
     setError(null);
+    setNote(null);
     try {
       await action();
       await load();
@@ -646,7 +654,7 @@ function StaffTab({ shopId, myMemberId }: { shopId: string; myMemberId: string }
 
   return (
     <>
-      {error ? <Alert text={error} /> : null}
+      {error && !adding ? <Alert text={error} /> : null}
       {plans && members ? (
         <View style={styles.planBox}>
           <Text size={13} color={colors.muted}>
@@ -699,17 +707,79 @@ function StaffTab({ shopId, myMemberId }: { shopId: string; myMemberId: string }
           ))}
         </Card>
       ) : null}
+      {invites.length ? (
+        <>
+          <Text size={15} weight="bold" style={{ marginTop: 6 }}>
+            Bekleyen davetler
+          </Text>
+          {invites.map((i) => (
+            <Appear key={i.id}>
+              <Card style={styles.removedRow}>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text weight="semibold">
+                    {i.display_name} ({i.role === 'staff' ? 'Personel' : 'Ortak'})
+                  </Text>
+                  <Text size={13} color={colors.muted}>
+                    {formatPhone(i.phone)} · {viaLabel(i.sent_via)} ile gönderildi
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 18, marginTop: 6 }}>
+                    <Pressable
+                      hitSlop={8}
+                      disabled={busy}
+                      onPress={() =>
+                        void run(async () => {
+                          const r = await api<{ sentVia: string }>(`/staff/shops/${shopId}/invites/${i.id}/resend`, { method: 'POST' });
+                          setNote(`Davet tekrar gönderildi (${viaLabel(r.sentVia)}).`);
+                        })
+                      }
+                    >
+                      <Text weight="bold" color={colors.primary}>
+                        Tekrar gönder
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      hitSlop={8}
+                      disabled={busy}
+                      onPress={() =>
+                        confirm({
+                          title: 'Daveti iptal et',
+                          message: `${i.display_name} için gönderilen davet geçersiz olur.`,
+                          confirmLabel: 'İptal et',
+                          danger: true,
+                          icon: 'close',
+                          onConfirm: () => void run(() => api(`/staff/shops/${shopId}/invites/${i.id}`, { method: 'DELETE' })),
+                        })
+                      }
+                    >
+                      <Text weight="bold" color={colors.danger}>
+                        İptal et
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </Card>
+            </Appear>
+          ))}
+        </>
+      ) : null}
       {adding ? (
         <NewMember
           busy={busy}
           onCancel={() => setAdding(false)}
-          onAdd={(body) => void run(() => api(`/staff/shops/${shopId}/members`, { method: 'POST', body })).then((ok) => ok && setAdding(false))}
+          onAdd={(body) =>
+            void run(async () => {
+              const r = await api<{ sentVia: string }>(`/staff/shops/${shopId}/members`, { method: 'POST', body });
+              setNote(`${body.displayName} davet edildi (${viaLabel(r.sentVia)}). Daveti kabul edince ekibe katılır.`);
+            }).then((ok) => ok && setAdding(false))
+          }
         />
-      ) : (
-        <Button kind="secondary" title="+ Personel veya ortak ekle" onPress={() => (setAdding(true), setEditing(null))} />
-      )}
+      ) : null}
+      {adding && error ? <Alert text={error} /> : null}
+      {adding ? null : <Button kind="secondary" title="+ Personel veya ortak ekle" onPress={() => (setAdding(true), setEditing(null))} />}
+      {note ? <Alert tone="success" text={note} /> : null}
       <Text size={13} color={colors.muted}>
-        Eklediğiniz kişiler kendi telefon numaralarıyla giriş yapar. Yeni kişiler salonun saatleri ve tüm hizmetlerle başlar.
+        Eklediğiniz kişiye davet gönderilir: uygulamayı kullanıyorsa bildirim, kullanmıyorsa SMS. Daveti kabul edince ekibe katılır ve salonun saatleri ile tüm hizmetlerle başlar. Bir kişi yalnızca
+        bir salonda çalışabilir.
       </Text>
       {removed.length > 0 ? (
         <>
@@ -736,9 +806,17 @@ function StaffTab({ shopId, myMemberId }: { shopId: string; myMemberId: string }
                     <Button
                       small
                       kind="ghost"
-                      title="Geri ekle"
+                      title="Davet gönder"
                       disabled={busy}
-                      onPress={() => void run(() => api(`/staff/shops/${shopId}/members`, { method: 'POST', body: { phone: m.phone, displayName: m.display_name, role: 'staff', bookable: true } }))}
+                      onPress={() =>
+                        void run(async () => {
+                          const r = await api<{ sentVia: string }>(`/staff/shops/${shopId}/members`, {
+                            method: 'POST',
+                            body: { phone: m.phone, displayName: m.display_name, role: 'staff', bookable: true },
+                          });
+                          setNote(`${m.display_name} davet edildi (${viaLabel(r.sentVia)}).`);
+                        })
+                      }
                     />
                   </Card>
                 </Appear>
@@ -842,7 +920,7 @@ function NewMember(props: { busy: boolean; onCancel: () => void; onAdd: (body: {
         </View>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Button kind="secondary" title="Vazgeç" onPress={props.onCancel} disabled={props.busy} style={{ flex: 1 }} />
-          <Button title="Ekle" onPress={() => props.onAdd({ displayName: name.trim(), phone, role, bookable })} busy={props.busy} disabled={!ok} style={{ flex: 1 }} />
+          <Button title="Davet gönder" onPress={() => props.onAdd({ displayName: name.trim(), phone, role, bookable })} busy={props.busy} disabled={!ok} style={{ flex: 1 }} />
         </View>
       </Card>
     </Appear>
