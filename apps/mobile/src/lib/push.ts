@@ -10,7 +10,7 @@ export type PushData = {
   shopId?: string;
   appointmentId?: string;
   template?: string;
-  /** '1' outside the salon's working hours: shown silently, never as an alarm. */
+  /** '1' outside the salon's working hours: an ordinary notification, never an alarm. */
   quiet?: string;
 };
 

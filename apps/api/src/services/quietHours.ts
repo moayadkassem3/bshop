@@ -3,7 +3,7 @@ import type { Queryable } from '../db.js';
 
 /**
  * Whether the salon is open at this moment (founder, 7 November 2026: no alarm
- * outside working hours). The salon's hours are what customers see on its page:
+ * outside working hours; 10 November: an ordinary notification instead, SMS as usual). The salon's hours are what customers see on its page:
  * from the earliest start to the latest end of anyone bookable that weekday, in
  * the salon's time zone. A salon with no hours that day counts as closed.
  */

@@ -22,15 +22,16 @@ import org.json.JSONObject
  * screen, and, for a request, Onayla / Reddet; a request keeps ringing until it
  * is answered or dismissed (founder, after alert test 1). Everything else is an
  * ordinary notification. Outside the salon's working hours the server marks a
- * message quiet: it is shown without any sound and never as an alarm. All
+ * message quiet: never an alarm, just an ordinary notification with the usual
+ * sound (founder, 10 November 2026; it was silent before). All
  * messages about one appointment share one notification, so a later one
  * (automatically confirmed, cancelled) replaces and silences the alarm.
  */
 object Alerts {
   const val CHANNEL_ALARM = "randevu_alarm"
   const val CHANNEL_DEFAULT = "bildirimler"
-  /** Outside the salon's working hours: shown, but without sound, vibration or a banner. */
-  const val CHANNEL_QUIET = "sessiz_bildirimler"
+  /** The old silent channel for out-of-hours messages, removed from phones (they now use CHANNEL_DEFAULT). */
+  private const val CHANNEL_QUIET_OLD = "sessiz_bildirimler"
   /** Announcements from our team (Yönetim → Bildirimler): their own channel, so people can mute them alone. */
   const val CHANNEL_NEWS = "duyurular"
   const val EXTRA_PAYLOAD = "salonPushPayload"
@@ -61,16 +62,8 @@ object Alerts {
         },
       )
     }
-    if (manager.getNotificationChannel(CHANNEL_QUIET) == null) {
-      manager.createNotificationChannel(
-        NotificationChannel(CHANNEL_QUIET, "Mesai dışı bildirimler", NotificationManager.IMPORTANCE_LOW).apply {
-          description = "Salonun çalışma saatleri dışında gelenler: sessiz."
-          setSound(null, null)
-          enableVibration(false)
-          lockscreenVisibility = Notification.VISIBILITY_PRIVATE
-        },
-      )
-    }
+    // Out-of-hours messages are ordinary notifications now: the silent channel goes away.
+    if (manager.getNotificationChannel(CHANNEL_QUIET_OLD) != null) manager.deleteNotificationChannel(CHANNEL_QUIET_OLD)
     if (manager.getNotificationChannel(CHANNEL_NEWS) == null) {
       manager.createNotificationChannel(
         NotificationChannel(CHANNEL_NEWS, "Duyurular", NotificationManager.IMPORTANCE_DEFAULT).apply {
@@ -94,7 +87,7 @@ object Alerts {
   fun show(context: Context, data: Map<String, String>) {
     ensureChannels(context)
     val kind = data["kind"] ?: ""
-    // Outside the salon's working hours the server marks it quiet: no alarm, no sound (founder, 7 November 2026).
+    // Outside the salon's working hours the server marks it quiet: no alarm, just an ordinary notification (founder, 7 and 10 November 2026).
     val quiet = data["quiet"] == "1"
     val alarm = kind in ALARM_KINDS && !quiet
     val answerable = kind in ANSWERABLE_KINDS
@@ -120,7 +113,6 @@ object Alerts {
 
     val channel = when {
       alarm -> CHANNEL_ALARM
-      quiet -> CHANNEL_QUIET
       news -> CHANNEL_NEWS
       else -> CHANNEL_DEFAULT
     }
@@ -132,12 +124,10 @@ object Alerts {
       .setPriority(
         when {
           alarm -> NotificationCompat.PRIORITY_MAX
-          quiet -> NotificationCompat.PRIORITY_LOW
           news -> NotificationCompat.PRIORITY_DEFAULT
           else -> NotificationCompat.PRIORITY_HIGH
         },
       )
-      .setSilent(quiet)
       .setAutoCancel(true)
       .setContentIntent(open(null, 1))
     if (alarm) {

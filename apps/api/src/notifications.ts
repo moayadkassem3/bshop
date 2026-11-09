@@ -97,8 +97,8 @@ type Row = {
  */
 export async function dispatchNotifications(deps: Deps, limit = 100, parallel = 10): Promise<number> {
   return withTx(deps.db, async (tx) => {
-    // Outside the salon's working hours a push arrives silently: no alarm for the salon,
-    // no sound for the customer (founder, 7 November 2026). Looked up once per salon per pass.
+    // Outside the salon's working hours a push is marked quiet: never an alarm, just an ordinary
+    // notification; SMS go out as usual (founder, 7 and 10 November 2026). Looked up once per salon per pass.
     const open = new Map<string, boolean>();
     const quiet = async (shopId: string | null) => {
       if (!shopId) return {};
