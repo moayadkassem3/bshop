@@ -13,7 +13,9 @@ type Source = 'kesfet' | 'kesimler' | 'qr' | 'diger';
 type ShopStats = {
   month: string;
   today: string;
-  views: { total: number; bySource: Record<Source, number>; daily: { date: string; views: number }[] };
+  /** 'mine': a staff member's own appointments, without the salon's page visits (founder, 9 November 2026). */
+  scope: 'shop' | 'mine';
+  views: { total: number; bySource: Record<Source, number>; daily: { date: string; views: number }[] } | null;
   appointments: { total: number; completed: number; upcoming: number; noShow: number; cancelled: number };
 };
 
@@ -43,7 +45,7 @@ function niceMax(max: number): number {
 }
 
 /**
- * İstatistikler (as on the website), for owners: a month of visits to the
+ * İstatistikler (as on the website). Staff see their own appointments only (İstatistiklerim). For owners: a month of visits to the
  * salon's page (by day and by where visitors came from) and its appointments.
  */
 export default function StatsScreen() {
@@ -62,7 +64,7 @@ export default function StatsScreen() {
   }, [shop?.id]);
 
   useEffect(() => {
-    if (!shop || shop.role !== 'owner') return;
+    if (!shop) return;
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -84,12 +86,12 @@ export default function StatsScreen() {
 
   return (
     <Screen
-      title="İstatistikler"
+      title={shop && !owner ? 'İstatistiklerim' : 'İstatistikler'}
       back={<BackLink label="Salonum" />}
       header={
         <>
           <ShopPicker shops={shops} shop={shop} onSelect={selectShop} />
-          {owner && shown ? (
+          {shop && shown ? (
             <View style={styles.monthBar}>
               <Pressable accessibilityLabel="Önceki ay" disabled={loading || shown === oldest} onPress={() => setMonth(shiftMonth(shown, -1))} style={styles.monthButton} hitSlop={6}>
                 <Icon name="back" size={20} color={shown === oldest ? colors.darkMuted : colors.white} strokeWidth={2.2} />
@@ -106,19 +108,23 @@ export default function StatsScreen() {
       }
     >
       {shopsError || error ? <Alert text={(shopsError || error)!} /> : null}
-      {shop && !owner ? <Alert tone="info" text="İstatistikleri salon sahibi ve ortaklar görür." /> : null}
-      {owner && !stats && !error ? <SkeletonList rows={3} /> : null}
-      {owner && stats ? (
+      {shop && !stats && !error ? <SkeletonList rows={3} /> : null}
+      {shop && stats ? (
         // The previous month stays on screen, dimmed, while the next one loads.
         <View style={{ gap: 12, opacity: loading ? 0.5 : 1 }}>
           <Overview stats={stats} />
-          <Appear index={2}>
-            <Sources stats={stats} />
-          </Appear>
-          <Appear index={3}>
-            <Daily key={stats.month} stats={stats} />
-          </Appear>
+          {stats.views ? (
+            <>
+              <Appear index={2}>
+                <Sources stats={stats} />
+              </Appear>
+              <Appear index={3}>
+                <Daily key={stats.month} stats={stats} />
+              </Appear>
+            </>
+          ) : null}
           <Text size={12} color={colors.muted}>
+            {stats.scope === 'mine' ? 'Randevular yalnızca size atananlardır; ziyaretler salonun tamamı içindir. ' : ''}
             Ziyaretler oturum başına bir kez sayılır; salon ekibinin kendi ziyaretleri sayılmaz.
           </Text>
         </View>
@@ -136,20 +142,20 @@ function Overview({ stats }: { stats: ShopStats }) {
         <Appear style={{ flex: 1 }}>
           <Card style={styles.tile}>
             <Text size={13} weight="semibold" color={colors.ink2}>
-              Salon sayfası ziyareti
+              {stats.views ? 'Salon sayfası ziyareti' : 'Tamamlanan'}
             </Text>
             <Text size={34} weight="heavy">
-              {n(stats.views.total)}
+              {n(stats.views ? stats.views.total : a.completed)}
             </Text>
             <Text size={12} color={colors.muted}>
-              {thisMonth ? 'Ay başından bugüne' : 'Ay boyunca'}
+              {stats.views ? (thisMonth ? 'Ay başından bugüne' : 'Ay boyunca') : a.total ? `Randevularınızın %${Math.round((a.completed / a.total) * 100)}’i` : 'Bu ay henüz yok'}
             </Text>
           </Card>
         </Appear>
         <Appear index={1} style={{ flex: 1 }}>
           <Card style={styles.tile}>
             <Text size={13} weight="semibold" color={colors.ink2}>
-              Randevu
+              {stats.scope === 'mine' ? 'Randevularınız' : 'Randevu'}
             </Text>
             <Text size={34} weight="heavy">
               {n(a.total)}
@@ -171,15 +177,15 @@ function Overview({ stats }: { stats: ShopStats }) {
 
 /** Visits by where they came from: one bar per source, in a fixed order, one colour. */
 function Sources({ stats }: { stats: ShopStats }) {
-  const total = stats.views.total;
-  const max = Math.max(1, ...SOURCES.map((s) => stats.views.bySource[s.key] ?? 0));
+  const total = stats.views!.total;
+  const max = Math.max(1, ...SOURCES.map((s) => stats.views!.bySource[s.key] ?? 0));
   return (
     <Card style={{ gap: 12 }}>
       <Text size={17} weight="heavy">
         Ziyaretler nereden geldi
       </Text>
       {SOURCES.map((s) => {
-        const v = stats.views.bySource[s.key] ?? 0;
+        const v = stats.views!.bySource[s.key] ?? 0;
         return (
           <View key={s.key} style={{ gap: 4 }}>
             <Text size={14} color={colors.ink2}>
@@ -201,7 +207,7 @@ function Sources({ stats }: { stats: ShopStats }) {
 
 /** Visits per day: one column per day; tap a day for its number. */
 function Daily({ stats }: { stats: ShopStats }) {
-  const days = stats.views.daily;
+  const days = stats.views!.daily;
   const [picked, setPicked] = useState<number | null>(null);
   const top = niceMax(Math.max(...days.map((d) => d.views), 0));
   const best = days.reduce<{ date: string; views: number } | null>((b, d) => (d.views > (b?.views ?? 0) ? d : b), null);

@@ -196,7 +196,7 @@ type ShortcutItem = { href: string; icon: keyof typeof ICONS; label: string; hin
 /**
  * The salon's tools (founder, 8 November 2026; the app's list matches). Owners and co-owners see four
  * groups as separate cards: promote the salon, see how it is doing, set it up, the subscription.
- * Staff see their five tools in one card, in the same order (single-row cards would look broken up).
+ * Staff see their six tools in one card, in the same order (single-row cards would look broken up).
  */
 function ShortcutGroups({ owner, onSettings }: { owner: boolean; onSettings: () => void }) {
   const groups: (ShortcutItem | false)[][] = [
@@ -206,7 +206,9 @@ function ShortcutGroups({ owner, onSettings }: { owner: boolean; onSettings: () 
       { href: '/calismalar', icon: 'camera', label: 'Kesim fotoğrafı paylaş', hint: 'Popüler kesimler’de görünür' },
     ],
     [
-      owner && { href: '/istatistikler', icon: 'chart', label: 'İstatistikler', hint: 'Sayfa ziyaretleri ve randevular, ay ay' },
+      owner
+        ? { href: '/istatistikler', icon: 'chart', label: 'İstatistikler', hint: 'Sayfa ziyaretleri ve randevular, ay ay' }
+        : { href: '/istatistikler', icon: 'chart', label: 'İstatistiklerim', hint: 'Sayfa ziyaretleri ve randevularınız, ay ay' },
       { href: '/degerlendirmeler', icon: 'star', label: 'Değerlendirmeler', hint: owner ? 'Müşteri puanları ve yanıtlarınız' : 'Müşterilerin salona verdiği puanlar' },
     ],
     [

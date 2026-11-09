@@ -2,7 +2,7 @@ import { DateTime } from 'luxon';
 import type { Deps } from '../deps.js';
 import { badRequest } from '../errors.js';
 import { localDayOf } from '../domain/time.js';
-import { requireOwner } from './access.js';
+import { requireMember } from './access.js';
 import type { User } from './auth.js';
 import { getPublicShopBySlug, getShopById } from './shops.js';
 
@@ -22,12 +22,14 @@ export async function recordShopView(deps: Deps, slug: string, source: ViewSourc
 }
 
 /**
- * A month of a salon's numbers for its owners: page visits by day and source,
- * and the month's appointments by outcome. Visits run to today; appointments
- * cover the whole month, including those still ahead.
+ * A month of a salon's numbers: page visits by day and source, and the month's
+ * appointments by outcome. Visits run to today; appointments cover the whole
+ * month, including those still ahead. Everyone on the team sees the salon's page
+ * visits; staff see their own appointments, owners the whole salon's (founder, 9 November 2026).
  */
 export async function shopStats(deps: Deps, user: User, shopId: string, month?: string) {
-  await requireOwner(deps.db, user, shopId);
+  const me = await requireMember(deps.db, user, shopId);
+  const own = me.role !== 'owner';
   const shop = await getShopById(deps.db, shopId);
   const today = DateTime.fromJSDate(deps.clock.now(), { zone: shop.timezone }).startOf('day');
   const start = month ? DateTime.fromFormat(month, 'yyyy-MM', { zone: shop.timezone }) : today.startOf('month');
@@ -54,14 +56,16 @@ export async function shopStats(deps: Deps, user: User, shopId: string, month?: 
 
   const appts = await deps.db.query<{ status: string; count: number }>(
     `SELECT status, count(*)::int AS count FROM appointments
-     WHERE shop_id = $1 AND starts_at >= $2 AND starts_at < $3 GROUP BY status`,
-    [shopId, start.toJSDate(), start.plus({ months: 1 }).toJSDate()],
+     WHERE shop_id = $1 AND starts_at >= $2 AND starts_at < $3 AND ($4::uuid IS NULL OR staff_id = $4) GROUP BY status`,
+    [shopId, start.toJSDate(), start.plus({ months: 1 }).toJSDate(), own ? me.id : null],
   );
   const count = (...statuses: string[]) => appts.rows.filter((r) => statuses.includes(r.status)).reduce((n, r) => n + r.count, 0);
 
   return {
     month: start.toFormat('yyyy-MM'),
     today: today.toISODate(),
+    // Appointments: 'mine', a staff member's own; 'shop', the whole salon's.
+    scope: own ? 'mine' : 'shop',
     views: { total: daily.reduce((n, d) => n + d.views, 0), bySource, daily },
     // Declined requests never became appointments; cancellations are shown on their own.
     appointments: {

@@ -230,14 +230,19 @@ describe('İstatistikler (v1.7)', () => {
     expect(stats.views.daily).toHaveLength(27);
     expect(stats.views.daily.at(-1)).toEqual({ date: '2026-10-27', views: 6 });
 
-    // November's booking is November's; a future month and staff are refused.
+    // November's booking is November's; a future month is refused.
     t.clock.set(at('09:00', '2026-11-01'));
     const nov = (await t.call('GET', `${shop.base}/stats`, { token: shop.tokens.owner })).body;
     expect(nov).toMatchObject({ month: '2026-11', views: { total: 0 }, appointments: { total: 1 } });
     expect((await t.call('GET', `${shop.base}/stats?month=2026-10`, { token: shop.tokens.owner })).body.views.total).toBe(6);
     expect((await t.call('GET', `${shop.base}/stats?month=2026-12`, { token: shop.tokens.owner })).status).toBe(400);
-    const staff = await t.login(PHONES.cumali, { portal: 'staff' });
-    expect((await t.call('GET', `${shop.base}/stats`, { token: staff })).status).toBe(403);
+    // Staff see the salon's page visits and their own appointments (founder, 9 November 2026).
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
+    const mine = (await t.call('GET', `${shop.base}/stats?month=2026-10`, { token: cumali })).body;
+    expect(mine).toMatchObject({ scope: 'mine', views: { total: 6 }, appointments: { total: 1, upcoming: 1, cancelled: 1 } });
+    const tahir = await t.login(PHONES.tahir, { portal: 'staff' });
+    expect((await t.call('GET', `${shop.base}/stats?month=2026-10`, { token: tahir })).body).toMatchObject({ scope: 'mine', appointments: { total: 0, cancelled: 0 } });
+    expect((await t.call('GET', `${shop.base}/stats`, { token: owner })).body.scope).toBe('shop');
   });
 });
 

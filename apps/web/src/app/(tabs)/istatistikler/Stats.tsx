@@ -15,7 +15,9 @@ import { SkeletonList } from '@/components/Skeleton';
 type ShopStats = {
   month: string;
   today: string;
-  views: { total: number; bySource: Record<ViewSource, number>; daily: { date: string; views: number }[] };
+  /** 'mine': a staff member's own appointments, without the salon's page visits. */
+  scope: 'shop' | 'mine';
+  views: { total: number; bySource: Record<ViewSource, number>; daily: { date: string; views: number }[] } | null;
   appointments: { total: number; completed: number; upcoming: number; noShow: number; cancelled: number };
 };
 
@@ -27,8 +29,7 @@ const SOURCES: { key: ViewSource; label: string }[] = [
 ];
 
 const MONTHS_BACK = 24;
-const monthName = (month: string) =>
-  new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${month}-01T00:00:00Z`));
+const monthName = (month: string) => new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${month}-01T00:00:00Z`));
 const dayName = (date: string) => new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`));
 
 function shiftMonth(month: string, by: number): string {
@@ -38,8 +39,9 @@ function shiftMonth(month: string, by: number): string {
 }
 
 /**
- * İstatistikler (v1.7), for owners: a month of visits to the salon's page (by
- * day and by where visitors came from) and the month's appointments.
+ * İstatistikler (v1.7): for owners, a month of visits to the salon's page (by day
+ * and by where visitors came from) and the month's appointments. Staff see their own
+ * appointments only, as İstatistiklerim (founder, 9 November 2026).
  */
 export function Stats() {
   const { shops, shop, shopId, selectShop, error: shopsError } = useBusinessShops();
@@ -51,7 +53,7 @@ export function Stats() {
   const owner = shop?.role === 'owner';
 
   useEffect(() => {
-    if (!shop || shop.role !== 'owner') return;
+    if (!shop) return;
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -79,7 +81,7 @@ export function Stats() {
             <BackArrow />
             Salonum
           </Link>
-          <h1>İstatistikler</h1>
+          <h1>{shop && !owner ? 'İstatistiklerim' : 'İstatistikler'}</h1>
           {shops && shops.length > 1 ? (
             <select
               className={biz.shopSelect}
@@ -100,7 +102,7 @@ export function Stats() {
           ) : (
             shop && <p>{shop.name}</p>
           )}
-          {owner && shown && (
+          {shop && shown && (
             <div className={styles.monthBar}>
               <button type="button" aria-label="Önceki ay" disabled={loading || shown === oldest} onClick={() => setMonth(shiftMonth(shown, -1))}>
                 ‹
@@ -117,17 +119,21 @@ export function Stats() {
       <div className={`container narrow ${page.body} ${styles.page}`}>
         {(shopsError || error) && <p className="alert alert-danger">{shopsError || error}</p>}
         {shops && shops.length === 0 && <p className="muted">Bu hesap henüz bir işletmeye bağlı değil.</p>}
-        {shop && !owner && <p className="alert alert-info">İstatistikleri salon sahibi ve ortaklar görür.</p>}
-        {owner && !stats && !error && <SkeletonList rows={3} label="İstatistikler yükleniyor" />}
-        {owner && stats && (
+        {shop && !stats && !error && <SkeletonList rows={3} label="İstatistikler yükleniyor" />}
+        {shop && stats && (
           // The previous month stays on screen, dimmed, while the next one loads.
           <div className={`motion-fade ${loading ? styles.refreshing : ''}`}>
             <Overview stats={stats} />
-            <Sources stats={stats} />
-            <Daily stats={stats} />
-            <p className={styles.footnote}>
-              Ziyaretler tarayıcı oturumu başına bir kez sayılır; salon ekibinin kendi ziyaretleri sayılmaz. Bu güncellemeden önce bastırılan QR kodların taramaları
-              “Bağlantı ve diğer” altında görünür; QR kodunuzu yeniden indirirseniz ayrı sayılır.
+            {stats.views ? (
+              <>
+                <Sources stats={stats} />
+                <Daily stats={stats} />
+              </>
+            ) : null}
+            {stats.scope === 'mine' ? <p className={styles.footnote}>Randevular yalnızca size atananlardır; ziyaretler salonun tamamı içindir.</p> : null}
+            <p className={styles.footnote} hidden={!stats.views}>
+              Ziyaretler tarayıcı oturumu başına bir kez sayılır; salon ekibinin kendi ziyaretleri sayılmaz. Bu güncellemeden önce bastırılan QR kodların taramaları “Bağlantı ve diğer” altında
+              görünür; QR kodunuzu yeniden indirirseniz ayrı sayılır.
             </p>
           </div>
         )}
@@ -141,13 +147,21 @@ function Overview({ stats }: { stats: ShopStats }) {
   const thisMonth = stats.month === stats.today.slice(0, 7);
   return (
     <section className={styles.kpis} aria-label="Özet">
+      {stats.views ? (
+        <div className={`card ${styles.tile}`}>
+          <span className={styles.tileLabel}>Salon sayfası ziyareti</span>
+          <span className={styles.tileValue}>{stats.views.total.toLocaleString('tr-TR')}</span>
+          <span className={styles.tileNote}>{thisMonth ? 'Ay başından bugüne' : 'Ay boyunca'}</span>
+        </div>
+      ) : (
+        <div className={`card ${styles.tile}`}>
+          <span className={styles.tileLabel}>Tamamlanan</span>
+          <span className={styles.tileValue}>{a.completed.toLocaleString('tr-TR')}</span>
+          <span className={styles.tileNote}>{a.total ? `Randevularınızın %${Math.round((a.completed / a.total) * 100)}’i` : 'Bu ay henüz yok'}</span>
+        </div>
+      )}
       <div className={`card ${styles.tile}`}>
-        <span className={styles.tileLabel}>Salon sayfası ziyareti</span>
-        <span className={styles.tileValue}>{stats.views.total.toLocaleString('tr-TR')}</span>
-        <span className={styles.tileNote}>{thisMonth ? 'Ay başından bugüne' : 'Ay boyunca'}</span>
-      </div>
-      <div className={`card ${styles.tile}`}>
-        <span className={styles.tileLabel}>Randevu</span>
+        <span className={styles.tileLabel}>{stats.scope === 'mine' ? 'Randevularınız' : 'Randevu'}</span>
         <span className={styles.tileValue}>{a.total.toLocaleString('tr-TR')}</span>
         <span className={styles.tileNote}>
           {a.completed} tamamlandı{a.upcoming ? ` · ${a.upcoming} ${thisMonth ? 'yaklaşan' : 'kapanmadı'}` : ''}
@@ -166,21 +180,19 @@ function Overview({ stats }: { stats: ShopStats }) {
 
 /** Visits by where they came from: one bar per source, in a fixed order, one colour. */
 function Sources({ stats }: { stats: ShopStats }) {
-  const total = stats.views.total;
-  const max = Math.max(1, ...SOURCES.map((s) => stats.views.bySource[s.key]));
+  const total = stats.views!.total;
+  const max = Math.max(1, ...SOURCES.map((s) => stats.views!.bySource[s.key]));
   return (
     <section className={`card ${styles.card}`} aria-labelledby="sources-title">
       <h2 id="sources-title">Ziyaretler nereden geldi</h2>
       <ul className={styles.sources} role="list">
         {SOURCES.map((s) => {
-          const n = stats.views.bySource[s.key];
+          const n = stats.views!.bySource[s.key];
           return (
             <li key={s.key}>
               <span className={styles.sourceLabel}>{s.label}</span>
               <span className={styles.sourceRow}>
-                <span className={styles.track}>
-                  {n > 0 && <span className={styles.bar} style={{ width: `${(n / max) * 100}%` }} />}
-                </span>
+                <span className={styles.track}>{n > 0 && <span className={styles.bar} style={{ width: `${(n / max) * 100}%` }} />}</span>
                 <span className={styles.sourceValue}>
                   {n.toLocaleString('tr-TR')}
                   {n > 0 && <span> · %{Math.round((n / total) * 100)}</span>}
@@ -196,7 +208,7 @@ function Sources({ stats }: { stats: ShopStats }) {
 
 /** Visits per day: one column per day; hover or tap a day for its number, or open the table. */
 function Daily({ stats }: { stats: ShopStats }) {
-  const days = stats.views.daily;
+  const days = stats.views!.daily;
   const [hover, setHover] = useState<number | null>(null);
   const max = Math.max(...days.map((d) => d.views), 0);
   const top = niceMax(max);
@@ -213,12 +225,7 @@ function Daily({ stats }: { stats: ShopStats }) {
         <div className={styles.plot} role="img" aria-label={`Günlük ziyaret grafiği; değerler aşağıdaki tabloda.`}>
           <span className={styles.grid} style={{ bottom: '100%' }} />
           {days.map((d, i) => (
-            <span
-              key={d.date}
-              className={`${styles.slot} ${hover === i ? styles.slotOn : ''}`}
-              onPointerEnter={() => setHover(i)}
-              onPointerDown={() => setHover(i)}
-            >
+            <span key={d.date} className={`${styles.slot} ${hover === i ? styles.slotOn : ''}`} onPointerEnter={() => setHover(i)} onPointerDown={() => setHover(i)}>
               {d.views > 0 && <span className={styles.col} style={{ height: `${(d.views / top) * 100}%` }} />}
             </span>
           ))}

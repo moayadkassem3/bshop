@@ -192,7 +192,7 @@ type ShortcutItem = { icon: IconName; label: string; hint: string; path: Href };
 /**
  * The salon's tools (founder, 8 November 2026; as on the website). Owners and co-owners see four
  * groups as separate cards: promote the salon, see how it is doing, set it up, the subscription.
- * Staff see their five tools in one card, in the same order (single-row cards would look broken up).
+ * Staff see their six tools in one card, in the same order (single-row cards would look broken up).
  */
 function ShortcutGroups({ owner }: { owner: boolean }) {
   const groups: (ShortcutItem | false)[][] = [
@@ -202,7 +202,9 @@ function ShortcutGroups({ owner }: { owner: boolean }) {
       { icon: 'camera', label: 'Kesim fotoğrafı paylaş', hint: 'Popüler kesimler’de görünür', path: '/isletme/kesimler' },
     ],
     [
-      owner && { icon: 'chart', label: 'İstatistikler', hint: 'Sayfa ziyaretleri ve randevular, ay ay', path: '/isletme/istatistikler' },
+      owner
+        ? { icon: 'chart', label: 'İstatistikler', hint: 'Sayfa ziyaretleri ve randevular, ay ay', path: '/isletme/istatistikler' }
+        : { icon: 'chart', label: 'İstatistiklerim', hint: 'Sayfa ziyaretleri ve randevularınız, ay ay', path: '/isletme/istatistikler' },
       { icon: 'star', label: 'Değerlendirmeler', hint: owner ? 'Müşteri puanları ve yanıtlarınız' : 'Müşterilerin salona verdiği puanlar', path: '/isletme/degerlendirmeler' },
     ],
     [
