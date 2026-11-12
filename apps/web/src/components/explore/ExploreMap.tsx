@@ -16,7 +16,7 @@ import type { NearbyShop } from '@/lib/types';
 import styles from './ExploreMap.module.css';
 import { ShareShop } from '@/components/ShareShop';
 import { VerifiedTick } from '@/components/VerifiedTick';
-import { FORWARD } from '@/lib/motion';
+import { EXPAND, FORWARD } from '@/lib/motion';
 import { SkeletonList } from '@/components/Skeleton';
 import { formatRating, RatingBadge, STAR } from '@/components/Stars';
 import { mapStyleUrl } from '@/lib/theme';
@@ -230,6 +230,11 @@ export function ExploreMap() {
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
             </svg>
+            {/* Phones: the bar opens the search screen (founder, 12 November 2026). Big screens
+                keep typing here, with the list beside the map. */}
+            <Link href="/ara" transitionTypes={EXPAND} className={styles.searchLink}>
+              Kuaför ya da hizmet ara
+            </Link>
             <input
               className={styles.searchInput}
               placeholder="Kuaför ya da hizmet ara"

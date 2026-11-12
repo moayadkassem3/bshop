@@ -24,6 +24,7 @@
 }
 
 .search {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -36,7 +37,27 @@
   color: var(--muted);
 }
 
+/* Phones: the whole bar is a link to the search screen; big screens type in the panel. */
+.searchLink {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.searchLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
 .searchInput {
+  display: none;
   flex: 1;
   min-width: 0;
   border: 0;
@@ -456,6 +477,14 @@
   .search {
     background: var(--bg);
     box-shadow: none;
+  }
+
+  .searchLink {
+    display: none;
+  }
+
+  .searchInput {
+    display: block;
   }
 
   .chip {

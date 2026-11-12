@@ -6,14 +6,14 @@ import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, Share, StyleSheet, TextInput, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { api, WEB_URL } from '@/lib/api';
 import { formatDistance } from '@/lib/format';
-import { colors, fonts, radius, themed, themeScheme } from '@/lib/theme';
+import { colors, radius, themed, themeScheme } from '@/lib/theme';
 import { AUDIENCE, type BusinessShop, type NearbyShop } from '@/lib/types';
 import { Icon } from './Icon';
 import { LogoMark } from './LogoMark';
@@ -58,7 +58,6 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
   const [start, setStart] = useState<LatLng | null>(home);
   const [center, setCenter] = useState<LatLng>(home ?? KADIKOY);
   const [user, setUser] = useState<LatLng | null>(home);
-  const [query, setQuery] = useState('');
   const [audience, setAudience] = useState<Audience>(props.initialAudience ?? 'all');
   const [shops, setShops] = useState<NearbyShop[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -117,12 +116,11 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
     }
   }, []);
 
-  // Salons around the map's centre, filtered by the search text and salon type.
+  // Salons around the map's centre, filtered by salon type.
   useEffect(() => {
     let cancelled = false;
     const timer = setTimeout(() => {
       const params = new URLSearchParams({ lat: String(center.lat), lng: String(center.lng), radiusKm: '30' });
-      if (query.trim().length >= 2) params.set('q', query.trim());
       if (audience !== 'all') params.set('audience', audience);
       api<NearbyShop[]>(`/public/nearby?${params}`)
         .then((l) => !cancelled && setShops(l))
@@ -132,7 +130,7 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [center, query, audience]);
+  }, [center, audience]);
 
   // Nearest first: from the customer (or the salon) when known, else from the map's centre.
   const sorted = useMemo(() => {
@@ -242,20 +240,23 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
               <Icon name="back" size={22} color={colors.ink} strokeWidth={2.4} />
             </Pressable>
           ) : null}
-          <View style={[styles.search, { flex: 1 }]}>
+          {/* The bar opens the search screen (founder, 12 November 2026), measured from where the map is. */}
+          <Pressable
+            onPress={() => {
+              const from = user ?? center;
+              router.push({ pathname: '/ara', params: { lat: String(from.lat), lng: String(from.lng), konum: user ? '1' : '0', salon: home ? '1' : '0', tur: audience } });
+            }}
+            style={[styles.search, { flex: 1 }]}
+            accessibilityRole="search"
+            accessibilityLabel="Kuaför ya da hizmet ara"
+          >
             <View style={{ flexShrink: 0 }}>
               <Icon name="search" size={20} color={colors.muted} />
             </View>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              onFocus={() => setOpen(true)}
-              placeholder="Kuaför ya da hizmet ara"
-              placeholderTextColor={colors.muted}
-              style={styles.searchInput}
-              returnKeyType="search"
-            />
-          </View>
+            <Text size={16} color={colors.muted} numberOfLines={1} style={{ flex: 1 }}>
+              Kuaför ya da hizmet ara
+            </Text>
+          </Pressable>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
           {(
@@ -386,7 +387,7 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
           ))}
           {sorted && sorted.length === 0 ? (
             <Text color={colors.muted} style={{ padding: 12 }}>
-              Bu bölgede aramanızla eşleşen kuaför bulunamadı. Haritayı kaydırmayı deneyin.
+              Bu bölgede kuaför bulunamadı. Haritayı kaydırmayı deneyin.
             </Text>
           ) : null}
         </ScrollView>
@@ -489,7 +490,6 @@ const styles = themed(() =>
     top: { position: 'absolute', top: 0, left: 0, right: 0, gap: 10, paddingHorizontal: 16 },
     back: { width: 52, height: 52, borderRadius: radius.sm, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadow },
     search: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, minHeight: 52, borderRadius: radius.sm, backgroundColor: colors.surface, ...shadow },
-    searchInput: { flex: 1, minWidth: 0, fontFamily: fonts.regular, fontSize: 16, color: colors.ink, paddingVertical: 10 },
     chip: { paddingHorizontal: 16, minHeight: 38, justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.surface, ...shadow },
     chipOn: { backgroundColor: colors.night },
     pill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 14, minHeight: 36, borderRadius: radius.pill, backgroundColor: colors.surface, ...shadow },

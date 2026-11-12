@@ -359,6 +359,24 @@ select {
   animation: var(--dur-2) var(--ease-out) both motion-fade-in;
 }
 
+/* The search screen grows out of Keşfet's search bar at the top. */
+::view-transition-old(.nav-expand) {
+  animation: var(--dur-2) var(--ease-in) both motion-fade-out;
+}
+
+::view-transition-new(.nav-expand) {
+  transform-origin: 50% 0;
+  animation:
+    var(--dur-2) var(--ease-out) both motion-fade-in,
+    var(--dur-3) var(--ease-out) both motion-expand;
+}
+
+@keyframes motion-expand {
+  from {
+    transform: scale(0.94);
+  }
+}
+
 /* A list item leaving (an answered request): slides right and fades. */
 ::view-transition-old(.leave) {
   animation: var(--dur-3) var(--ease-in) both motion-leave;

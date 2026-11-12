@@ -39,6 +39,8 @@ function Navigation({ fontsLoaded }: { fontsLoaded: boolean }) {
   return (
     <Fragment key={scheme}>
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: 'ios_from_right', fullScreenGestureEnabled: true }}>
+        {/* The search screen fades up from Keşfet's search bar rather than sliding in from the side. */}
+        <Stack.Screen name="ara" options={{ animation: 'fade_from_bottom' }} />
         <Stack.Screen name="alarm" options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false, contentStyle: { backgroundColor: colors.night } }} />
       </Stack>
       <PushBridge />

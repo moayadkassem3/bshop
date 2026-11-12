@@ -87,9 +87,10 @@ export function TabBar() {
         <LogoMark size={40} />
       </Link>
       {tabs.map((tab) => {
-        // The map opened from Salonum ("Haritada gör") still belongs to Salonum.
+        // The map opened from Salonum ("Haritada gör") still belongs to Salonum; the search screen belongs to the map.
+        const onMap = pathname === '/' || pathname === '/ara';
         const active =
-          tab.href === '/' ? pathname === '/' : tab.href === '/salonum' ? pathname.startsWith('/salonum') || pathname === '/' : pathname.startsWith(tab.href);
+          tab.href === '/' ? onMap : tab.href === '/salonum' ? pathname.startsWith('/salonum') || onMap : pathname.startsWith(tab.href);
         return (
           <Link key={tab.href} transitionTypes={TAB} href={tab.href} className={`${styles.tab} ${active ? styles.active : ''}`} aria-current={active ? 'page' : undefined}>
             <span className={styles.icon}>
