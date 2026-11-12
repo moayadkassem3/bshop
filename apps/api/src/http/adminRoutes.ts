@@ -26,6 +26,7 @@ import {
   sendTestAnnouncement,
   setAnnouncementActive,
 } from '../services/announcements.js';
+import { confirmPaymentNotice, listPaymentNotices, rejectPaymentNotice, sendPaymentRequest } from '../services/payments.js';
 import type { AuthFn } from './app.js';
 import { id, shopParams, timestamp } from './schemas.js';
 
@@ -60,6 +61,14 @@ export function adminRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     await extendTrial(deps, await auth(req), shopId, days);
     return reply.status(204).send();
   });
+  // Havale notices from the payment page, and the payment-request SMS (founder, 12 November 2026).
+  app.get('/admin/payment-notices', async (req) => listPaymentNotices(deps, await auth(req)));
+  app.post('/admin/payment-notices/:id/confirm', async (req) => confirmPaymentNotice(deps, await auth(req), z.object({ id }).parse(req.params).id));
+  app.post('/admin/payment-notices/:id/reject', async (req, reply) => {
+    await rejectPaymentNotice(deps, await auth(req), z.object({ id }).parse(req.params).id);
+    return reply.status(204).send();
+  });
+  app.post('/admin/salons/:shopId/payment-request', async (req) => sendPaymentRequest(deps, await auth(req), shopParams.parse(req.params).shopId));
   app.post('/admin/salons/:shopId/cancel-subscription', async (req, reply) => {
     await cancelSubscription(deps, await auth(req), shopParams.parse(req.params).shopId);
     return reply.status(204).send();

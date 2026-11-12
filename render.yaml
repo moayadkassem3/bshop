@@ -27,6 +27,14 @@ services:
         value: database
       - key: TICK_SECONDS
         value: "5"
+      # Our bank account for EFT / Havale on the payment page (/abonelik/odeme). Set the three
+      # values in the Render dashboard; until all are set the option stays closed.
+      - key: PAYMENT_ACCOUNT_HOLDER
+        sync: false
+      - key: PAYMENT_BANK
+        sync: false
+      - key: PAYMENT_IBAN
+        sync: false
 
 databases:
   - name: salon-randevu-test-db

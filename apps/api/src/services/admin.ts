@@ -94,8 +94,9 @@ export async function adminOverview(deps: Deps, admin: User) {
     `SELECT count(*)::int AS count, round(avg(stars), 1)::float AS average FROM shop_ratings
      WHERE hidden_at IS NULL AND updated_at > $1::timestamptz - interval '30 days'`,
   );
-  const open = await q<{ subscriptions: number; quotes: number }>(
+  const open = await q<{ subscriptions: number; quotes: number; payments: number }>(
     `SELECT (SELECT count(DISTINCT shop_id)::int FROM subscription_requests WHERE handled_at IS NULL) AS subscriptions,
+       (SELECT count(*)::int FROM payment_notices WHERE status = 'pending') AS payments,
        (SELECT count(*)::int FROM quote_requests WHERE status = 'new') AS quotes`,
     [],
   );

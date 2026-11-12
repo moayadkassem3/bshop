@@ -44,5 +44,5 @@ export type Overview = {
   bookings: Record<'total' | 'completed' | 'no_show' | 'cancelled', number>;
   customers: { total: number; new_30d: number };
   ratings: { count: number; average: number | null };
-  open: { subscriptions: number; quotes: number };
+  open: { subscriptions: number; quotes: number; payments: number };
 };

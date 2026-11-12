@@ -27,11 +27,16 @@ export function OverviewTab({ onFilter, onTab }: { onFilter: (filter: string) =>
 
   return (
     <div className="motion-fade">
-      {(s.unchecked > 0 || data.open.subscriptions > 0 || data.open.quotes > 0) && (
+      {(s.unchecked > 0 || data.open.payments > 0 || data.open.subscriptions > 0 || data.open.quotes > 0) && (
         <section className={styles.todo} aria-label="Bekleyen işler">
           {s.unchecked > 0 && (
             <button type="button" onClick={() => onFilter('yeni')}>
               <strong>{s.unchecked}</strong> yeni salon kontrol bekliyor ›
+            </button>
+          )}
+          {data.open.payments > 0 && (
+            <button type="button" onClick={() => onTab('talepler')}>
+              <strong>{data.open.payments}</strong> ödeme bildirimi onay bekliyor ›
             </button>
           )}
           {data.open.subscriptions > 0 && (

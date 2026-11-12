@@ -259,19 +259,14 @@ export function ExploreMap() {
               </button>
             ))}
           </div>
+          {/* One location prompt for customers (review, 12 November 2026): the banner in the list
+              until they share it, and the round button; the pill is only the salon's "Salonum". */}
           {home ? (
             <button type="button" className={styles.locationPill} onClick={goHome}>
               <span className={styles.pillLogo} dangerouslySetInnerHTML={{ __html: logoGlyphSvg(15) }} />
               Salonum
             </button>
-          ) : (
-            <button type="button" className={styles.locationPill} onClick={() => locate()} disabled={locating}>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="m3 11 18-8-8 18-2-8z" />
-              </svg>
-              {user ? 'Mevcut konumum' : locating ? 'Konum alınıyor…' : 'Konumumu kullan'}
-            </button>
-          )}
+          ) : null}
         </div>
 
         <section

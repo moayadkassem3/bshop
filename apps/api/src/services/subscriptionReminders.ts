@@ -14,7 +14,7 @@ const dayMonth = (d: Date) => new Intl.DateTimeFormat('tr-TR', { day: 'numeric',
  * Subscription reminders (v1.7). The salon's owner gets an SMS 3 days and 1 day
  * before the free trial ends and when it has ended; 3 days before a paid period
  * ends, when it has ended (7 days' grace), and when the salon is hidden. Each
- * links to the website's Aboneliğim page: the store apps never sell, so this is
+ * links to the website's payment page (Aboneliğim → Ödeme): the store apps never sell, so this is
  * how owners find where to pay. Each reminder goes out once per period; none
  * while the owner has already asked our team to start the subscription, nor for
  * a salon taken down by our team. Runs with the other timers.
@@ -33,7 +33,8 @@ export async function sendSubscriptionReminders(tx: pg.PoolClient, deps: Deps, n
        )`,
     [now],
   );
-  const link = `${deps.config.publicWebUrl}/abonelik`;
+  // Straight to the payment page (EFT / Havale) since 12 November 2026.
+  const link = `${deps.config.publicWebUrl}/abonelik/odeme`;
   let sent = 0;
   for (const r of rows) {
     if (!r.phone || !r.current_period_end) continue;

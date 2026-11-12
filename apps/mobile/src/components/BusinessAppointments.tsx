@@ -178,13 +178,27 @@ export function BusinessAppointments() {
                   <Icon name="chevron" size={20} color={colors.ink} strokeWidth={2.2} />
                 </Pressable>
               </View>
-              {date !== today ? (
-                <Pressable onPress={() => goTo(today)} hitSlop={8} style={{ alignSelf: 'center' }}>
-                  <Text size={14} weight="bold" color={colors.primary}>
-                    Bugüne dön
-                  </Text>
-                </Pressable>
-              ) : null}
+              {/* Under the date: back to today, and a small "Saat kapat" (it used to be a
+                  full-width button above the list; review, 12 November 2026). */}
+              <View style={styles.dayTools}>
+                {date !== today ? (
+                  <Pressable onPress={() => goTo(today)} hitSlop={8}>
+                    <Text size={14} weight="bold" color={colors.primary}>
+                      Bugüne dön
+                    </Text>
+                  </Pressable>
+                ) : (
+                  <View />
+                )}
+                {!blocking ? (
+                  <Pressable onPress={() => setBlocking(true)} hitSlop={6} style={({ pressed }) => [styles.blockLink, pressed && { backgroundColor: colors.surface2 }]}>
+                    <Icon name="clock" size={16} color={colors.ink} />
+                    <Text size={14} weight="bold">
+                      Saat kapat
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </View>
               {members.length > 1 ? (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} accessibilityRole="radiogroup" accessibilityLabel="Personel">
                   {[{ id: null, display_name: 'Herkes' }, ...members].map((m) => (
@@ -200,9 +214,7 @@ export function BusinessAppointments() {
                   ))}
                 </ScrollView>
               ) : null}
-              {!blocking ? (
-                <Button kind="secondary" title="Saat kapat" onPress={() => setBlocking(true)} />
-              ) : (
+              {!blocking ? null : (
                 <Appear>
                   <BlockForm
                     shopId={shop.id}
@@ -272,6 +284,18 @@ export function BusinessAppointments() {
 
 const styles = themed(() =>
   StyleSheet.create({
+    dayTools: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 36 },
+    blockLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      minHeight: 36,
+      paddingHorizontal: 14,
+      borderRadius: radius.pill,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      backgroundColor: colors.surface,
+    },
     dayBar: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     dropped: { flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: 16, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.line },
     dayButton: { width: 46, height: 46, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },

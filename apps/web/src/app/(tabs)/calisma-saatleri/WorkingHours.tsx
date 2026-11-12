@@ -125,6 +125,12 @@ export function WorkingHours() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  // "Kaydedildi." leaves by itself.
+  useEffect(() => {
+    if (!done) return;
+    const timer = setTimeout(() => setDone(null), 2500);
+    return () => clearTimeout(timer);
+  }, [done]);
 
   // Whose week: ?kisi=<member> from Personel, else your own.
   useEffect(() => {
@@ -241,8 +247,11 @@ export function WorkingHours() {
         {days && (
           <>
             <p className={styles.intro}>
-              {owner && person && memberId !== shop?.member_id ? `${person.display_name} bu saatlerde randevu alır.` : 'Bu saatlerde randevu alırsınız.'} Tek seferlik
-              kapatmak için <Link transitionTypes={TAB} href="/randevularim">Randevular → Takvim → Saat kapat</Link>.
+              {owner && person && memberId !== shop?.member_id ? `${person.display_name} bu saatlerde randevu alır.` : 'Bu saatlerde randevu alırsınız.'} Tek seferlik kapatmak için{' '}
+              <Link transitionTypes={TAB} href="/randevularim">
+                Randevular → Takvim → Saat kapat
+              </Link>
+              .
             </p>
             <ul className={`card ${styles.days} motion-fade`} role="list">
               {days.map((d, i) => {
@@ -305,7 +314,12 @@ export function WorkingHours() {
                             ))}
                             {issue && <p className={styles.issue}>{issue}</p>}
                             <div className={styles.dayActions}>
-                              <button type="button" className={styles.link} disabled={!room || Boolean(issue)} onClick={() => room && update(i, { breaks: [...d.breaks, room].sort((a, b) => a.start - b.start) })}>
+                              <button
+                                type="button"
+                                className={styles.link}
+                                disabled={!room || Boolean(issue)}
+                                onClick={() => room && update(i, { breaks: [...d.breaks, room].sort((a, b) => a.start - b.start) })}
+                              >
                                 + Mola ekle
                               </button>
                               <button type="button" className={styles.link} disabled={Boolean(issue)} onClick={() => copyToOthers(i)}>
@@ -335,7 +349,8 @@ export function WorkingHours() {
         )}
       </div>
 
-      {days && (
+      {/* Shown only while there is something to save, or to say (review, 12 November 2026). */}
+      {days && (changed || everyone || busy || done) && (
         <div className={styles.saveBar}>
           <div className="container narrow">
             {done && !changed && !everyone && (
@@ -343,9 +358,11 @@ export function WorkingHours() {
                 {done}
               </p>
             )}
-            <button type="button" className="btn btn-primary btn-block" disabled={busy || invalid || !(changed || everyone)} onClick={save}>
-              {busy ? 'Kaydediliyor…' : everyone ? 'Herkes için kaydet' : changed ? 'Değişiklikleri kaydet' : 'Kaydedildi'}
-            </button>
+            {(changed || everyone || busy) && (
+              <button type="button" className="btn btn-primary btn-block" disabled={busy || invalid} onClick={save}>
+                {busy ? 'Kaydediliyor…' : everyone ? 'Herkes için kaydet' : 'Değişiklikleri kaydet'}
+              </button>
+            )}
           </div>
         </div>
       )}

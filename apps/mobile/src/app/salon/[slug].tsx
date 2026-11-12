@@ -175,57 +175,8 @@ export default function SalonScreen() {
             </Card>
           </Appear>
 
-          {profile.photos.length > 1 ? (
-            <Appear index={2}>
-              <Card style={{ gap: 12 }}>
-                <SectionTitle count={profile.photos.length}>Fotoğraflar</SectionTitle>
-                <View style={styles.grid}>
-                  {profile.photos.map((p, i) => (
-                    <Pressable key={p.id} onPress={() => setViewer(i)} style={({ pressed }) => [styles.gridCell, pressed && { opacity: 0.85 }]} accessibilityLabel={`Fotoğraf ${i + 1}`}>
-                      <PhotoTile uri={photoUrl(p.id)} radius={10} />
-                    </Pressable>
-                  ))}
-                </View>
-              </Card>
-            </Appear>
-          ) : null}
-
-          {profile.posts?.length ? (
-            <Appear index={3}>
-              <Card style={{ gap: 12 }}>
-                <SectionTitle>Çalışmalarımız</SectionTitle>
-                <View style={styles.posts}>
-                  {profile.posts.map((p) => (
-                    <View key={p.id} style={{ width: '47.5%' }}>
-                      <HaircutCard post={p} liked={liked.has(p.id)} onToggleLike={toggleLike} onPress={() => router.push(`/randevu/${profile.slug}`)} />
-                    </View>
-                  ))}
-                </View>
-              </Card>
-            </Appear>
-          ) : null}
-
-          <Appear index={4}>
-            <Card style={{ gap: 2 }}>
-              <SectionTitle>Çalışma saatleri</SectionTitle>
-              {profile.openingHours.map((h) => {
-                const isToday = h.weekday === weekday;
-                return (
-                  <View key={h.weekday} style={[styles.hourRow, isToday && styles.hourToday]}>
-                    <Text weight={isToday ? 'bold' : 'regular'}>
-                      {WEEKDAYS[h.weekday - 1]}
-                      {isToday ? ' · Bugün' : ''}
-                    </Text>
-                    <Text weight={isToday ? 'bold' : 'regular'} color={h.open ? colors.ink : colors.muted}>
-                      {h.open ? `${h.open}–${h.close}` : 'Kapalı'}
-                    </Text>
-                  </View>
-                );
-              })}
-            </Card>
-          </Appear>
-
-          <Appear index={5}>
+          {/* Services and prices right after the salon info: what most people look for first (review, 12 November 2026). */}
+          <Appear index={2}>
             <Card style={{ gap: 0 }}>
               <SectionTitle>Hizmetler ve fiyatlar</SectionTitle>
               {profile.services.map((s, i) => (
@@ -246,6 +197,56 @@ export default function SalonScreen() {
               <Text size={14} color={colors.muted} style={{ marginTop: 10 }}>
                 Ödeme salonda yapılır.
               </Text>
+            </Card>
+          </Appear>
+
+          {profile.photos.length > 1 ? (
+            <Appear index={3}>
+              <Card style={{ gap: 12 }}>
+                <SectionTitle count={profile.photos.length}>Fotoğraflar</SectionTitle>
+                <View style={styles.grid}>
+                  {profile.photos.map((p, i) => (
+                    <Pressable key={p.id} onPress={() => setViewer(i)} style={({ pressed }) => [styles.gridCell, pressed && { opacity: 0.85 }]} accessibilityLabel={`Fotoğraf ${i + 1}`}>
+                      <PhotoTile uri={photoUrl(p.id)} radius={10} />
+                    </Pressable>
+                  ))}
+                </View>
+              </Card>
+            </Appear>
+          ) : null}
+
+          {profile.posts?.length ? (
+            <Appear index={4}>
+              <Card style={{ gap: 12 }}>
+                <SectionTitle>Çalışmalarımız</SectionTitle>
+                <View style={styles.posts}>
+                  {profile.posts.map((p) => (
+                    <View key={p.id} style={{ width: '47.5%' }}>
+                      <HaircutCard post={p} liked={liked.has(p.id)} onToggleLike={toggleLike} onPress={() => router.push(`/randevu/${profile.slug}`)} />
+                    </View>
+                  ))}
+                </View>
+              </Card>
+            </Appear>
+          ) : null}
+
+          <Appear index={5}>
+            <Card style={{ gap: 2 }}>
+              <SectionTitle>Çalışma saatleri</SectionTitle>
+              {profile.openingHours.map((h) => {
+                const isToday = h.weekday === weekday;
+                return (
+                  <View key={h.weekday} style={[styles.hourRow, isToday && styles.hourToday]}>
+                    <Text weight={isToday ? 'bold' : 'regular'}>
+                      {WEEKDAYS[h.weekday - 1]}
+                      {isToday ? ' · Bugün' : ''}
+                    </Text>
+                    <Text weight={isToday ? 'bold' : 'regular'} color={h.open ? colors.ink : colors.muted}>
+                      {h.open ? `${h.open}–${h.close}` : 'Kapalı'}
+                    </Text>
+                  </View>
+                );
+              })}
             </Card>
           </Appear>
 
@@ -309,10 +310,13 @@ function InfoRow(props: { icon: InfoIcon; text: string; hint?: string; onPress?:
       </View>
       <Text style={{ flex: 1 }}>{props.text}</Text>
       {props.action ? <Button small kind="secondary" title={props.action.label} onPress={props.action.onPress} /> : null}
+      {/* "Ara", "Aç": drawn as a button, so it reads as tappable; the whole row is pressable (review, 12 November 2026). */}
       {props.hint ? (
-        <Text size={14} weight="bold" color={colors.primary}>
-          {props.hint}
-        </Text>
+        <View style={styles.infoHint}>
+          <Text size={14} weight="bold" color={colors.primary}>
+            {props.hint}
+          </Text>
+        </View>
       ) : null}
     </>
   );
@@ -430,6 +434,17 @@ const styles = themed(() =>
     heartOn: { borderColor: colors.heartLine, backgroundColor: colors.heartSoft },
     today: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5, borderRadius: radius.pill, marginTop: 4 },
     infoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 },
+    infoHint: {
+      minWidth: 56,
+      minHeight: 38,
+      paddingHorizontal: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.sm,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      backgroundColor: colors.surface,
+    },
     infoIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
     line: { borderBottomWidth: 1, borderBottomColor: colors.line },
     serviceRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },

@@ -53,7 +53,10 @@ export function Button(props: { title: string; onPress: () => void; kind?: Butto
     dangerOutline: { bg: colors.surface, border: colors.dangerLine, fg: colors.danger },
     ghost: { bg: 'transparent', border: 'transparent', fg: colors.primary },
   };
-  const c = palette[kind];
+  // A filled button that cannot be pressed yet is grey with readable text, not a washed-out
+  // colour with white text (review, 12 November 2026). While busy it keeps its colour.
+  const greyed = Boolean(props.disabled) && !props.busy && (kind === 'primary' || kind === 'danger');
+  const c = greyed ? { bg: colors.line, border: colors.line, fg: colors.muted } : palette[kind];
   return (
     <Pressable
       accessibilityRole="button"
@@ -66,7 +69,7 @@ export function Button(props: { title: string; onPress: () => void; kind?: Butto
       style={({ pressed }) => [
         styles.button,
         props.small && styles.buttonSmall,
-        { backgroundColor: c.bg, borderColor: c.border, opacity: disabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+        { backgroundColor: c.bg, borderColor: c.border, opacity: greyed ? 1 : props.busy ? 0.7 : disabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
         props.style,
       ]}
     >

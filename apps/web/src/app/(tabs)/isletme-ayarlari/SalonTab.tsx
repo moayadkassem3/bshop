@@ -62,8 +62,6 @@ const toForm = (s: Settings): Form => ({
   point: s.latitude !== null && s.longitude !== null ? { lat: s.latitude, lng: s.longitude } : null,
 });
 
-
-
 function problem(f: Form): string | null {
   if (f.name.trim().length < 2) return 'İşletme adını yazın.';
   if (!phoneComplete(f.phone, 'any')) return 'Salon telefonunu 11 haneli yazın (0 ile başlayarak).';
@@ -85,6 +83,12 @@ export function SalonTab({ shopId, slug, visible }: { shopId: string; slug: stri
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  // "Değişiklikler kaydedildi." leaves by itself; a problem stays until the next action.
+  useEffect(() => {
+    if (!message?.ok) return;
+    const timer = setTimeout(() => setMessage(null), 2500);
+    return () => clearTimeout(timer);
+  }, [message]);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const loadPhotos = useCallback(async () => {
@@ -177,119 +181,120 @@ export function SalonTab({ shopId, slug, visible }: { shopId: string; slug: stri
   return (
     <div hidden={!visible}>
       {!form && message && <p className="alert alert-danger">{message.text}</p>}
-        {form && (
-          <>
-            <section className={own.section} aria-labelledby="s-type">
-              <h2 id="s-type">Müşterileriniz kimler?</h2>
-              <div className={reg.types} role="radiogroup" aria-labelledby="s-type">
-                {SALON_TYPES.map((o) => (
-                  <button
-                    key={o.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={form.audience === o.value}
-                    className={`${reg.type} ${own.type} ${form.audience === o.value ? reg.selected : ''}`}
-                    onClick={() => update({ audience: o.value })}
-                  >
-                    <span className={reg.typeIcon} aria-hidden>
-                      {o.icon}
-                    </span>
-                    <span>
-                      <strong>{o.label}</strong>
-                      <span>{o.hint}</span>
-                    </span>
+      {form && (
+        <>
+          <section className={own.section} aria-labelledby="s-type">
+            <h2 id="s-type">Müşterileriniz kimler?</h2>
+            <div className={reg.types} role="radiogroup" aria-labelledby="s-type">
+              {SALON_TYPES.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={form.audience === o.value}
+                  className={`${reg.type} ${own.type} ${form.audience === o.value ? reg.selected : ''}`}
+                  onClick={() => update({ audience: o.value })}
+                >
+                  <span className={reg.typeIcon} aria-hidden>
+                    {o.icon}
+                  </span>
+                  <span>
+                    <strong>{o.label}</strong>
+                    <span>{o.hint}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className={`card ${own.section} ${own.card}`} aria-labelledby="s-info">
+            <h2 id="s-info">Bilgiler</h2>
+            <div className="field">
+              <label htmlFor="s-name">İşletme adı</label>
+              <input id="s-name" className="input" maxLength={80} value={form.name} onChange={(e) => update({ name: e.target.value })} />
+              <p className={reg.help}>Ad değişse de salon bağlantınız (/{slug}) ve QR kodunuz aynı kalır.</p>
+            </div>
+            <div className="field">
+              <label htmlFor="s-phone">Salon telefonu</label>
+              <PhoneInput id="s-phone" value={form.phone} onChange={(phone) => update({ phone })} />
+            </div>
+            <div className="field">
+              <label htmlFor="s-wa">WhatsApp (isteğe bağlı)</label>
+              <PhoneInput id="s-wa" value={form.whatsapp} onChange={(whatsapp) => update({ whatsapp })} />
+            </div>
+            <div className="field">
+              <label htmlFor="s-ig">Instagram (isteğe bağlı)</label>
+              <input id="s-ig" className="input" autoCapitalize="none" placeholder="@kullaniciadi" value={form.instagram} onChange={(e) => update({ instagram: e.target.value })} />
+            </div>
+            <div className="field">
+              <label htmlFor="s-about">Hakkında (isteğe bağlı)</label>
+              <textarea id="s-about" className={`input ${reg.textarea}`} maxLength={600} value={form.about} onChange={(e) => update({ about: e.target.value })} />
+            </div>
+          </section>
+
+          <section className={`card ${own.section} ${own.card}`} aria-labelledby="s-address">
+            <h2 id="s-address">Adres</h2>
+            <div className={reg.row}>
+              <div className="field">
+                <label htmlFor="s-city">İl</label>
+                <select id="s-city" className={`input ${reg.select}`} value={form.city} onChange={(e) => update({ city: e.target.value, district: '' })}>
+                  <option value="">Seçin</option>
+                  {PROVINCES.map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="s-district">İlçe</label>
+                <DistrictSelect id="s-district" city={form.city} value={form.district} onChange={(district) => update({ district })} />
+              </div>
+            </div>
+            <div className="field">
+              <label htmlFor="s-addr">Açık adres</label>
+              <textarea id="s-addr" className={`input ${reg.textarea}`} maxLength={300} value={form.address} onChange={(e) => update({ address: e.target.value })} />
+            </div>
+            <div className="field">
+              <span className={reg.fieldLabel}>Haritadaki yeri</span>
+              <LocationPicker key={shopId} value={form.point} onChange={(point) => update({ point })} focus={focusFor(form.city, form.district)} />
+            </div>
+          </section>
+
+          <section className={`card ${own.section} ${own.card}`} aria-labelledby="s-photos">
+            <h2 id="s-photos">Fotoğraflar ({photos.length}/12)</h2>
+            <p className={reg.help}>İlk fotoğraf kapak olur.</p>
+            <ul className={reg.photos} role="list">
+              {photos.map((p, i) => (
+                <li key={p.id}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photoUrl(p.id)} alt={`Fotoğraf ${i + 1}`} />
+                  {i === 0 ? (
+                    <span className={reg.photoBadge}>Kapak</span>
+                  ) : (
+                    <button type="button" className={own.cover} onClick={() => makeCover(p.id)}>
+                      Kapak yap
+                    </button>
+                  )}
+                  <button type="button" className={own.removePhoto} onClick={() => removePhoto(p.id)} aria-label={`Fotoğraf ${i + 1} sil`}>
+                    ×
                   </button>
-                ))}
-              </div>
-            </section>
+                </li>
+              ))}
+              {photos.length < 12 && (
+                <li>
+                  <button type="button" className={reg.addPhoto} onClick={() => fileInput.current?.click()} disabled={busy}>
+                    <span aria-hidden>+</span>
+                    Ekle
+                  </button>
+                </li>
+              )}
+            </ul>
+            <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(e) => addPhotos(e.target.files)} />
+          </section>
+        </>
+      )}
 
-            <section className={`card ${own.section} ${own.card}`} aria-labelledby="s-info">
-              <h2 id="s-info">Bilgiler</h2>
-              <div className="field">
-                <label htmlFor="s-name">İşletme adı</label>
-                <input id="s-name" className="input" maxLength={80} value={form.name} onChange={(e) => update({ name: e.target.value })} />
-                <p className={reg.help}>Ad değişse de salon bağlantınız (/{slug}) ve QR kodunuz aynı kalır.</p>
-              </div>
-              <div className="field">
-                <label htmlFor="s-phone">Salon telefonu</label>
-                <PhoneInput id="s-phone" value={form.phone} onChange={(phone) => update({ phone })} />
-              </div>
-              <div className="field">
-                <label htmlFor="s-wa">WhatsApp (isteğe bağlı)</label>
-                <PhoneInput id="s-wa" value={form.whatsapp} onChange={(whatsapp) => update({ whatsapp })} />
-              </div>
-              <div className="field">
-                <label htmlFor="s-ig">Instagram (isteğe bağlı)</label>
-                <input id="s-ig" className="input" autoCapitalize="none" placeholder="@kullaniciadi" value={form.instagram} onChange={(e) => update({ instagram: e.target.value })} />
-              </div>
-              <div className="field">
-                <label htmlFor="s-about">Hakkında (isteğe bağlı)</label>
-                <textarea id="s-about" className={`input ${reg.textarea}`} maxLength={600} value={form.about} onChange={(e) => update({ about: e.target.value })} />
-              </div>
-            </section>
-
-            <section className={`card ${own.section} ${own.card}`} aria-labelledby="s-address">
-              <h2 id="s-address">Adres</h2>
-              <div className={reg.row}>
-                <div className="field">
-                  <label htmlFor="s-city">İl</label>
-                  <select id="s-city" className={`input ${reg.select}`} value={form.city} onChange={(e) => update({ city: e.target.value, district: '' })}>
-                    <option value="">Seçin</option>
-                    {PROVINCES.map((p) => (
-                      <option key={p}>{p}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="field">
-                  <label htmlFor="s-district">İlçe</label>
-                  <DistrictSelect id="s-district" city={form.city} value={form.district} onChange={(district) => update({ district })} />
-                </div>
-              </div>
-              <div className="field">
-                <label htmlFor="s-addr">Açık adres</label>
-                <textarea id="s-addr" className={`input ${reg.textarea}`} maxLength={300} value={form.address} onChange={(e) => update({ address: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className={reg.fieldLabel}>Haritadaki yeri</span>
-                <LocationPicker key={shopId} value={form.point} onChange={(point) => update({ point })} focus={focusFor(form.city, form.district)} />
-              </div>
-            </section>
-
-            <section className={`card ${own.section} ${own.card}`} aria-labelledby="s-photos">
-              <h2 id="s-photos">Fotoğraflar ({photos.length}/12)</h2>
-              <p className={reg.help}>İlk fotoğraf kapak olur.</p>
-              <ul className={reg.photos} role="list">
-                {photos.map((p, i) => (
-                  <li key={p.id}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={photoUrl(p.id)} alt={`Fotoğraf ${i + 1}`} />
-                    {i === 0 ? (
-                      <span className={reg.photoBadge}>Kapak</span>
-                    ) : (
-                      <button type="button" className={own.cover} onClick={() => makeCover(p.id)}>
-                        Kapak yap
-                      </button>
-                    )}
-                    <button type="button" className={own.removePhoto} onClick={() => removePhoto(p.id)} aria-label={`Fotoğraf ${i + 1} sil`}>
-                      ×
-                    </button>
-                  </li>
-                ))}
-                {photos.length < 12 && (
-                  <li>
-                    <button type="button" className={reg.addPhoto} onClick={() => fileInput.current?.click()} disabled={busy}>
-                      <span aria-hidden>+</span>
-                      Ekle
-                    </button>
-                  </li>
-                )}
-              </ul>
-              <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(e) => addPhotos(e.target.files)} />
-            </section>
-          </>
-        )}
-
-      {form && visible && (
+      {/* Shown only while there is something to save, or to say (review, 12 November 2026; as in the app). */}
+      {form && visible && (changed || busy || message) && (
         <div className={own.saveBar}>
           <div className="container narrow">
             {message && (
@@ -298,9 +303,11 @@ export function SalonTab({ shopId, slug, visible }: { shopId: string; slug: stri
               </p>
             )}
             {!message && changed && blocker && <p className={own.bad}>{blocker}</p>}
-            <button type="button" className="btn btn-primary btn-block" disabled={busy || !changed || !!blocker} onClick={save}>
-              {busy ? 'Kaydediliyor…' : changed ? 'Değişiklikleri kaydet' : 'Kaydedildi'}
-            </button>
+            {(changed || busy) && (
+              <button type="button" className="btn btn-primary btn-block" disabled={busy || !!blocker} onClick={save}>
+                {busy ? 'Kaydediliyor…' : 'Değişiklikleri kaydet'}
+              </button>
+            )}
           </div>
         </div>
       )}

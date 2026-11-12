@@ -6,6 +6,7 @@ import { formatLongDate, formatPrice, formatTime, turkeyDate } from '@/lib/forma
 import { useBusinessShops, type ShopAppointment } from '@/lib/business';
 import { formatPhone } from '@/lib/shop';
 import styles from './appointments.module.css';
+import { Icon } from '@/components/Icon';
 import biz from './business.module.css';
 import { BlockForm, TimeOffCard, type TimeOff } from './TimeBlocks';
 import { VerifiedTick } from '@/components/VerifiedTick';
@@ -56,7 +57,6 @@ export function BusinessAppointments() {
     const timer = setInterval(loadRequests, 15_000);
     return () => clearInterval(timer);
   }, [loadRequests]);
-
 
   const pending = requests?.filter((a) => a.status === 'pending').length ?? 0;
 
@@ -127,9 +127,7 @@ export function BusinessAppointments() {
       <div className={`container narrow ${styles.body}`}>
         {(error ?? shopsError) && <p className="alert alert-danger">{error ?? shopsError}</p>}
         {shops && shops.length === 0 && <p className="muted">Bu hesap henüz bir işletmeye bağlı değil.</p>}
-        {shop && !shop.reviewed_at && (
-          <p className="alert alert-info">İşletmeniz henüz yayında değil.</p>
-        )}
+        {shop && !shop.reviewed_at && <p className="alert alert-info">İşletmeniz henüz yayında değil.</p>}
         {shopId && (
           <div key={tab} className={from === 'right' ? 'motion-slide-from-right' : 'motion-slide-from-left'}>
             {tab === 'requests' && <Requests shopId={shopId} items={requests} onChanged={loadRequests} />}
@@ -235,11 +233,23 @@ function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string;
           ›
         </button>
       </div>
-      {date !== today && (
-        <button type="button" className={biz.todayLink} onClick={() => setDate(today)}>
-          Bugüne dön
-        </button>
-      )}
+      {/* Under the date: back to today, and a small "Saat kapat" (it used to be a dashed
+          full-width button that read like an empty slot; review, 12 November 2026). */}
+      <div className={biz.dayTools}>
+        {date !== today ? (
+          <button type="button" className={biz.todayLink} onClick={() => setDate(today)}>
+            Bugüne dön
+          </button>
+        ) : (
+          <span />
+        )}
+        {!blocking && (
+          <button type="button" className={biz.blockLink} onClick={() => setBlocking(true)}>
+            <Icon name="clock" size={16} />
+            Saat kapat
+          </button>
+        )}
+      </div>
 
       {members.length > 1 && (
         <div className={`${styles.chips} ${biz.staffChips}`} role="radiogroup" aria-label="Personel">
@@ -258,11 +268,6 @@ function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string;
         </div>
       )}
 
-      {!blocking && (
-        <button type="button" className={`btn btn-block ${biz.blockButton}`} onClick={() => setBlocking(true)}>
-          Saat kapat
-        </button>
-      )}
       {blocking && (
         <BlockForm
           shopId={props.shopId}
@@ -412,13 +417,15 @@ export function AppointmentCard(props: {
           İptal zamanı: {formatLongDate(a.cancelled_at)} {formatTime(a.cancelled_at)}
         </p>
       )}
-      {a.status === 'pending' && a.deadline_at && (
-        <p className={biz.deadline}>Yanıt vermezseniz otomatik onaylanır. Otomatik onay saati: {formatTime(a.deadline_at)}</p>
-      )}
+      {a.status === 'pending' && a.deadline_at && <p className={biz.deadline}>Yanıt vermezseniz otomatik onaylanır. Otomatik onay saati: {formatTime(a.deadline_at)}</p>}
 
       {a.status === 'offered' && (
         <p className={biz.deadline}>
-          {a.offered_from && <>Müşterinin istediği: {formatLongDate(a.offered_from)} {formatTime(a.offered_from)}. </>}
+          {a.offered_from && (
+            <>
+              Müşterinin istediği: {formatLongDate(a.offered_from)} {formatTime(a.offered_from)}.{' '}
+            </>
+          )}
           Müşterinin yanıtı bekleniyor{a.deadline_at && <>; yanıt gelmezse {formatTime(a.deadline_at)} saatinde saat yeniden boşalır</>}.
         </p>
       )}
@@ -455,7 +462,9 @@ export function AppointmentCard(props: {
         </button>
       )}
       {a.status === 'confirmed' && started && (
-        <div className={biz.actions}>
+        // One compact line instead of two full-width buttons, so more appointments fit on a screen (review, 12 November 2026).
+        <div className={biz.attend}>
+          <span>Müşteri geldi mi?</span>
           <button type="button" className="btn" disabled={busy} onClick={() => act('no-show')}>
             Gelmedi
           </button>

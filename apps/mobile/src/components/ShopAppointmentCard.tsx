@@ -108,16 +108,20 @@ export function ShopAppointmentCard(props: { shopId: string; appointment: ShopAp
         </View>
       ) : null}
       {a.status === 'confirmed' && started ? (
-        <View style={styles.actions}>
-          <Button title="Geldi" onPress={() => void act('complete')} busy={busy === 'complete'} disabled={Boolean(busy)} style={{ flex: 1 }} />
+        // One compact line instead of two full-width buttons, so more appointments fit on a screen (review, 12 November 2026).
+        <View style={styles.attend}>
+          <Text size={14} weight="semibold" color={colors.ink2} style={{ flex: 1 }}>
+            Müşteri geldi mi?
+          </Text>
           <Button
+            small
             kind="secondary"
             title="Gelmedi"
             onPress={() => confirmFirst('Gelmedi olarak işaretle', 'Müşterinin kaydına işlenir.', 'no-show', 'Gelmedi')}
             busy={busy === 'no-show'}
             disabled={Boolean(busy)}
-            style={{ flex: 1 }}
           />
+          <Button small title="Geldi" onPress={() => void act('complete')} busy={busy === 'complete'} disabled={Boolean(busy)} />
         </View>
       ) : null}
       {(a.status === 'confirmed' || a.status === 'offered') && !started ? (
@@ -133,6 +137,7 @@ const styles = themed(() =>
     top: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
     pending: { borderColor: colors.warningLine, borderWidth: 1.5 },
     dropped: { opacity: 0.75 },
+    attend: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line },
     actions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   }),
 );

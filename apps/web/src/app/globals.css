@@ -105,6 +105,13 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Slide-in animations (tabs, booking steps) must never widen the page: phone browsers keep
+   the wider layout afterwards and the tab bar ends up partly off screen (12 November 2026). */
+html,
+body {
+  overflow-x: clip;
+}
+
 h1,
 h2,
 h3 {
@@ -185,6 +192,15 @@ select {
 .btn-primary:hover {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
+}
+
+/* A primary button that cannot be pressed yet is grey with readable text, not a washed-out
+   blue with white text (review, 12 November 2026). */
+.btn-primary:disabled {
+  opacity: 1;
+  background: var(--line);
+  border-color: var(--line);
+  color: var(--muted);
 }
 
 .btn-block {

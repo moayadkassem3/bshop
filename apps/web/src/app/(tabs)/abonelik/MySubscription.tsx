@@ -5,15 +5,13 @@ import { useEffect, useState } from 'react';
 import { api, errorMessage } from '@/lib/api';
 import { daysLeft, useBusinessShops } from '@/lib/business';
 import { formatPrice, TZ } from '@/lib/format';
-import { getToken, setToken, useBusinessMode } from '@/lib/session';
 import { useCanSell } from '@/lib/store';
-import type { Me } from '@/lib/types';
 import { BackArrow } from '@/components/BackArrow';
 import { SkeletonList } from '@/components/Skeleton';
-import { StartSubscription } from '@/app/isletmeler/Pricing';
 import { BACK, FORWARD } from '@/lib/motion';
 import page from '../randevularim/appointments.module.css';
 import biz from '../randevularim/business.module.css';
+import { useBusinessGate } from './gate';
 import styles from './subscription.module.css';
 
 type Subscription = {
@@ -38,22 +36,7 @@ const day = (iso: string) => new Intl.DateTimeFormat('tr-TR', { day: 'numeric', 
  * store apps it is read-only (lib/store.ts).
  */
 export function MySubscription() {
-  const business = useBusinessMode();
-  const [state, setState] = useState<'checking' | 'signed-out' | 'no-business' | 'business'>('checking');
-
-  // Opened from an SMS while signed out or in customer mode: sign in, or switch to the salon account.
-  useEffect(() => {
-    if (!getToken()) return setState('signed-out');
-    if (business) return setState('business');
-    api<Me>('/me')
-      .then(async (me) => {
-        if (!me.has_business) return setState('no-business');
-        const r = await api<{ token: string; user: Me }>('/me/switch', { method: 'POST', body: { to: 'business' } });
-        setToken(r.token, r.user.portal);
-        setState('business');
-      })
-      .catch(() => setState('signed-out'));
-  }, [business]);
+  const state = useBusinessGate();
 
   return (
     <>
@@ -143,12 +126,14 @@ function OwnerView() {
                 <strong>{sub.plan ? sub.plan.name : `${sub.terms.customQuoteAboveStaff}’dan fazla personel`}</strong>
                 {canSell === true && <span>{sub.plan ? `${formatPrice(sub.plan.monthlyPriceKurus)}/ay` : 'Size özel fiyat'}</span>}
               </p>
-              <p className="muted">
-                {sub.seats} kişi randevu alıyor. Paket, randevu alan personel sayısına göre belirlenir.
-              </p>
-              {canSell === true && !sub.suspended_at && (sub.status !== 'active' || daysLeft(sub.current_period_end) <= 7) && (
+              <p className="muted">{sub.seats} kişi randevu alıyor. Paket, randevu alan personel sayısına göre belirlenir.</p>
+              {/* The payment page (EFT / Havale; founder, 12 November 2026): the main button while the
+                  salon needs to pay, a quieter one to pay ahead. Never in the store apps. */}
+              {canSell === true && !sub.suspended_at && (
                 <div className={styles.actions}>
-                  <StartSubscription shop={{ id: shop.id, role: shop.role, subscription_requested_at: sub.open_request_at }} />
+                  <Link transitionTypes={FORWARD} href="/abonelik/odeme" className={`btn ${sub.status !== 'active' || daysLeft(sub.current_period_end) <= 7 ? 'btn-primary' : ''}`}>
+                    {sub.status === 'active' ? 'Aboneliği uzat' : 'Ödeme yap'}
+                  </Link>
                 </div>
               )}
               {canSell === true && (
@@ -168,7 +153,7 @@ function OwnerView() {
                         {day(p.created_at)} · {p.months} ay
                       </span>
                       <span className="muted">
-                        {p.method === 'yok' ? 'Ödemesiz' : canSell === true ? formatPrice(p.amount_kurus) : 'Ödendi'} · → {day(p.period_end)}
+                        {p.method === 'yok' ? 'Ödemesiz etkinleştirildi' : canSell === true ? `${formatPrice(p.amount_kurus)} ödendi` : 'Ödendi'} · {day(p.period_end)} tarihine kadar
                       </span>
                     </li>
                   ))}
@@ -203,7 +188,9 @@ function Status({ sub }: { sub: Subscription }) {
     return (
       <>
         <h2>Aboneliğiniz aktif</h2>
-        <p>{day(end)} tarihine kadar · {daysLeft(end)} gün kaldı</p>
+        <p>
+          {day(end)} tarihine kadar · {daysLeft(end)} gün kaldı
+        </p>
       </>
     );
   }

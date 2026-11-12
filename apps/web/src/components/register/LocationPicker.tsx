@@ -42,6 +42,12 @@ export function LocationPicker(props: { value: Point | null; onChange: (point: P
         attributionControl: { compact: true },
       });
       mapRef.current = map;
+      // The map credit starts as its small (i) button instead of an open box over the map (review, 12 November 2026).
+      map.once('load', () => {
+        const credit = container.current?.querySelector('.maplibregl-ctrl-attrib');
+        credit?.classList.remove('maplibregl-compact-show');
+        credit?.removeAttribute('open');
+      });
       const pin = document.createElement('div');
       pin.className = styles.pin;
       marker.current = new maplibre.Marker({ element: pin, draggable: true, anchor: 'bottom' })

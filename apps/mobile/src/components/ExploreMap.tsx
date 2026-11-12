@@ -275,12 +275,16 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
             );
           })}
         </ScrollView>
-        <Pressable onPress={() => (home ? goHome() : void locate())} disabled={locating} style={styles.pill}>
-          {home ? <LogoMark size={15} color={colors.primary} /> : <Icon name="locate" size={16} color={colors.primary} strokeWidth={2} />}
-          <Text size={14} weight="bold" color={colors.primary}>
-            {home ? 'Salonum' : user ? 'Mevcut konumum' : locating ? 'Konum alınıyor…' : 'Konumumu kullan'}
-          </Text>
-        </Pressable>
+        {/* One location prompt for customers (review, 12 November 2026): the banner in the list
+            until they share it, and the round button; the pill is only the salon's "Salonum". */}
+        {home ? (
+          <Pressable onPress={goHome} style={styles.pill}>
+            <LogoMark size={15} color={colors.primary} />
+            <Text size={14} weight="bold" color={colors.primary}>
+              Salonum
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {start ? <MapCredit style={{ bottom: closedH + 6, left: 12 }} /> : null}

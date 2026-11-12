@@ -104,6 +104,27 @@
   gap: 10px;
 }
 
+.attend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.attend span {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.attend :global(.btn) {
+  min-height: 38px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
 .dayNav {
   display: flex;
   align-items: center;
@@ -140,9 +161,32 @@
   color: var(--muted);
 }
 
+.dayTools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+}
+
+.blockLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .todayLink {
-  display: block;
-  margin: 0 auto 8px;
+  padding: 0;
   border: 0;
   background: none;
   color: var(--primary);
@@ -226,11 +270,6 @@
 }
 
 /* Closed times and "Saat kapat" (v1.7). */
-.blockButton {
-  margin-bottom: 12px;
-  border-style: dashed;
-}
-
 .blockForm {
   display: grid;
   gap: 12px;

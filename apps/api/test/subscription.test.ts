@@ -17,7 +17,7 @@ describe('subscription reminders and Aboneliğim (v1.7)', () => {
     await t.tick();
     expect(reminders()).toHaveLength(1);
     expect(reminders()[0]).toContain('ücretsiz denemeniz 3 gün sonra bitiyor');
-    expect(reminders()[0]).toContain('/abonelik');
+    expect(reminders()[0]).toContain('/abonelik/odeme');
 
     t.clock.advance(2 * DAY);
     await t.tick();

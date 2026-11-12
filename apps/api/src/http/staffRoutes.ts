@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { notifyPayment, paymentOptions, withdrawPaymentNotice } from '../services/payments.js';
 import { cancelInvite, inviteMember, listInvites, resendInvite } from '../services/invites.js';
 import type { Deps } from '../deps.js';
 import { applyAbsence, getAbsence, markAbsence } from '../services/absence.js';
@@ -169,6 +170,19 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.post('/staff/shops/:shopId/subscription-request', async (req) => {
     const { shopId } = shopParams.parse(req.params);
     return requestSubscription(deps, await auth(req), shopId);
+  });
+
+  // Paying on the website by EFT / Havale (founder, 12 November 2026).
+  app.get('/staff/shops/:shopId/payment', async (req) => paymentOptions(deps, await auth(req), shopParams.parse(req.params).shopId));
+  app.post('/staff/shops/:shopId/payment-notices', async (req, reply) => {
+    const { shopId } = shopParams.parse(req.params);
+    const body = z.object({ months: z.number().int().min(1).max(24) }).parse(req.body);
+    return reply.status(201).send(await notifyPayment(deps, await auth(req), shopId, body));
+  });
+  app.delete('/staff/shops/:shopId/payment-notices/:id', async (req, reply) => {
+    const p = action.parse(req.params);
+    await withdrawPaymentNotice(deps, await auth(req), p.shopId, p.id);
+    return reply.status(204).send();
   });
 
   // İstatistikler (v1.7): a month of page visits and appointments, for owners.

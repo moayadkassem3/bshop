@@ -171,6 +171,12 @@ function SalonView({ id, onBack }: { id: string; onBack: () => void }) {
               <Status s={s} />
               <PaymentForm s={s} busy={busy} onSave={(body, paid) => act('payments', 'POST', body, paid ? 'Ödeme kaydedildi; abonelik etkin.' : 'Abonelik ödemesiz etkinleştirildi.')} />
               <div className={styles.panelActions}>
+                {/* The payment-request SMS with the link to the payment page (founder, 12 November 2026). */}
+                {s.plan && (
+                  <button type="button" className="btn" disabled={busy} onClick={() => act('payment-request', 'POST', undefined, 'Ödeme isteği SMS ile salon sahibine gönderildi.')}>
+                    Ödeme isteği gönder (SMS)
+                  </button>
+                )}
                 {['trial', 'none'].includes(s.subscription_status) && (
                   <button type="button" className="btn" disabled={busy} onClick={() => act('extend-trial', 'POST', { days: 7 }, 'Deneme 7 gün uzatıldı.')}>
                     Denemeyi 7 gün uzat
@@ -181,7 +187,9 @@ function SalonView({ id, onBack }: { id: string; onBack: () => void }) {
                     type="button"
                     className={`btn ${styles.dangerOutline}`}
                     disabled={busy}
-                    onClick={() => window.confirm(`${s.name} için abonelik sonlandırılsın mı? Salon müşterilere görünmez olur.`) && act('cancel-subscription', 'POST', undefined, 'Abonelik sonlandırıldı.')}
+                    onClick={() =>
+                      window.confirm(`${s.name} için abonelik sonlandırılsın mı? Salon müşterilere görünmez olur.`) && act('cancel-subscription', 'POST', undefined, 'Abonelik sonlandırıldı.')
+                    }
                   >
                     Aboneliği sonlandır
                   </button>
@@ -193,7 +201,8 @@ function SalonView({ id, onBack }: { id: string; onBack: () => void }) {
                   <ul className={styles.mini} role="list">
                     {s.payments.map((p) => (
                       <li key={p.id}>
-                        <strong>{p.method === 'yok' ? 'Ödemesiz' : formatPrice(p.amount_kurus)}</strong> · {p.months} ay{p.method === 'yok' ? '' : ` · ${METHOD_LABELS[p.method] ?? p.method}`} · {shortDate(p.created_at)}
+                        <strong>{p.method === 'yok' ? 'Ödemesiz' : formatPrice(p.amount_kurus)}</strong> · {p.months} ay{p.method === 'yok' ? '' : ` · ${METHOD_LABELS[p.method] ?? p.method}`} ·{' '}
+                        {shortDate(p.created_at)}
                         {p.note ? ` · ${p.note}` : ''}
                         <span className="muted"> → {shortDate(p.period_end)}</span>
                       </li>
@@ -224,8 +233,7 @@ function SalonView({ id, onBack }: { id: string; onBack: () => void }) {
                   <li key={i} className={m.active ? '' : styles.inactive}>
                     <strong>{m.display_name}</strong> · {m.owner_label === 'owner' ? 'Sahibi' : m.role === 'owner' ? 'Ortak' : 'Personel'}
                     {m.bookable ? ' · randevu alıyor' : ''}
-                    {!m.active ? ' · ayrıldı' : ''} ·{' '}
-                    <a href={`tel:${m.phone}`}>{formatPhone(m.phone)}</a>
+                    {!m.active ? ' · ayrıldı' : ''} · <a href={`tel:${m.phone}`}>{formatPhone(m.phone)}</a>
                   </li>
                 ))}
               </ul>
@@ -246,8 +254,7 @@ function Status({ s }: { s: SalonDetail }) {
   const st = salonStatus(s);
   return (
     <p className={styles.status}>
-      <span className={`badge badge-${st.tone}`}>{st.label}</span>{' '}
-      {s.plan ? `${s.plan.name} · ${formatPrice(s.plan.monthlyPriceKurus)}/ay` : `${s.seats} personel · özel fiyat`}
+      <span className={`badge badge-${st.tone}`}>{st.label}</span> {s.plan ? `${s.plan.name} · ${formatPrice(s.plan.monthlyPriceKurus)}/ay` : `${s.seats} personel · özel fiyat`}
       {s.current_period_end && <span className="muted"> · dönem sonu {shortDate(s.current_period_end)}</span>}
       {s.grace_until && <span className="muted"> · ek süre {shortDate(s.grace_until)}</span>}
     </p>
@@ -361,7 +368,12 @@ function Moderation({ s, busy, act }: { s: SalonDetail; busy: boolean; act: (pat
   return (
     <div className={styles.moderation}>
       <label className={styles.check}>
-        <input type="checkbox" checked={Boolean(s.checked_at)} disabled={busy} onChange={(e) => act('checked', 'PUT', { checked: e.target.checked }, e.target.checked ? 'Kontrol edildi olarak işaretlendi.' : 'Kontrol işareti kaldırıldı.')} />
+        <input
+          type="checkbox"
+          checked={Boolean(s.checked_at)}
+          disabled={busy}
+          onChange={(e) => act('checked', 'PUT', { checked: e.target.checked }, e.target.checked ? 'Kontrol edildi olarak işaretlendi.' : 'Kontrol işareti kaldırıldı.')}
+        />
         Kontrol edildi: bilgiler ve fotoğraflar gerçek görünüyor
       </label>
       {taking ? (

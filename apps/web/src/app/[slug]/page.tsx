@@ -174,6 +174,22 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
           )}
         </section>
 
+        {/* Services and prices come right after the salon info: price is what most people look for first (review, 12 November 2026). */}
+        <section className={`card ${styles.section}`} aria-labelledby="services-title">
+          <h2 id="services-title" className={styles.sectionTitle}>
+            Hizmetler ve fiyatlar
+          </h2>
+          <ServiceList
+            services={profile.services.map((s) => ({
+              id: s.id,
+              name: s.name,
+              meta: formatDuration(s.duration_minutes),
+              price: formatPrice(s.price_kurus, s.price_is_starting_from),
+            }))}
+          />
+          <p className={styles.note}>Ödeme salonda yapılır.</p>
+        </section>
+
         {profile.photos.length > 1 && (
           <section className={`card ${styles.section}`} aria-labelledby="photos-title">
             <h2 id="photos-title" className={styles.sectionTitle}>
@@ -207,21 +223,6 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
               </div>
             ))}
           </dl>
-        </section>
-
-        <section className={`card ${styles.section}`} aria-labelledby="services-title">
-          <h2 id="services-title" className={styles.sectionTitle}>
-            Hizmetler ve fiyatlar
-          </h2>
-          <ServiceList
-            services={profile.services.map((s) => ({
-              id: s.id,
-              name: s.name,
-              meta: formatDuration(s.duration_minutes),
-              price: formatPrice(s.price_kurus, s.price_is_starting_from),
-            }))}
-          />
-          <p className={styles.note}>Ödeme salonda yapılır.</p>
         </section>
 
         {profile.staff.length > 0 && (

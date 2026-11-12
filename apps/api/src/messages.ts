@@ -49,8 +49,17 @@ export const sms = {
   // Kept to one SMS: dates are left out where they repeat (see offers.ts).
   timeOffered: (c: { shop: string; from: string; when: string; deadline: string; link: string }) =>
     `${c.shop}: ${c.from} dolu. Yerine ${c.when} uygun mu? Son yanıt ${c.deadline}: ${c.link}`,
+  // Paying on the website (founder, 12 November 2026). The payment request, with the link to
+  // the payment page (EFT / Havale; card payment later); sent from Yönetim.
+  paymentRequest: (c: { shop: string; plan: string; amount: string; link: string }) =>
+    `${c.shop}: ${c.plan} aboneliğinizin aylık ücreti ${c.amount}. EFT/Havale ile ödemek için: ${c.link}`,
+  paymentConfirmed: (c: { shop: string; date: string }) => `${c.shop}: ödemeniz alındı, teşekkür ederiz. Aboneliğiniz ${c.date} tarihine kadar aktif.`,
+  paymentNotFound: (c: { shop: string; link: string }) =>
+    `${c.shop}: bildirdiğiniz ödeme hesabımızda görünmüyor. Açıklamaya telefon numaranızı yazdığınızdan emin olun: ${c.link}`,
   // To our team, not to customers.
   subscriptionRequest: (c: { salon: string; plan: string; phone: string }) => `Abonelik talebi: ${c.salon}, ${c.plan}. Tel: ${c.phone}`,
+  paymentNotice: (c: { salon: string; amount: string; months: number; reference: string }) =>
+    `Havale bildirimi: ${c.salon}, ${c.amount}, ${c.months} ay. Açıklama: ${c.reference}`,
   quoteRequest: (c: { salon: string; staff: number; phone: string }) => `Yeni teklif talebi: ${c.salon}, ${c.staff} personel. Tel: ${c.phone}`,
 };
 

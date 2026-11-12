@@ -189,7 +189,7 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
           {/* Salon owners edit their salon from its card in İşletmelerim instead (v1.7). */}
           {!me.owns_shop && <MenuLink href="/isletme-kaydi" icon="salonum" label="İşletmenizi kaydedin" />}
           {me.owns_shop && <MenuLink href="/abonelik" icon="card" label="Aboneliğim" />}
-          {canSell === true && <MenuLink href="/isletmeler" icon="card" label="Paketler ve fiyatlar" />}
+          {canSell === true && (me.has_business || mode !== 'customer') && <MenuLink href="/isletmeler" icon="card" label="Paketler ve fiyatlar" />}
           <MenuLink href="/sozlesmeler" icon="doc" label="Yasal metinler" />
           {/* Our team only (v1.7). */}
           {me.is_platform_admin && <MenuLink href="/yonetim" icon="settings" label="Yönetim paneli" />}
