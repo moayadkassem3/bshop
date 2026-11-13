@@ -196,7 +196,7 @@ type ShortcutItem = { href: string; icon: keyof typeof ICONS; label: string; hin
 /**
  * The salon's tools (founder, 8 November 2026; the app's list matches). Owners and co-owners see four
  * groups as separate cards: promote the salon, see how it is doing, set it up, the subscription.
- * Staff see their six tools in one card, in the same order (single-row cards would look broken up).
+ * Staff see the first three groups the same way, without the subscription (founder, 14 November 2026).
  */
 function ShortcutGroups({ owner, onSettings }: { owner: boolean; onSettings: () => void }) {
   const groups: (ShortcutItem | false)[][] = [
@@ -220,7 +220,8 @@ function ShortcutGroups({ owner, onSettings }: { owner: boolean; onSettings: () 
     [owner && { href: '/abonelik', icon: 'card', label: 'Aboneliğim', hint: 'Paketiniz ve abonelik durumunuz' }],
   ];
   const shown = groups.map((g) => g.filter((item): item is ShortcutItem => Boolean(item))).filter((g) => g.length);
-  const cards = owner ? shown : [shown.flat()];
+  // Staff get the same separate cards as owners now that they have Salon bilgileri too (founder, 14 November 2026).
+  const cards = shown;
   return (
     <div className={styles.groups}>
       {cards.map((items, i) => (
