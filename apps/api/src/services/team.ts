@@ -299,6 +299,16 @@ export async function listServices(deps: Deps, user: User, shopId: string) {
   return rows;
 }
 
+/** The services one team member performs (Salon bilgileri → Hizmetler, for staff: "verdiğim hizmetler"). */
+export async function listMemberServices(deps: Deps, user: User, shopId: string, memberId: string) {
+  await requireMember(deps.db, user, shopId);
+  const { rows } = await deps.db.query<{ service_id: string; duration_minutes: number | null }>(
+    'SELECT service_id, duration_minutes FROM member_services WHERE shop_id = $1 AND member_id = $2',
+    [shopId, memberId],
+  );
+  return rows;
+}
+
 /** Staff pick which shop services they perform and their own durations (handoff 2, v1.1). */
 export async function setMemberServices(
   deps: Deps,

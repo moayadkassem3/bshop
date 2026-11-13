@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native';
 import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { api } from '@/lib/api';
-import { colors, radius, themed, themeScheme } from '@/lib/theme';
+import { BRAND_NAVY, colors, radius, themed, themeScheme } from '@/lib/theme';
 import { LogoMark } from './LogoMark';
 import { Button, Text } from './ui';
 
@@ -150,6 +150,6 @@ const styles = themed(() =>
       borderColor: colors.line,
       boxShadow: `0px 12px 32px ${colors.dialogShadow}`,
     },
-    badge: { width: 104, height: 104, borderRadius: 30, alignItems: 'center', justifyContent: 'center', marginBottom: 10, backgroundColor: '#192C60' },
+    badge: { width: 104, height: 104, borderRadius: 30, alignItems: 'center', justifyContent: 'center', marginBottom: 10, backgroundColor: BRAND_NAVY },
   }),
 );

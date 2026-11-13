@@ -213,7 +213,9 @@ function ShortcutGroups({ owner, onSettings }: { owner: boolean; onSettings: () 
     ],
     [
       { href: '/calisma-saatleri', icon: 'clock', label: 'Çalışma saatleri', hint: owner ? 'Ekibin haftalık saatleri ve molaları' : 'Haftalık saatleriniz ve molalarınız' },
-      owner && { href: '/isletme-ayarlari', icon: 'settings', label: 'Salon bilgileri', hint: 'Adres, fotoğraflar, hizmetler, personel', onClick: onSettings },
+      owner
+        ? { href: '/isletme-ayarlari', icon: 'settings', label: 'Salon bilgileri', hint: 'Adres, fotoğraflar, hizmetler, personel', onClick: onSettings }
+        : { href: '/isletme-ayarlari', icon: 'settings', label: 'Salon bilgileri', hint: 'Salon, verdiğiniz hizmetler, ekip' },
     ],
     [owner && { href: '/abonelik', icon: 'card', label: 'Aboneliğim', hint: 'Paketiniz ve abonelik durumunuz' }],
   ];

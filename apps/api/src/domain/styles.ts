@@ -15,6 +15,7 @@ export const HAIRCUT_STYLES: HaircutStyle[] = [
   { key: 'uzun-erkek', name: 'Uzun Saç (Erkek)', audience: 'men' },
   { key: 'sakal', name: 'Sakal Tasarımı', audience: 'men' },
   { key: 'cocuk', name: 'Çocuk Kesimi', audience: 'men' },
+  { key: 'diger-erkek', name: 'Diğer', audience: 'men' },
   { key: 'bob', name: 'Bob', audience: 'women' },
   { key: 'lob', name: 'Lob', audience: 'women' },
   { key: 'katli', name: 'Katlı Kesim', audience: 'women' },
@@ -24,7 +25,12 @@ export const HAIRCUT_STYLES: HaircutStyle[] = [
   { key: 'rofle', name: 'Röfle', audience: 'women' },
   { key: 'dalga', name: 'Dalgalı Fön', audience: 'women' },
   { key: 'gelin', name: 'Gelin Saçı', audience: 'women' },
+  { key: 'diger-kadin', name: 'Diğer', audience: 'women' },
 ];
 
 export const STYLE_KEYS = HAIRCUT_STYLES.map((s) => s.key) as [string, ...string[]];
 export const stylesFor = (audience: 'men' | 'women') => HAIRCUT_STYLES.filter((s) => s.audience === audience).map((s) => s.key);
+
+/** "Diğer": the salon types the cut's name itself (founder, 14 November 2026); one per list, so the Erkek/Kadın filter still works. */
+export const isCustomStyle = (key: string) => key === 'diger-erkek' || key === 'diger-kadin';
+export const CUSTOM_NAME_MAX = 40;

@@ -427,3 +427,32 @@
 .linkDanger {
   color: var(--danger);
 }
+
+/* Staff: the salon's details to read (founder, 14 November 2026). */
+.facts {
+  display: grid;
+  margin: 0;
+  padding: 4px 16px;
+}
+
+.facts > div {
+  display: grid;
+  gap: 2px;
+  padding: 12px 0;
+}
+
+.facts > div + div {
+  border-top: 1px solid var(--line);
+}
+
+.facts dt {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}

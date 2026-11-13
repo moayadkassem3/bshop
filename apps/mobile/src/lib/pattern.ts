@@ -1,0 +1,12 @@
+/**
+ * The header texture (founder, 14 November 2026): line drawings of a salon's tools (scissors,
+ * comb, barber pole, razor, clipper), very faint on the dark headers. Our own drawing; the
+ * website uses the same tile (`apps/web/public/doku.svg`): keep the two in step.
+ */
+export const PATTERN_SIZE = 200;
+export const PATTERN_TILE = `<g transform="translate(34 42) rotate(-25)"><circle cx="-8" cy="14" r="6"/><circle cx="8" cy="14" r="6"/><path d="M-5 9L10 -22M5 9L-10 -22"/></g>
+<g transform="translate(134 40) rotate(18)"><rect x="-24" y="-7" width="48" height="6" rx="2"/><path d="M-20 -1v9M-15 -1v9M-10 -1v9M-5 -1v9M0 -1v9M5 -1v9M10 -1v9M15 -1v9M20 -1v9"/></g>
+<g transform="translate(96 104) rotate(-18)"><rect x="-8" y="-22" width="16" height="44" rx="3"/><path d="M-8 -10l16 -8M-8 2l16 -8M-8 14l16 -8"/><path d="M-11 -26h22M-11 26h22"/></g>
+<g transform="translate(40 152) rotate(28)"><path d="M-22 -4h28a4 4 0 0 1 4 4v6h-32z"/><path d="M10 4l16 9"/></g>
+<g transform="translate(162 138) rotate(-30)"><rect x="-9" y="-16" width="18" height="34" rx="7"/><path d="M-9 -16v-7h18v7M-5 -23v-4M0 -23v-4M5 -23v-4"/><circle cx="0" cy="4" r="3"/></g>
+<circle cx="92" cy="26" r="1.6"/><circle cx="122" cy="178" r="1.6"/><path d="M178 66l5 5M183 66l-5 5M12 98l5 5M17 98l-5 5"/>`;

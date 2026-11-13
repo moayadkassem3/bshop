@@ -8,6 +8,7 @@ import biz from '../randevularim/business.module.css';
 import { SalonTab } from './SalonTab';
 import { ServicesTab } from './ServicesTab';
 import { StaffTab } from './StaffTab';
+import { StaffView } from './StaffView';
 import own from './settings.module.css';
 import { BackArrow } from '@/components/BackArrow';
 import { BACK } from '@/lib/motion';
@@ -20,9 +21,10 @@ const TABS = [
 type Tab = (typeof TABS)[number]['key'];
 
 /**
- * Salon bilgileri (v1.7), for owners and co-owners, in three tabs: Salon
+ * Salon bilgileri (v1.7), in three tabs: Salon
  * (details, address, photos), Hizmetler (services and prices), Personel (team).
- * The tab is kept in the address (#hizmetler) so it survives a reload.
+ * Owners and co-owners edit them; staff read them and choose the services they give
+ * (StaffView). The tab is kept in the address (#hizmetler) so it survives a reload.
  */
 export function ShopSettings() {
   const { shops, shop, shopId, selectShop, error } = useBusinessShops();
@@ -71,7 +73,7 @@ export function ShopSettings() {
 
       <div className={`container narrow ${styles.body} ${own.page}`}>
         {error && <p className="alert alert-danger">{error}</p>}
-        {shop && shop.role !== 'owner' && <p className="alert alert-info">Salon bilgilerini yalnızca salon sahibi ve ortaklar değiştirebilir.</p>}
+        {shop && shop.role !== 'owner' && <StaffView key={shop.id} shopId={shop.id} memberId={shop.member_id} tab={tab} />}
         {shop && shop.role === 'owner' && (
           // Remounted per salon; tabs stay mounted so unsaved changes survive switching.
           <div key={shop.id}>

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { Deps } from '../deps.js';
 import { withTx } from '../db.js';
 import { badRequest, conflict, forbidden, notFound } from '../errors.js';
-import { HAIRCUT_STYLES, stylesFor } from '../domain/styles.js';
+import { HAIRCUT_STYLES, isCustomStyle, stylesFor } from '../domain/styles.js';
 import { requireMember } from './access.js';
 import type { User } from './auth.js';
 import { processImage } from './photos.js';
@@ -22,14 +22,18 @@ export type HaircutPost = {
 };
 
 const styleName = (key: string) => HAIRCUT_STYLES.find((s) => s.key === key)?.name ?? key;
-const withStyleName = <T extends { style: string }>(row: T) => ({ ...row, style_name: styleName(row.style) });
+/** The name shown on a photo: the salon's own name for the cut when it wrote one. */
+const withStyleName = <T extends { style: string; custom_name?: string | null }>({ custom_name, ...row }: T) => ({ ...row, style_name: custom_name || styleName(row.style) });
 
-const POST_COLUMNS = `p.id, p.style, p.caption, p.width, p.height, p.created_at,
+const POST_COLUMNS = `p.id, p.style, p.custom_name, p.caption, p.width, p.height, p.created_at,
   (SELECT count(*)::int FROM haircut_likes l WHERE l.post_id = p.id) AS like_count`;
 
 /** Owners and staff post their work; staff showcase their own cuts. */
-export async function addPost(deps: Deps, user: User, shopId: string, data: Buffer, input: { style: string; caption?: string | null }) {
+export async function addPost(deps: Deps, user: User, shopId: string, data: Buffer, input: { style: string; caption?: string | null; name?: string | null }) {
   await requireMember(deps.db, user, shopId);
+  // "Diğer" needs the salon's own name for the cut; the listed styles keep theirs.
+  const customName = isCustomStyle(input.style) ? input.name?.trim() || null : null;
+  if (isCustomStyle(input.style) && !customName) throw badRequest('STYLE_NAME_REQUIRED', 'Write the name of the cut');
   // A men's salon posts men's styles, a women's salon women's; unisex salons both (v1.7).
   const { rows: shopRows } = await deps.db.query<{ audience: 'men' | 'women' | 'unisex' }>('SELECT audience FROM shops WHERE id = $1', [shopId]);
   const styleAudience = HAIRCUT_STYLES.find((s) => s.key === input.style)?.audience;
@@ -44,9 +48,9 @@ export async function addPost(deps: Deps, user: User, shopId: string, data: Buff
     if (rows[0]!.n >= MAX_POSTS_PER_SHOP) throw conflict('POST_LIMIT', `A shop can have up to ${MAX_POSTS_PER_SHOP} posts`);
     await deps.photos.put(key, processed.data);
     const inserted = await tx.query<{ id: string }>(
-      `INSERT INTO haircut_posts (shop_id, author_user_id, style, caption, storage_key, width, height, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [shopId, user.id, input.style, input.caption?.trim() || null, key, processed.info.width, processed.info.height, deps.clock.now()],
+      `INSERT INTO haircut_posts (shop_id, author_user_id, style, caption, storage_key, width, height, created_at, custom_name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+      [shopId, user.id, input.style, input.caption?.trim() || null, key, processed.info.width, processed.info.height, deps.clock.now(), customName],
     );
     return { id: inserted.rows[0]!.id };
   });
@@ -73,7 +77,7 @@ export async function listShopPostsForStaff(deps: Deps, user: User, shopId: stri
 
 /** A shop's work, newest first (its profile page shows the latest). */
 export async function listShopPosts(deps: Deps, shopId: string, limit = 12): Promise<HaircutPost[]> {
-  const { rows } = await deps.db.query<Omit<HaircutPost, 'style_name'>>(
+  const { rows } = await deps.db.query<Omit<HaircutPost, 'style_name'> & { custom_name: string | null }>(
     `SELECT ${POST_COLUMNS} FROM haircut_posts p WHERE p.shop_id = $1 ORDER BY p.created_at DESC LIMIT $2`,
     [shopId, limit],
   );
@@ -87,7 +91,7 @@ export async function listShopPosts(deps: Deps, shopId: string, limit = 12): Pro
 export async function popularPosts(deps: Deps, input: { audience?: 'men' | 'women'; style?: string; limit?: number }) {
   const styles = input.style ? [input.style] : input.audience ? stylesFor(input.audience) : null;
   const { rows } = await deps.db.query<
-    Omit<HaircutPost, 'style_name'> & { shop_name: string; shop_slug: string; shop_verified: boolean; district: string | null; city: string | null }
+    Omit<HaircutPost, 'style_name'> & { custom_name: string | null; shop_name: string; shop_slug: string; shop_verified: boolean; district: string | null; city: string | null }
   >(
     `SELECT ${POST_COLUMNS}, s.name AS shop_name, s.slug AS shop_slug, s.verified_at IS NOT NULL AS shop_verified, s.district, s.city
      FROM haircut_posts p JOIN shops s ON s.id = p.shop_id JOIN subscriptions sub ON sub.shop_id = s.id

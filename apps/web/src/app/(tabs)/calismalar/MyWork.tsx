@@ -25,6 +25,9 @@ export function MyWork() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [style, setStyle] = useState('');
+  // "Diğer": the salon writes the cut's name itself (founder, 14 November 2026).
+  const [customName, setCustomName] = useState('');
+  const custom = style.startsWith('diger-');
   const groups: ('men' | 'women')[] = shop?.audience === 'men' ? ['men'] : shop?.audience === 'women' ? ['women'] : ['men', 'women'];
   // Switching to a salon of another type clears a style it does not offer.
   useEffect(() => {
@@ -69,10 +72,12 @@ export function MyWork() {
     try {
       const params = new URLSearchParams({ style });
       if (caption.trim()) params.set('caption', caption.trim());
+      if (custom) params.set('name', customName.trim());
       const res = await uploadImage(`/api/staff/shops/${shopId}/posts?${params}`, file, getToken());
       if (!res.ok) throw new ApiError(res.status, (await res.json().catch(() => ({}))).error ?? 'UNKNOWN');
       setFile(null);
       setCaption('');
+      setCustomName('');
       if (input.current) input.current.value = '';
       await load();
     } catch (err) {
@@ -138,7 +143,7 @@ export function MyWork() {
                         .filter((s) => s.audience === groups[0])
                         .map((s) => (
                           <option key={s.key} value={s.key}>
-                            {s.name}
+                            {pickLabel(s)}
                           </option>
                         ))
                     : groups.map((group) => (
@@ -147,18 +152,24 @@ export function MyWork() {
                             .filter((s) => s.audience === group)
                             .map((s) => (
                               <option key={s.key} value={s.key}>
-                                {s.name}
+                                {pickLabel(s)}
                               </option>
                             ))}
                         </optgroup>
                       ))}
                 </select>
               </div>
+              {custom && (
+                <div className="field">
+                  <label htmlFor="w-name">Kesimin adı</label>
+                  <input id="w-name" className="input" maxLength={40} value={customName} placeholder="Örn. Mullet" onChange={(e) => setCustomName(e.target.value)} />
+                </div>
+              )}
               <div className="field">
                 <label htmlFor="w-caption">Açıklama (isteğe bağlı)</label>
                 <input id="w-caption" className="input" maxLength={200} value={caption} placeholder="Örn. Yan taraflar 0 numara" onChange={(e) => setCaption(e.target.value)} />
               </div>
-              <button type="button" className="btn btn-primary" disabled={busy || !file || !style} onClick={share}>
+              <button type="button" className="btn btn-primary" disabled={busy || !file || !style || (custom && !customName.trim())} onClick={share}>
                 {busy ? 'Paylaşılıyor…' : 'Paylaş'}
               </button>
             </div>
@@ -196,3 +207,6 @@ export function MyWork() {
     </>
   );
 }
+
+/** In the list for sharing, "Diğer" says what it is for. */
+const pickLabel = (s: HaircutStyle) => (s.key.startsWith('diger-') ? 'Diğer (kendi adınızı yazın)' : s.name);

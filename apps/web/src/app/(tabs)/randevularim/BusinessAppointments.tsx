@@ -1,5 +1,6 @@
 'use client';
 
+import { addMonths, MonthCalendar } from './MonthCalendar';
 import { startTransition, useCallback, useEffect, useRef, useState, ViewTransition, type TouchEvent } from 'react';
 import { api, errorMessage } from '@/lib/api';
 import { formatLongDate, formatPrice, formatTime, turkeyDate } from '@/lib/format';
@@ -184,6 +185,34 @@ function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string;
   const [error, setError] = useState<string | null>(null);
   const [closed, setClosed] = useState<TimeOff[]>([]);
   const [blocking, setBlocking] = useState(false);
+  // The month view, opened by tapping the date (founder, 14 November 2026). It and "Saat kapat"
+  // close on leaving Takvim: this component is removed when another tab or page is opened.
+  const [calendar, setCalendar] = useState(false);
+  const [month, setMonth] = useState(today.slice(0, 7));
+  const [counts, setCounts] = useState<Record<string, number> | null>(null);
+
+  // How many appointments each day of the shown month has (declined and cancelled ones aside).
+  useEffect(() => {
+    if (!calendar) return;
+    let stale = false;
+    const range = `from=${dayStart(`${month}-01`).toISOString()}&to=${dayStart(`${addMonths(month, 1)}-01`).toISOString()}`;
+    api<Appointment[]>(`/staff/shops/${props.shopId}/appointments?${range}${staffId ? `&staffId=${staffId}` : ''}`)
+      .then((list) => {
+        if (stale) return;
+        const next: Record<string, number> = {};
+        for (const a of list) {
+          if (a.status === 'declined' || a.status === 'cancelled') continue;
+          const d = turkeyDate(new Date(a.starts_at));
+          next[d] = (next[d] ?? 0) + 1;
+        }
+        setCounts(next);
+      })
+      .catch(() => undefined);
+    return () => {
+      stale = true;
+    };
+    // `items` too: the counts follow the day's list when it is refreshed or answered.
+  }, [calendar, props.shopId, month, staffId, items]);
 
   useEffect(() => {
     if (!props.isOwner) return;
@@ -225,14 +254,38 @@ function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string;
         <button type="button" className={biz.dayArrow} onClick={() => setDate(addDays(date, -1))} aria-label="Önceki gün">
           ‹
         </button>
-        <div className={biz.dayLabel}>
+        <button
+          type="button"
+          className={`${biz.dayLabel} ${biz.dayLabelButton}`}
+          aria-expanded={calendar}
+          aria-label={`${formatLongDate(dayStart(date))}, takvimi ${calendar ? 'kapat' : 'aç'}`}
+          onClick={() => {
+            setMonth(date.slice(0, 7));
+            setCalendar((v) => !v);
+          }}
+        >
           <strong>{label ?? formatLongDate(dayStart(date))}</strong>
           {label && <span>{formatLongDate(dayStart(date))}</span>}
-        </div>
+          <span className={biz.dayCaret} aria-hidden>
+            <Icon name="chevron" size={14} strokeWidth={2.4} />
+          </span>
+        </button>
         <button type="button" className={biz.dayArrow} onClick={() => setDate(addDays(date, 1))} aria-label="Sonraki gün">
           ›
         </button>
       </div>
+      <MonthCalendar
+        open={calendar}
+        month={month}
+        selected={date}
+        today={today}
+        counts={counts}
+        onMonth={(m) => {
+          setCounts(null);
+          setMonth(m);
+        }}
+        onPick={setDate}
+      />
       {/* Under the date: back to today, and a small "Saat kapat" (it used to be a dashed
           full-width button that read like an empty slot; review, 12 November 2026). */}
       <div className={biz.dayTools}>

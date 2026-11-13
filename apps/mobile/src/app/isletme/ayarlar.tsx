@@ -9,6 +9,7 @@ import { Appear, SkeletonList } from '@/components/motion';
 import { PhotoManager } from '@/components/PhotoManager';
 import { SAVE_BAR_SPACE, SaveBar, type SaveBarState } from '@/components/SaveBar';
 import { SelectField } from '@/components/SelectField';
+import { ShopInfoStaff } from '@/components/ShopInfoStaff';
 import { ShopPicker } from '@/components/ShopPicker';
 import { StaffAvatar, StaffPhotoPicker } from '@/components/StaffAvatar';
 import { Alert, Badge, Button, Card, Field, Screen, Segmented, Text } from '@/components/ui';
@@ -53,7 +54,8 @@ export default function ShopSettingsScreen() {
         }
       >
         {error ? <Alert text={error} /> : null}
-        {shop && shop.role !== 'owner' ? <Alert tone="info" text="Salon bilgilerini yalnızca salon sahibi ve ortaklar değiştirebilir." /> : null}
+        {/* Staff read the same three tabs and choose the services they give (founder, 14 November 2026). */}
+        {shop && shop.role !== 'owner' ? <ShopInfoStaff key={shop.id} shopId={shop.id} memberId={shop.member_id} tab={tab} /> : null}
         {shop && shop.role === 'owner' ? (
           // Remounted per salon; tabs stay mounted so unsaved changes survive switching.
           <View key={shop.id}>

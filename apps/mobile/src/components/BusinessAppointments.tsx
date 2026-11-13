@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -11,6 +11,7 @@ import { colors, radius, themed } from '@/lib/theme';
 import type { Member, ShopAppointment } from '@/lib/types';
 import { usePolling } from '@/lib/usePolling';
 import { Icon } from './Icon';
+import { addMonths, MonthCalendar } from './MonthCalendar';
 import { ShopAppointmentCard } from './ShopAppointmentCard';
 import { BlockForm, TimeOffCard, type TimeOff } from './TimeBlocks';
 import { ShopPicker } from './ShopPicker';
@@ -40,6 +41,21 @@ export function BusinessAppointments() {
   const [showDropped, setShowDropped] = useState(false);
   const [closed, setClosed] = useState<TimeOff[]>([]);
   const [blocking, setBlocking] = useState(false);
+  // Takvim's month view, opened by tapping the date (founder, 14 November 2026).
+  const [calendar, setCalendar] = useState(false);
+  const [month, setMonth] = useState(date.slice(0, 7));
+  const [counts, setCounts] = useState<Record<string, number> | null>(null);
+
+  // Leaving for another screen closes what was open here: the month view and "Saat kapat".
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        setCalendar(false);
+        setBlocking(false);
+      },
+      [],
+    ),
+  );
 
   useEffect(() => {
     if (params.tab === 'takvim') setTab('takvim');
@@ -53,6 +69,8 @@ export function BusinessAppointments() {
     if (tabRef.current === next) return;
     setFrom(next === 'takvim' ? 'right' : 'left');
     setTab(next);
+    setCalendar(false);
+    setBlocking(false);
   }, []);
   // A tap on the tabs already gives a tick; a swipe gives the same one.
   const onSwipe = useCallback(
@@ -105,6 +123,30 @@ export function BusinessAppointments() {
     }
   }, [shop, date, staffId]);
   const { refreshing, refresh } = usePolling(load);
+
+  // How many appointments each day of the shown month has (declined and cancelled ones aside).
+  const shopId = shop?.id;
+  useEffect(() => {
+    if (!calendar || !shopId) return;
+    let stale = false;
+    const range = `from=${dayStart(`${month}-01`).toISOString()}&to=${dayStart(`${addMonths(month, 1)}-01`).toISOString()}`;
+    api<ShopAppointment[]>(`/staff/shops/${shopId}/appointments?${range}${staffId ? `&staffId=${staffId}` : ''}`)
+      .then((list) => {
+        if (stale) return;
+        const next: Record<string, number> = {};
+        for (const a of list) {
+          if (a.status === 'declined' || a.status === 'cancelled') continue;
+          const d = turkeyDate(new Date(a.starts_at));
+          next[d] = (next[d] ?? 0) + 1;
+        }
+        setCounts(next);
+      })
+      .catch(() => undefined);
+    return () => {
+      stale = true;
+    };
+    // `day` too: the counts follow the day's list when it is refreshed or answered.
+  }, [calendar, shopId, month, staffId, day]);
 
   const pending = requests?.filter((a) => a.status === 'pending').length ?? 0;
   const owner = shop?.role === 'owner';
@@ -164,7 +206,16 @@ export function BusinessAppointments() {
                 <Pressable accessibilityLabel="Önceki gün" onPress={() => goTo(addDays(date, -1))} style={styles.dayButton} hitSlop={6}>
                   <Icon name="back" size={20} color={colors.ink} strokeWidth={2.2} />
                 </Pressable>
-                <View style={{ flex: 1, alignItems: 'center' }}>
+                <Pressable
+                  style={({ pressed }) => [styles.dayTitle, pressed && { backgroundColor: colors.surface2 }]}
+                  onPress={() => {
+                    setMonth(date.slice(0, 7));
+                    setCalendar((v) => !v);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: calendar }}
+                  accessibilityLabel={`${formatLongDate(dayStart(date))}, takvimi ${calendar ? 'kapat' : 'aç'}`}
+                >
                   {dayLabel ? (
                     <Text weight="bold" size={17}>
                       {dayLabel}
@@ -173,11 +224,26 @@ export function BusinessAppointments() {
                   <Text size={dayLabel ? 13 : 17} weight={dayLabel ? 'regular' : 'bold'} color={dayLabel ? colors.muted : colors.ink}>
                     {formatLongDate(dayStart(date))}
                   </Text>
-                </View>
+                  <View style={[styles.dayCaret, { transform: [{ rotate: calendar ? '-90deg' : '90deg' }] }]}>
+                    <Icon name="chevron" size={14} color={colors.muted} strokeWidth={2.4} />
+                  </View>
+                </Pressable>
                 <Pressable accessibilityLabel="Sonraki gün" onPress={() => goTo(addDays(date, 1))} style={styles.dayButton} hitSlop={6}>
                   <Icon name="chevron" size={20} color={colors.ink} strokeWidth={2.2} />
                 </Pressable>
               </View>
+              <MonthCalendar
+                open={calendar}
+                month={month}
+                selected={date}
+                today={today}
+                counts={counts}
+                onMonth={(m) => {
+                  setCounts(null);
+                  setMonth(m);
+                }}
+                onPick={goTo}
+              />
               {/* Under the date: back to today, and a small "Saat kapat" (it used to be a
                   full-width button above the list; review, 12 November 2026). */}
               <View style={styles.dayTools}>
@@ -297,6 +363,8 @@ const styles = themed(() =>
       backgroundColor: colors.surface,
     },
     dayBar: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    dayTitle: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 46, paddingHorizontal: 22, borderRadius: radius.sm },
+    dayCaret: { position: 'absolute', right: 6, top: '50%', marginTop: -7 },
     dropped: { flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: 16, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.line },
     dayButton: { width: 46, height: 46, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   }),

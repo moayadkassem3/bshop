@@ -1,3 +1,4 @@
+import { HeaderPattern } from '@/components/HeaderPattern';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -130,6 +131,7 @@ export default function BookingScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style="light" />
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <HeaderPattern />
         <Pressable onPress={back} hitSlop={10} style={styles.headerBack} accessibilityLabel="Geri">
           <Icon name="back" size={20} color={colors.primaryLight} strokeWidth={2.4} />
           <Text weight="bold" color={colors.primaryLight} numberOfLines={1}>

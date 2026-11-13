@@ -6,7 +6,7 @@ import { sms } from '../messages.js';
 import { queueSms } from '../notifications.js';
 import { normalizePhone, normalizeShopPhone } from '../phone.js';
 import { PROVINCE_SLUGS, RESERVED_SLUGS, shopLinkCandidates, SLUG_PATTERN } from '../domain/slug.js';
-import { requireOwner, requirePlatformAdmin } from './access.js';
+import { requireMember, requireOwner, requirePlatformAdmin } from './access.js';
 import { upsertUserByPhone, type User } from './auth.js';
 import { RATING_COLUMNS } from '../domain/ratings.js';
 
@@ -299,8 +299,9 @@ const SETTING_COLUMNS: Record<keyof ShopSettingsInput, string> = {
 };
 
 /** The shop's details for its owners' edit screen (v1.7), including while it is under review. */
+/** Salon bilgileri: owners edit it; staff can read it (founder, 14 November 2026). */
 export async function getShopSettings(deps: Deps, user: User, shopId: string) {
-  await requireOwner(deps.db, user, shopId);
+  await requireMember(deps.db, user, shopId);
   return getShopById(deps.db, shopId);
 }
 

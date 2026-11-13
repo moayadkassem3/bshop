@@ -4,7 +4,8 @@
 
 /* Dark page header used by the tab pages (Randevular, Favoriler, Profil). */
 .page-header {
-  background: var(--night);
+  /* A faint texture of salon tools (founder, 14 November 2026); the app draws the same tile. */
+  background: var(--night) url('/doku.svg') repeat;
   color: #fff;
   padding: calc(28px + env(safe-area-inset-top)) 0 24px;
 }

@@ -1,3 +1,4 @@
+import { HeaderPattern } from '@/components/HeaderPattern';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
@@ -266,6 +267,7 @@ function Shell(props: {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style="light" />
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <HeaderPattern />
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Pressable onPress={props.onBack} hitSlop={10} style={styles.headerBack} accessibilityLabel={props.backLabel}>
             <Icon name="back" size={20} color={colors.primaryLight} strokeWidth={2.4} />

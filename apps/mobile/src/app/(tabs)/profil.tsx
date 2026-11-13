@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
@@ -20,7 +19,9 @@ import { formatPhone } from '@/lib/phone';
 import type { BusinessShop } from '@/lib/types';
 import { testPush } from '@/lib/push';
 import { useSession } from '@/lib/session';
-import { colors, radius, themed } from '@/lib/theme';
+import { BRAND_NAVY, colors, radius, themed } from '@/lib/theme';
+import { HeaderPattern } from '@/components/HeaderPattern';
+import { LogoMark } from '@/components/LogoMark';
 
 /** Profil: sign-in when signed out; otherwise the account, the mode switch and sign-out. */
 export default function ProfileScreen() {
@@ -37,8 +38,12 @@ function SignedOut() {
       <StatusBar style="light" />
       <ScrollView ref={scroll} onScroll={keyboard.onScroll} scrollEventThrottle={16} contentContainerStyle={{ flexGrow: 1, paddingBottom: keyboard.room }} keyboardShouldPersistTaps="handled">
         <View style={[styles.hero, { paddingTop: insets.top + 36 }]}>
+          <HeaderPattern />
           <PopIn>
-            <Image source={require('../../../assets/icon.png')} style={styles.mark} contentFit="cover" accessibilityIgnoresInvertColors />
+            {/* Drawn, not the icon file: the tile is the brand navy on every phone (founder, 14 November 2026). */}
+            <View style={styles.mark}>
+              <LogoMark size={46} color="#ffffff" />
+            </View>
           </PopIn>
           <Text size={32} weight="heavy" color={colors.white} style={{ letterSpacing: -0.6 }}>
             Salon Randevu
@@ -431,7 +436,7 @@ function MenuRow({ icon, label, onPress, last, open }: { icon: IconName; label: 
 const styles = themed(() =>
   StyleSheet.create({
     hero: { alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingBottom: 36 },
-    mark: { width: 84, height: 84, borderRadius: 24, marginBottom: 12, borderWidth: 1.5, borderColor: colors.dark2 },
+    mark: { width: 84, height: 84, borderRadius: 24, marginBottom: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: BRAND_NAVY, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.14)' },
     sheet: { flexGrow: 1, gap: 16, padding: 20, paddingBottom: 32, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colors.bg },
     businessLink: {
       flexDirection: 'row',

@@ -8,6 +8,20 @@ const t = useTestApp();
 const jpeg = () => sharp({ create: { width: 300, height: 400, channels: 3, background: '#334' } }).jpeg().toBuffer();
 
 describe('Popüler kesimler (v1.7)', () => {
+  it('a cut can be given the salon\'s own name with "Diğer" (founder, 14 November 2026)', async () => {
+    const shop = await setupShop(t);
+    const post = async (query: string) => t.call('POST', `${shop.base}/posts?${query}`, { token: shop.tokens.owner, body: await jpeg(), contentType: 'image/jpeg' });
+    expect((await post('style=diger-erkek')).body.error).toBe('STYLE_NAME_REQUIRED');
+    expect((await post(`style=diger-erkek&name=${'x'.repeat(41)}`)).status).toBe(400);
+    expect((await post('style=diger-erkek&name=Mullet')).status).toBe(201);
+    // A name sent with a listed style is ignored.
+    expect((await post('style=crop&name=Mullet')).status).toBe(201);
+    const posts = (await t.call('GET', `${shop.base}/posts`, { token: shop.tokens.owner })).body;
+    expect(posts.map((p: { style_name: string }) => p.style_name).sort()).toEqual(['Crop', 'Mullet']);
+    const popular = (await t.call('GET', '/public/haircuts?audience=men')).body;
+    expect(popular.map((p: { style_name: string }) => p.style_name).sort()).toEqual(['Crop', 'Mullet']);
+  });
+
   it("a salon posts only its own customers' styles", async () => {
     const shop = await setupShop(t);
     const upload = async (style: string) =>
@@ -104,7 +118,17 @@ describe('editing the salon (v1.7)', () => {
     expect(patched.body).toMatchObject({ name: 'Yeni Ad', audience: 'unisex', phone: '+902165554433', slug: shop.slug });
 
     const staff = await t.login(PHONES.cumali, { portal: 'staff' });
-    expect((await t.call('GET', `${shop.base}/settings`, { token: staff })).status).toBe(403);
+    // Staff read the salon's details and choose the services they give; they cannot change the salon (founder, 14 November 2026).
+    expect((await t.call('GET', `${shop.base}/settings`, { token: staff })).body.name).toBeTruthy();
+    expect((await t.call('PATCH', `${shop.base}/settings`, { token: staff, body: { name: 'Başka' } })).status).toBe(403);
+    const cumali = (await t.call('GET', `${shop.base}/members`, { token: staff })).body.find((m: { display_name: string }) => m.display_name.startsWith('Cumali'));
+    const given = (await t.call('GET', `${shop.base}/members/${cumali.id}/services`, { token: staff })).body as { service_id: string }[];
+    expect(given.length).toBeGreaterThan(1);
+    const keep = [{ serviceId: given[0]!.service_id }];
+    expect((await t.call('PUT', `${shop.base}/members/${cumali.id}/services`, { token: staff, body: keep })).status).toBe(204);
+    expect((await t.call('GET', `${shop.base}/members/${cumali.id}/services`, { token: staff })).body).toHaveLength(1);
+    const other = (await t.call('GET', `${shop.base}/members`, { token: staff })).body.find((m: { id: string }) => m.id !== cumali.id);
+    expect((await t.call('PUT', `${shop.base}/members/${other.id}/services`, { token: staff, body: keep })).status).toBe(403);
     expect((await t.call('GET', '/me', { token: owner })).body.owns_shop).toBe(true);
     const mine = (await t.call('GET', '/staff/shops', { token: owner })).body[0];
     expect(mine).toMatchObject({ slug: shop.slug, audience: 'unisex' });

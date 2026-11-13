@@ -175,3 +175,6 @@ export const shadow = Platform.select({
   android: {},
   default: { shadowColor: '#0b1120', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
 });
+
+/** The app icon's navy: the logo tile on the sign-in screen and the update pop-up. */
+export const BRAND_NAVY = '#192C60';

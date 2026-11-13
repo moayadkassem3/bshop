@@ -1,3 +1,4 @@
+import { revealFocusedField } from '@/lib/keyboard';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { confirm } from '@/components/Dialogs';
@@ -27,6 +28,9 @@ export default function MyWorkScreen() {
   const [posts, setPosts] = useState<HaircutPost[] | null>(null);
   const [file, setFile] = useState<string | null>(null);
   const [style, setStyle] = useState<string | null>(null);
+  // "Diğer": the salon writes the cut's name itself (founder, 14 November 2026).
+  const [customName, setCustomName] = useState('');
+  const custom = Boolean(style?.startsWith('diger-'));
   const [caption, setCaption] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +38,11 @@ export default function MyWorkScreen() {
   // Only the styles of the salon's own customers: a men's salon sees men's styles.
   const choices = useMemo(() => {
     const groups = shop?.audience === 'men' ? ['men'] : shop?.audience === 'women' ? ['women'] : ['men', 'women'];
-    return styleList.filter((s) => groups.includes(s.audience)).map((s) => ({ ...s, label: groups.length > 1 ? `${s.name} (${s.audience === 'men' ? 'Erkek' : 'Kadın'})` : s.name }));
+    return styleList.filter((s) => groups.includes(s.audience)).map((s) => {
+      // In the list for sharing, "Diğer" says what it is for.
+      const name = s.key.startsWith('diger-') ? 'Diğer (kendi adınızı yazın)' : s.name;
+      return { ...s, label: groups.length > 1 ? `${name} (${s.audience === 'men' ? 'Erkek' : 'Kadın'})` : name };
+    });
   }, [styleList, shop?.audience]);
 
   useEffect(() => {
@@ -69,9 +77,11 @@ export default function MyWorkScreen() {
     try {
       const params = new URLSearchParams({ style });
       if (caption.trim()) params.set('caption', caption.trim());
+      if (custom) params.set('name', customName.trim());
       await apiUpload(`/staff/shops/${shop.id}/posts?${params}`, file);
       setFile(null);
       setCaption('');
+      setCustomName('');
       await load();
     } catch (err) {
       setError(errorMessage(err));
@@ -139,13 +149,21 @@ export default function MyWorkScreen() {
               placeholder="Seçin"
               onChange={(label) => setStyle(choices.find((c) => c.label === label)?.key ?? null)}
             />
+            {custom ? (
+              <View style={{ gap: 6 }}>
+                <Text size={14} weight="semibold" color={colors.ink2}>
+                  Kesimin adı
+                </Text>
+                <TextInput value={customName} onChangeText={setCustomName} onFocus={revealFocusedField} maxLength={40} placeholder="Örn. Mullet" placeholderTextColor={colors.muted} style={styles.input} />
+              </View>
+            ) : null}
             <View style={{ gap: 6 }}>
               <Text size={14} weight="semibold" color={colors.ink2}>
                 Açıklama (isteğe bağlı)
               </Text>
               <TextInput value={caption} onChangeText={setCaption} maxLength={200} placeholder="Örn. Yan taraflar 0 numara" placeholderTextColor={colors.muted} style={styles.input} />
             </View>
-            <Button title={busy ? 'Paylaşılıyor…' : 'Paylaş'} onPress={share} disabled={busy || !file || !style} busy={busy} />
+            <Button title={busy ? 'Paylaşılıyor…' : 'Paylaş'} onPress={share} disabled={busy || !file || !style || (custom && !customName.trim())} busy={busy} />
           </Card>
         </Appear>
       ) : null}

@@ -1,5 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
+import { HeaderPattern } from './HeaderPattern';
 import { Icon, type IconName } from './Icon';
 import { useRef, type ReactNode } from 'react';
 import {
@@ -159,6 +160,7 @@ export function Screen(props: {
         }
       >
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+          <HeaderPattern />
           {props.back}
           <Text size={30} weight="heavy" color={colors.white} style={{ letterSpacing: -0.6 }}>
             {props.title}

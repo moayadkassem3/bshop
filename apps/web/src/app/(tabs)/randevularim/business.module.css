@@ -324,3 +324,147 @@
   font-size: 13px;
   color: var(--muted);
 }
+
+/* Takvim: the date is a button that opens the month view below it (founder, 14 November 2026). */
+.dayLabelButton {
+  position: relative;
+  flex: 1;
+  min-height: 44px;
+  padding: 2px 26px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.dayLabelButton:hover {
+  background: var(--surface-2);
+}
+
+.dayCaret {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  display: grid;
+  color: var(--muted);
+  transform: translateY(-50%) rotate(90deg);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.dayLabelButton[aria-expanded='true'] .dayCaret {
+  transform: translateY(-50%) rotate(-90deg);
+}
+
+/* Slides down: the row grows from nothing to the card's height. */
+.month {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--dur-3) var(--ease-out),
+    opacity var(--dur-2) var(--ease-out);
+}
+
+.monthOpen {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.monthClip {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.monthCard {
+  margin: 4px 0 10px;
+  padding: 8px 10px 12px;
+}
+
+.monthHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 2px;
+}
+
+.monthArrow {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  justify-items: center;
+  row-gap: 4px;
+}
+
+.monthWeekday {
+  height: 24px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.monthDay {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.monthDay small {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.monthDay:hover {
+  background: var(--surface-2);
+}
+
+.monthToday {
+  border-color: var(--primary);
+  font-weight: 800;
+}
+
+.monthDayOn,
+.monthDayOn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 800;
+}
+
+.monthDayOn small {
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .month,
+  .dayCaret {
+    transition: none;
+  }
+}

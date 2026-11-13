@@ -26,7 +26,7 @@ import {
   listMyShops,
   listServices,
   setCustomerBlocked,
-  setMemberServices,
+  listMemberServices, setMemberServices,
   setWorkingHours,
   getWorkingHours,
   updateMember,
@@ -35,7 +35,7 @@ import {
 import { AppError } from '../errors.js';
 import { addPhoto, deletePhoto, deleteStaffPhoto, listPhotosForStaff, MAX_UPLOAD_BYTES, reorderPhotos, setStaffPhoto } from '../services/photos.js';
 import { addPost, deletePost, listShopPostsForStaff } from '../services/haircuts.js';
-import { STYLE_KEYS } from '../domain/styles.js';
+import { STYLE_KEYS, CUSTOM_NAME_MAX } from '../domain/styles.js';
 import type { AuthFn } from './app.js';
 import { id, shopParams, timestamp, weeklyWindows } from './schemas.js';
 import { replyToRating, shopRatings } from '../services/ratings.js';
@@ -257,6 +257,10 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     await setWorkingHours(deps, await auth(req), p.shopId, p.id, weeklyWindows.parse(req.body));
     return reply.status(204).send();
   });
+  app.get('/staff/shops/:shopId/members/:id/services', async (req) => {
+    const p = action.parse(req.params);
+    return listMemberServices(deps, await auth(req), p.shopId, p.id);
+  });
   app.put('/staff/shops/:shopId/members/:id/services', async (req, reply) => {
     const p = action.parse(req.params);
     const body = z.array(z.object({ serviceId: id, durationMinutes: minutes.nullish() })).parse(req.body);
@@ -335,7 +339,7 @@ export function staffRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
   app.post('/staff/shops/:shopId/posts', async (req, reply) => {
     const user = await auth(req);
     const { shopId } = shopParams.parse(req.params);
-    const q = z.object({ style: z.enum(STYLE_KEYS), caption: z.string().max(200).optional() }).parse(req.query);
+    const q = z.object({ style: z.enum(STYLE_KEYS), caption: z.string().max(200).optional(), name: z.string().trim().max(CUSTOM_NAME_MAX).optional() }).parse(req.query);
     if (!Buffer.isBuffer(req.body)) throw new AppError(415, 'UNSUPPORTED_MEDIA', 'Send a JPEG, PNG, or WebP image');
     return reply.status(201).send(await addPost(deps, user, shopId, req.body, q));
   });
