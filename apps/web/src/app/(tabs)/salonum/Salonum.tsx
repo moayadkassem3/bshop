@@ -196,7 +196,7 @@ type ShortcutItem = { href: string; icon: keyof typeof ICONS; label: string; hin
 /**
  * The salon's tools (founder, 8 November 2026; the app's list matches). Owners and co-owners see four
  * groups as separate cards: promote the salon, see how it is doing, set it up, the subscription.
- * Staff see the first three groups the same way, without the subscription (founder, 14 November 2026).
+ * Staff see the same four cards; their subscription page is read-only (founder, 14 November 2026).
  */
 function ShortcutGroups({ owner, onSettings }: { owner: boolean; onSettings: () => void }) {
   const groups: (ShortcutItem | false)[][] = [
@@ -217,7 +217,7 @@ function ShortcutGroups({ owner, onSettings }: { owner: boolean; onSettings: () 
         ? { href: '/isletme-ayarlari', icon: 'settings', label: 'Salon bilgileri', hint: 'Adres, fotoğraflar, hizmetler, personel', onClick: onSettings }
         : { href: '/isletme-ayarlari', icon: 'settings', label: 'Salon bilgileri', hint: 'Salon, verdiğiniz hizmetler, ekip' },
     ],
-    [owner && { href: '/abonelik', icon: 'card', label: 'Aboneliğim', hint: 'Paketiniz ve abonelik durumunuz' }],
+    [{ href: '/abonelik', icon: 'card', label: owner ? 'Aboneliğim' : 'Abonelik', hint: owner ? 'Paketiniz ve abonelik durumunuz' : 'Salonun paketi ve abonelik durumu' }],
   ];
   const shown = groups.map((g) => g.filter((item): item is ShortcutItem => Boolean(item))).filter((g) => g.length);
   // Staff get the same separate cards as owners now that they have Salon bilgileri too (founder, 14 November 2026).

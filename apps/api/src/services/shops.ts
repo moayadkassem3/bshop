@@ -458,7 +458,9 @@ export async function sitemapEntries(deps: Deps) {
  * period and the payments and activations our team recorded (without our notes).
  */
 export async function mySubscription(deps: Deps, user: User, shopId: string) {
-  await requireOwner(deps.db, user, shopId);
+  // Staff see the state and the package's name (founder, 14 November 2026); prices and the
+  // payment history stay with the owner and co-owners, who look after the subscription.
+  const member = await requireMember(deps.db, user, shopId);
   const now = deps.clock.now();
   const { rows } = await deps.db.query<{ seats: number }>(
     `SELECT sub.status, sub.current_period_end, sub.grace_until, s.suspended_at, s.suspended_reason, (${PUBLIC_CONDITION}) AS visible,
@@ -472,5 +474,9 @@ export async function mySubscription(deps: Deps, user: User, shopId: string) {
     `SELECT amount_kurus, months, method, period_end, created_at FROM payments WHERE shop_id = $1 ORDER BY created_at DESC LIMIT 24`,
     [shopId],
   );
-  return { ...rows[0], plan: planForStaff(rows[0].seats), terms: PLAN_TERMS, payments: payments.rows };
+  const plan = planForStaff(rows[0].seats);
+  if (member.role !== 'owner') {
+    return { ...rows[0], open_request_at: null, plan: plan ? { id: plan.id, name: plan.name } : null, terms: { customQuoteAboveStaff: PLAN_TERMS.customQuoteAboveStaff }, payments: [], manages: false };
+  }
+  return { ...rows[0], plan, terms: PLAN_TERMS, payments: payments.rows, manages: true };
 }

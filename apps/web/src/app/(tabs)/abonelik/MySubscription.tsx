@@ -87,7 +87,7 @@ function OwnerView() {
   const owner = shop?.role === 'owner';
 
   useEffect(() => {
-    if (!shop || shop.role !== 'owner') return;
+    if (!shop) return;
     setSub(null);
     api<Subscription>(`/staff/shops/${shop.id}/subscription`)
       .then(setSub)
@@ -112,9 +112,8 @@ function OwnerView() {
       <div className={`container narrow ${page.body} ${styles.page}`}>
         {(shopsError || error) && <p className="alert alert-danger">{shopsError || error}</p>}
         {shops && shops.length === 0 && <p className="muted">Bu hesap henüz bir işletmeye bağlı değil.</p>}
-        {shop && !owner && <p className="alert alert-info">Aboneliği salon sahibi yönetir.</p>}
-        {owner && !sub && !error && <SkeletonList rows={2} />}
-        {owner && sub && shop && (
+        {shop && !sub && !error && <SkeletonList rows={2} />}
+        {sub && shop && (
           <div className="motion-fade">
             <section className={`card ${styles.card} ${styles[toneOf(sub)]}`} aria-label="Durum">
               <Status sub={sub} />
@@ -124,19 +123,21 @@ function OwnerView() {
               <h2 id="plan-title">Paketiniz</h2>
               <p className={styles.plan}>
                 <strong>{sub.plan ? sub.plan.name : `${sub.terms.customQuoteAboveStaff}’dan fazla personel`}</strong>
-                {canSell === true && <span>{sub.plan ? `${formatPrice(sub.plan.monthlyPriceKurus)}/ay` : 'Size özel fiyat'}</span>}
+                {canSell === true && owner && <span>{sub.plan ? `${formatPrice(sub.plan.monthlyPriceKurus)}/ay` : 'Size özel fiyat'}</span>}
               </p>
               <p className="muted">{sub.seats} kişi randevu alıyor. Paket, randevu alan personel sayısına göre belirlenir.</p>
               {/* The payment page (EFT / Havale; founder, 12 November 2026): the main button while the
                   salon needs to pay, a quieter one to pay ahead. Never in the store apps. */}
-              {canSell === true && !sub.suspended_at && (
+              {canSell === true && owner && !sub.suspended_at && (
                 <div className={styles.actions}>
                   <Link transitionTypes={FORWARD} href="/abonelik/odeme" className={`btn ${sub.status !== 'active' || daysLeft(sub.current_period_end) <= 7 ? 'btn-primary' : ''}`}>
                     {sub.status === 'active' ? 'Aboneliği uzat' : 'Ödeme yap'}
                   </Link>
                 </div>
               )}
-              {canSell === true && (
+              {/* Staff: the state and the package's name only (founder, 14 November 2026). */}
+              {!owner && <p className="alert alert-info">Aboneliği salon sahibi ve ortaklar takip eder.</p>}
+              {canSell === true && owner && (
                 <Link transitionTypes={FORWARD} href="/isletmeler" className={styles.link}>
                   Tüm paketler ve fiyatlar ›
                 </Link>

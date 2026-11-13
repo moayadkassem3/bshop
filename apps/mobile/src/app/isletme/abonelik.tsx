@@ -13,7 +13,7 @@ import type { Subscription } from '@/lib/types';
 /**
  * Aboneliğim in the app: read-only (store rules, CLAUDE.md). Plan name, staff
  * count, days left and history without amounts; no prices, no buy buttons and
- * no "pay on the website" wording.
+ * no "pay on the website" wording. Staff see the state and the package's name.
  */
 export default function MySubscriptionScreen() {
   const { shops, shop, selectShop, error: shopsError } = useBusinessShops();
@@ -22,7 +22,7 @@ export default function MySubscriptionScreen() {
   const owner = shop?.role === 'owner';
 
   const load = useCallback(async () => {
-    if (!shop || shop.role !== 'owner') return;
+    if (!shop) return;
     try {
       setSub(await api<Subscription>(`/staff/shops/${shop.id}/subscription`));
       setError(null);
@@ -39,9 +39,8 @@ export default function MySubscriptionScreen() {
   return (
     <Screen title="Aboneliğim" back={<BackLink label="Salonum" />} header={<ShopPicker shops={shops} shop={shop} onSelect={selectShop} />}>
       {shopsError || error ? <Alert text={(shopsError || error)!} /> : null}
-      {shop && !owner ? <Alert tone="info" text="Aboneliği salon sahibi yönetir." /> : null}
-      {owner && !sub && !error ? <SkeletonList rows={2} /> : null}
-      {owner && sub ? (
+      {shop && !sub && !error ? <SkeletonList rows={2} /> : null}
+      {shop && sub ? (
         <>
           <Appear>
             <Status sub={sub} />
@@ -57,6 +56,12 @@ export default function MySubscriptionScreen() {
               <Text color={colors.muted}>{sub.seats} kişi randevu alıyor. Paket, randevu alan personel sayısına göre belirlenir.</Text>
             </Card>
           </Appear>
+          {/* Staff: the state and the package's name only (founder, 14 November 2026). */}
+          {!owner ? (
+            <Appear index={2}>
+              <Alert tone="info" text="Aboneliği salon sahibi ve ortaklar takip eder." />
+            </Appear>
+          ) : null}
           {sub.payments.length > 0 ? (
             <Appear index={2}>
               <Card style={{ gap: 10 }}>

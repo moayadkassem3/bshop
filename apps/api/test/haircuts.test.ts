@@ -118,6 +118,11 @@ describe('editing the salon (v1.7)', () => {
     expect(patched.body).toMatchObject({ name: 'Yeni Ad', audience: 'unisex', phone: '+902165554433', slug: shop.slug });
 
     const staff = await t.login(PHONES.cumali, { portal: 'staff' });
+    // Staff see the subscription's state and the package's name, without prices or payments (founder, 14 November 2026).
+    const seen = (await t.call('GET', `${shop.base}/subscription`, { token: staff })).body;
+    expect(seen).toMatchObject({ status: 'active', manages: false, payments: [], plan: { name: expect.any(String) } });
+    expect(seen.plan.monthlyPriceKurus).toBeUndefined();
+    expect((await t.call('GET', `${shop.base}/subscription`, { token: owner })).body).toMatchObject({ manages: true, plan: { monthlyPriceKurus: expect.any(Number) } });
     // Staff read the salon's details and choose the services they give; they cannot change the salon (founder, 14 November 2026).
     expect((await t.call('GET', `${shop.base}/settings`, { token: staff })).body.name).toBeTruthy();
     expect((await t.call('PATCH', `${shop.base}/settings`, { token: staff, body: { name: 'Başka' } })).status).toBe(403);

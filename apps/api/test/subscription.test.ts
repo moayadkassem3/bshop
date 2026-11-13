@@ -70,6 +70,8 @@ describe('subscription reminders and Aboneliğim (v1.7)', () => {
     expect(mine.payments[0].note).toBeUndefined();
 
     const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
-    expect((await t.call('GET', `/staff/shops/${shop.shopId}/subscription`, { token: cumali })).status).toBe(403);
+    // Staff see the state and the package's name only (founder, 14 November 2026).
+    expect((await t.call('GET', `/staff/shops/${shop.shopId}/subscription`, { token: cumali })).body).toMatchObject({ manages: false, payments: [] });
+    expect((await t.call('POST', `/staff/shops/${shop.shopId}/subscription-request`, { token: cumali })).status).toBe(403);
   });
 });
