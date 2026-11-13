@@ -219,8 +219,8 @@ function EditProfile({ business, onDone }: { business: boolean; onDone: () => vo
       {business ? <MyStaffPhoto /> : null}
       <Field label="Ad" value={firstName} onChangeText={setFirstName} autoCapitalize="words" textContentType="givenName" />
       <Field label="Soyad" value={lastName} onChangeText={setLastName} autoCapitalize="words" textContentType="familyName" />
-      {/* Chosen once at sign-up; it cannot be changed afterwards (founder, 13 November 2026). */}
-      {me?.gender ? null : <GenderChoice value={gender} onChange={setGender} />}
+      {/* Chosen once at sign-up; afterwards it is shown greyed out and cannot be changed (founder, 13 November 2026). */}
+      <GenderChoice value={gender} onChange={setGender} locked={Boolean(me?.gender)} />
       {error ? <Alert text={error} /> : null}
       <Button title="Kaydet" onPress={() => void save()} busy={busy} disabled={!firstName.trim() || !lastName.trim()} />
     </View>

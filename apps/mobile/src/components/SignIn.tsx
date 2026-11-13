@@ -213,7 +213,8 @@ function CreateAccount({ result }: { result: VerifyResult }) {
   );
 }
 
-export function GenderChoice(props: { value: 'male' | 'female' | null; onChange: (v: 'male' | 'female') => void }) {
+/** `locked`: shown greyed out and cannot be changed (Profil, once it is set; founder, 13 November 2026). */
+export function GenderChoice(props: { value: 'male' | 'female' | null; onChange: (v: 'male' | 'female') => void; locked?: boolean }) {
   return (
     <View style={{ gap: 6 }}>
       <Text size={14} weight="semibold" color={colors.ink2}>
@@ -223,14 +224,26 @@ export function GenderChoice(props: { value: 'male' | 'female' | null; onChange:
         {(['male', 'female'] as const).map((g) => {
           const on = props.value === g;
           return (
-            <Pressable key={g} accessibilityRole="radio" accessibilityState={{ checked: on }} onPress={() => props.onChange(g)} style={[styles.gender, on && styles.genderOn]}>
-              <Text weight="bold" color={on ? colors.primary : colors.ink}>
+            <Pressable
+              key={g}
+              disabled={props.locked}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: on, disabled: props.locked }}
+              onPress={() => props.onChange(g)}
+              style={[styles.gender, on && styles.genderOn, props.locked && { backgroundColor: colors.bg }, props.locked && on && { borderColor: colors.muted, backgroundColor: colors.line }]}
+            >
+              <Text weight="bold" color={props.locked ? (on ? colors.ink : colors.muted) : on ? colors.primary : colors.ink}>
                 {g === 'male' ? 'Erkek' : 'Kadın'}
               </Text>
             </Pressable>
           );
         })}
       </View>
+      {props.locked ? (
+        <Text size={13} color={colors.muted}>
+          Cinsiyet kayıttan sonra değiştirilemez.
+        </Text>
+      ) : null}
     </View>
   );
 }

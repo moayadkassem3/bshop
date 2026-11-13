@@ -245,20 +245,24 @@ function CreateAccount({ result, onDone }: { result: VerifyResult; onDone: (me: 
   );
 }
 
-/** Erkek / Kadın: Keşfet opens on the matching salon type. */
-export function GenderChoice(props: { value: 'male' | 'female' | null; onChange: (value: 'male' | 'female') => void }) {
+/**
+ * Erkek / Kadın: Keşfet opens on the matching salon type. `locked`: shown greyed out and
+ * cannot be changed (Profil, once it is set; founder, 13 November 2026).
+ */
+export function GenderChoice(props: { value: 'male' | 'female' | null; onChange: (value: 'male' | 'female') => void; locked?: boolean }) {
   return (
     <div className="field">
       <span className={styles.label} id="gender-label">
         Cinsiyet
       </span>
-      <div className={styles.gender} role="radiogroup" aria-labelledby="gender-label">
+      <div className={`${styles.gender} ${props.locked ? styles.genderLocked : ''}`} role="radiogroup" aria-labelledby="gender-label" aria-disabled={props.locked || undefined}>
         {(['male', 'female'] as const).map((g) => (
-          <button key={g} type="button" role="radio" aria-checked={props.value === g} className={props.value === g ? styles.genderOn : ''} onClick={() => props.onChange(g)}>
+          <button key={g} type="button" role="radio" aria-checked={props.value === g} className={props.value === g ? styles.genderOn : ''} disabled={props.locked} onClick={() => props.onChange(g)}>
             {g === 'male' ? 'Erkek' : 'Kadın'}
           </button>
         ))}
       </div>
+      {props.locked && <span className={styles.genderNote}>Cinsiyet kayıttan sonra değiştirilemez.</span>}
     </div>
   );
 }

@@ -99,6 +99,24 @@
   color: var(--primary);
 }
 
+/* Profil, once the gender is set: both choices greyed out, the chosen one still marked. */
+.genderLocked button {
+  background: var(--bg);
+  color: var(--muted);
+  cursor: default;
+}
+
+.genderLocked .genderOn {
+  border-color: var(--muted);
+  background: var(--line);
+  color: var(--ink);
+}
+
+.genderNote {
+  font-size: 13px;
+  color: var(--muted);
+}
+
 .title {
   margin: 0;
   font-size: 20px;

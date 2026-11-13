@@ -179,8 +179,8 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
                   <label htmlFor="p-last">Soyad</label>
                   <input id="p-last" className="input" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                 </div>
-                {/* Chosen once at sign-up; it cannot be changed afterwards (founder, 13 November 2026). */}
-                {!me.gender && <GenderChoice value={gender} onChange={setGender} />}
+                {/* Chosen once at sign-up; afterwards it is shown greyed out and cannot be changed (founder, 13 November 2026). */}
+                <GenderChoice value={gender} onChange={setGender} locked={Boolean(me.gender)} />
                 <button type="button" className="btn btn-primary" disabled={busy || !firstName.trim() || !lastName.trim()} onClick={saveName}>
                   Kaydet
                 </button>
