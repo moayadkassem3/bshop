@@ -3,6 +3,7 @@ import { SplashScreen, Stack } from 'expo-router';
 import { Fragment, useEffect, useSyncExternalStore } from 'react';
 import { DialogHost } from '@/components/Dialogs';
 import { PushBridge } from '@/components/PushBridge';
+import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SessionProvider, useSession } from '@/lib/session';
@@ -45,6 +46,7 @@ function Navigation({ fontsLoaded }: { fontsLoaded: boolean }) {
       </Stack>
       <PushBridge />
       <DialogHost />
+      <UpdatePrompt />
     </Fragment>
   );
 }

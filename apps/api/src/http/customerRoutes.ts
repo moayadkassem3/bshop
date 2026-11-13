@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { acceptInvite, declineInvite, myInvites } from '../services/invites.js';
 import type { Deps } from '../deps.js';
-import { signOut, switchMode, updateProfile } from '../services/auth.js';
+import { signOut, switchMode, updateProfile, withBusiness } from '../services/auth.js';
 import { cancelByCustomer, createBooking, listCustomerAppointments } from '../services/booking.js';
 import { addFavorite, listCustomerShops, removeFavorite } from '../services/favorites.js';
 import { listConsents, recordConsents, withdrawConsent } from '../services/consents.js';
@@ -33,12 +33,9 @@ export function customerRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
 
   app.get('/me', async (req) => {
     const user = await auth(req);
-    // Profil (v1.7): owners and co-owners do not need "İşletmenizi kaydedin"; only people
-    // who work at a salon see the switch to business mode.
-    const { rows } = await deps.db.query<{ role: string }>('SELECT role FROM shop_members WHERE user_id = $1 AND active', [user.id]);
     // Verified tick (v1.7): three completed visits booked through the app.
     const tick = await deps.db.query<{ verified: boolean }>('SELECT verified_at IS NOT NULL AS verified FROM users WHERE id = $1', [user.id]);
-    return { ...user, owns_shop: rows.some((r) => r.role === 'owner'), has_business: rows.length > 0, verified: tick.rows[0]?.verified ?? false };
+    return { ...(await withBusiness(deps.db, user)), verified: tick.rows[0]?.verified ?? false };
   });
 
   app.post('/auth/logout', async (req, reply) => {

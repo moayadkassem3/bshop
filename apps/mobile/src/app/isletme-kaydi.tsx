@@ -238,7 +238,7 @@ export default function RegisterScreen() {
             onRegistered={async (r) => {
               saved = null;
               // The answer carries an owner session for the new salon: the app continues in business mode.
-              await signIn(r.token, { ...me, portal: 'owner' }, true);
+              await signIn(r.token, { ...me, portal: 'owner', owns_shop: true }, true);
               setResult(r);
             }}
           />

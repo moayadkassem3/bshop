@@ -191,7 +191,7 @@ function Account() {
   );
 }
 
-/** Ad, soyad and gender, as on the website's "Profili düzenle". */
+/** Ad and soyad (and gender, only while it is still empty), as on the website's "Profili düzenle". */
 function EditProfile({ business, onDone }: { business: boolean; onDone: () => void }) {
   const { me, refresh } = useSession();
   const [firstName, setFirstName] = useState(me?.first_name ?? '');
@@ -219,7 +219,8 @@ function EditProfile({ business, onDone }: { business: boolean; onDone: () => vo
       {business ? <MyStaffPhoto /> : null}
       <Field label="Ad" value={firstName} onChangeText={setFirstName} autoCapitalize="words" textContentType="givenName" />
       <Field label="Soyad" value={lastName} onChangeText={setLastName} autoCapitalize="words" textContentType="familyName" />
-      <GenderChoice value={gender} onChange={setGender} />
+      {/* Chosen once at sign-up; it cannot be changed afterwards (founder, 13 November 2026). */}
+      {me?.gender ? null : <GenderChoice value={gender} onChange={setGender} />}
       {error ? <Alert text={error} /> : null}
       <Button title="Kaydet" onPress={() => void save()} busy={busy} disabled={!firstName.trim() || !lastName.trim()} />
     </View>

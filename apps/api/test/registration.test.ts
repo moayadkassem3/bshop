@@ -209,16 +209,49 @@ describe('test deployments (DEMO_MODE)', () => {
   });
 });
 
+/** A fresh sign-in through the customer entrance (t.login keeps the first session). */
+async function signInAgain(phone: string, extra: object = {}) {
+  t.clock.advance(2);
+  await t.call('POST', '/auth/otp/request', { body: { phone, portal: 'customer' } });
+  await t.tick();
+  const code = t.sms.to(phone).filter((m) => m.includes('kodunuz')).at(-1)!.match(/(\d{6})/)![1];
+  return t.call('POST', '/auth/otp/verify', { body: { phone, code, portal: 'customer', ...extra } });
+}
+
 describe('customer gender (v1.7)', () => {
-  it('is chosen at sign-up, kept on later sign-ins, and editable in the profile', async () => {
+  it('is chosen at sign-up, kept on later sign-ins, and cannot be changed afterwards', async () => {
     const token = await t.login(PHONES.customer, { names: { firstName: 'Elif', lastName: 'Kaya', gender: 'female' } });
     expect((await t.call('GET', '/me', { token })).body.gender).toBe('female');
 
     const patch = (body: object) => t.call('PATCH', '/me', { token, body: { firstName: 'Elif', lastName: 'Kaya', ...body } });
     expect((await patch({})).body.gender).toBe('female');
-    expect((await patch({ gender: 'male' })).body.gender).toBe('male');
-    expect((await patch({ gender: null })).body.gender).toBeNull();
+    expect((await patch({ gender: 'male' })).body.gender).toBe('female');
+    expect((await patch({ gender: null })).body.gender).toBe('female');
     expect((await patch({ gender: 'other' })).status).toBe(400);
+    // A later sign-in that sends another gender does not change it either.
+    const again = await signInAgain(PHONES.customer, { gender: 'male' });
+    expect(again.body.user.gender).toBe('female');
+  });
+
+  it('an account without one (added by a salon) can still fill it in once', async () => {
+    const token = await t.login(PHONES.customer2);
+    const patch = (gender: string) => t.call('PATCH', '/me', { token, body: { firstName: 'Can', lastName: 'Demir', gender } });
+    expect((await patch('male')).body.gender).toBe('male');
+    expect((await patch('female')).body.gender).toBe('male');
+  });
+});
+
+describe('sign-in tells Profil about the salon (founder, 13 November 2026)', () => {
+  it('owners get owns_shop with the sign-in and the mode switch, not only from /me', async () => {
+    const shop = await setupShop(t);
+    const signedIn = await signInAgain(PHONES.owner);
+    expect(signedIn.body.user).toMatchObject({ owns_shop: true, has_business: true });
+    const switched = await t.call('POST', '/me/switch', { token: signedIn.body.token, body: { to: 'business' } });
+    expect(switched.body.user).toMatchObject({ owns_shop: true, has_business: true, portal: 'owner' });
+    expect(shop.slug).toBeTruthy();
+
+    const customer = await t.login(PHONES.customer, { names: { firstName: 'Elif', lastName: 'Kaya' } });
+    expect((await t.call('GET', '/me', { token: customer })).body).toMatchObject({ owns_shop: false, has_business: false });
   });
 });
 

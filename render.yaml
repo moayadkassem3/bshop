@@ -35,6 +35,13 @@ services:
         sync: false
       - key: PAYMENT_IBAN
         sync: false
+      # The newest app version in each store, e.g. 1.1.0: older apps show the update pop-up.
+      - key: APP_ANDROID_VERSION
+        sync: false
+      - key: APP_IOS_VERSION
+        sync: false
+      - key: APP_IOS_URL
+        sync: false
 
 databases:
   - name: salon-randevu-test-db

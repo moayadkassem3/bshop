@@ -20,6 +20,12 @@ export type Config = {
    * (PAYMENT_ACCOUNT_HOLDER, PAYMENT_BANK, PAYMENT_IBAN). Without all three the option is closed.
    */
   paymentAccount: { holder: string; bank: string; iban: string } | null;
+  /**
+   * The newest app version in each store (APP_ANDROID_VERSION, APP_IOS_VERSION, e.g. "1.2.0"):
+   * an older app shows the "update" pop-up. Empty until the apps are in the stores.
+   * APP_IOS_URL is the App Store page (Android's is known from the package name).
+   */
+  appVersions: { android: string | null; ios: string | null; iosUrl: string | null };
   /** Firebase service account for push notifications (FCM_SERVICE_ACCOUNT_JSON); without it they print to the log. */
   fcmServiceAccount: string | undefined;
 };
@@ -39,7 +45,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       env.PAYMENT_ACCOUNT_HOLDER?.trim() && env.PAYMENT_BANK?.trim() && env.PAYMENT_IBAN?.trim()
         ? { holder: env.PAYMENT_ACCOUNT_HOLDER.trim(), bank: env.PAYMENT_BANK.trim(), iban: env.PAYMENT_IBAN.replace(/\s+/g, '').toUpperCase() }
         : null,
+    appVersions: { android: appVersion(env.APP_ANDROID_VERSION), ios: appVersion(env.APP_IOS_VERSION), iosUrl: env.APP_IOS_URL?.trim() || null },
     fcmServiceAccount: env.FCM_SERVICE_ACCOUNT_JSON,
     adminPhones: (env.ADMIN_PHONES ?? '').split(',').map((p) => p.trim()).filter(Boolean),
   };
+}
+
+/** "1.2.0" (numbers and dots only); anything else counts as not set. */
+function appVersion(value: string | undefined): string | null {
+  const v = value?.trim() ?? '';
+  return /^\d+(\.\d+){0,3}$/.test(v) ? v : null;
 }

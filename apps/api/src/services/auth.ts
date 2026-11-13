@@ -158,7 +158,7 @@ export async function verifyOtp(
          ON CONFLICT (phone) DO UPDATE SET
            first_name = COALESCE(EXCLUDED.first_name, users.first_name),
            last_name = COALESCE(EXCLUDED.last_name, users.last_name),
-           gender = COALESCE(EXCLUDED.gender, users.gender)
+           gender = COALESCE(users.gender, EXCLUDED.gender)
          RETURNING id, phone, first_name, last_name, is_platform_admin, gender`,
         [phone, input.firstName?.trim() || null, input.lastName?.trim() || null, input.gender ?? null],
       )
@@ -170,12 +170,22 @@ export async function verifyOtp(
     const needsTerms = portal === 'customer' && !(await hasAccepted(tx, user.id, 'kullanici-sozlesmesi'));
     const needsProfile = portal === 'customer' && (!user.first_name || !user.last_name || !user.gender || needsTerms);
     // One sign-in for everyone (v1.7): people who work at a salon then choose how to continue.
-    const member = await tx.query('SELECT 1 FROM shop_members WHERE user_id = $1 AND active LIMIT 1', [user.id]);
-    const hasBusiness = (member.rowCount ?? 0) > 0;
-    return { token: await createSession(tx, deps, user.id, portal, now), user, needsProfile, needsTerms, hasBusiness };
+    const account = await withBusiness(tx, user);
+    return { token: await createSession(tx, deps, user.id, portal, now), user: account, needsProfile, needsTerms, hasBusiness: account.has_business };
   });
   if (!result) throw badRequest('OTP_INVALID', 'Code is invalid or expired');
   return result;
+}
+
+/**
+ * The account with what Profil needs to draw itself: owners and co-owners do not see
+ * "İşletmenizi kaydedin", and only people who work at a salon see the switch to business
+ * mode. Sent with every sign-in and mode switch too (founder, 13 November 2026: the link
+ * stayed on screen after signing in until the page was refreshed).
+ */
+export async function withBusiness<U extends { id: string }>(q: Queryable, user: U): Promise<U & { owns_shop: boolean; has_business: boolean }> {
+  const { rows } = await q.query<{ role: string }>('SELECT role FROM shop_members WHERE user_id = $1 AND active', [user.id]);
+  return { ...user, owns_shop: rows.some((r) => r.role === 'owner'), has_business: rows.length > 0 };
 }
 
 export async function createSession(q: Queryable, deps: Deps, userId: string, portal: Portal, now: Date): Promise<string> {
@@ -194,7 +204,7 @@ export async function createSession(q: Queryable, deps: Deps, userId: string, po
 export async function switchMode(deps: Deps, user: User, to: 'customer' | 'business') {
   const portal = await resolvePortal(deps.db, user.phone, to);
   const token = await createSession(deps.db, deps, user.id, portal, deps.clock.now());
-  return { token, user: { ...user, portal } };
+  return { token, user: await withBusiness(deps.db, { ...user, portal }) };
 }
 
 export async function userForToken(deps: Deps, token: string): Promise<User | null> {
@@ -207,11 +217,15 @@ export async function userForToken(deps: Deps, token: string): Promise<User | nu
   return rows[0] ?? null;
 }
 
+/**
+ * Profil → "Profili düzenle". Gender is chosen once, when the account is created, and cannot be
+ * changed afterwards (founder, 13 November 2026): it is only filled in while still empty.
+ */
 export async function updateProfile(deps: Deps, user: User, input: { firstName: string; lastName: string; gender?: Gender | null }) {
   const { rows } = await deps.db.query<Omit<User, 'portal'>>(
-    `UPDATE users SET first_name = $2, last_name = $3, gender = CASE WHEN $5 THEN $4 ELSE gender END WHERE id = $1
+    `UPDATE users SET first_name = $2, last_name = $3, gender = COALESCE(gender, $4) WHERE id = $1
      RETURNING id, phone, first_name, last_name, is_platform_admin, gender`,
-    [user.id, input.firstName.trim(), input.lastName.trim(), input.gender ?? null, input.gender !== undefined],
+    [user.id, input.firstName.trim(), input.lastName.trim(), input.gender ?? null],
   );
   return { ...rows[0]!, portal: user.portal };
 }

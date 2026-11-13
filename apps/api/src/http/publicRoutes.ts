@@ -41,6 +41,12 @@ export function publicRoutes(app: FastifyInstance, deps: Deps, auth: AuthFn) {
     return verifyOtp(deps, body);
   });
 
+  // The app asks at start whether a newer version is in its store (founder, 13 November 2026).
+  app.get('/public/app-version', async () => ({
+    android: { latest: deps.config.appVersions.android },
+    ios: { latest: deps.config.appVersions.ios, url: deps.config.appVersions.iosUrl },
+  }));
+
   app.get('/public/nearby', async (req) => {
     const q = z
       .object({

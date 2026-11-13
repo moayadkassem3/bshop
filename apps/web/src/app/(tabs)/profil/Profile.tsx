@@ -179,7 +179,8 @@ function Account({ me, onChange }: { me: Me; onChange: (me: Me | null) => void }
                   <label htmlFor="p-last">Soyad</label>
                   <input id="p-last" className="input" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                 </div>
-                <GenderChoice value={gender} onChange={setGender} />
+                {/* Chosen once at sign-up; it cannot be changed afterwards (founder, 13 November 2026). */}
+                {!me.gender && <GenderChoice value={gender} onChange={setGender} />}
                 <button type="button" className="btn btn-primary" disabled={busy || !firstName.trim() || !lastName.trim()} onClick={saveName}>
                   Kaydet
                 </button>
