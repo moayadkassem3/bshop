@@ -15,9 +15,7 @@ export function formatTime(iso: string | Date): string {
 }
 
 export function formatLongDate(iso: string | Date): string {
-  return new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, day: 'numeric', month: 'long', weekday: 'long' }).format(
-    new Date(iso),
-  );
+  return new Intl.DateTimeFormat('tr-TR', { timeZone: TZ, day: 'numeric', month: 'long', weekday: 'long' }).format(new Date(iso));
 }
 
 export function formatDuration(minutes: number): string {
@@ -29,9 +27,7 @@ export function formatDuration(minutes: number): string {
 
 /** YYYY-MM-DD of an instant in Türkiye. */
 export function turkeyDate(instant: Date): string {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(
-    instant,
-  );
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(instant);
   return parts;
 }
 
@@ -78,3 +74,12 @@ export function parseLira(value: string): number | null {
 
 /** Kuruş to an editable lira amount: 45000 → "450", 12550 → "125,50". */
 export const liraInput = (kurus: number) => (kurus % 100 === 0 ? String(kurus / 100) : (kurus / 100).toFixed(2).replace('.', ','));
+
+/** "Günaydın" and the like by the hour in Türkiye (Salonum's greeting, founder 14 November 2026). */
+export function greeting(now = new Date()): string {
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Istanbul', hour: '2-digit', hour12: false }).format(now)) % 24;
+  if (hour >= 5 && hour < 12) return 'Günaydın';
+  if (hour >= 12 && hour < 18) return 'İyi günler';
+  if (hour >= 18 && hour < 22) return 'İyi akşamlar';
+  return 'İyi geceler';
+}

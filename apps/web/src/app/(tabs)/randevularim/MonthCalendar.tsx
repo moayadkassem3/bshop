@@ -23,7 +23,7 @@ function monthCells(month: string): (string | null)[] {
   return cells;
 }
 
-const monthTitle = (month: string) => `${MONTHS[Number(month.slice(5)) - 1]} ${month.slice(0, 4)}`;
+export const monthTitle = (month: string) => `${MONTHS[Number(month.slice(5)) - 1]} ${month.slice(0, 4)}`;
 
 /**
  * Takvim's month view (founder, 14 November 2026; as in the app): slides down under the date

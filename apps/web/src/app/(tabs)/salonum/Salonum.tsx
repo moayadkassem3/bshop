@@ -5,7 +5,9 @@ import { useEffect, useState } from 'react';
 import { ShareShop } from '@/components/ShareShop';
 import { VerifiedTick } from '@/components/VerifiedTick';
 import { api, errorMessage } from '@/lib/api';
-import { formatTime, turkeyDate } from '@/lib/format';
+import { formatDuration, formatPrice, formatTime, greeting, turkeyDate } from '@/lib/format';
+import { Icon } from '@/components/Icon';
+import type { Me } from '@/lib/types';
 import { rememberShop, useBusinessShops, type ShopAppointment } from '@/lib/business';
 import page from '../randevularim/appointments.module.css';
 import biz from '../randevularim/business.module.css';
@@ -26,6 +28,12 @@ export function Salonum() {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const owner = shop?.role === 'owner';
+  const [firstName, setFirstName] = useState<string | null>(null);
+  useEffect(() => {
+    api<Me>('/me')
+      .then((me) => setFirstName(me.first_name))
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (!shopId) return;
@@ -83,46 +91,48 @@ export function Salonum() {
 
         {shop && (
           <>
-            <section aria-labelledby="today-title" className={styles.section}>
-              <h2 id="today-title">Bugün</h2>
+            {/* Today at a glance (founder's design, 14 November 2026): a greeting, two tiles, the
+                requests waiting and the next appointment. */}
+            <section aria-labelledby="today-title" className={`card ${styles.today}`}>
+              <h2 id="today-title" className={styles.hello}>
+                {greeting()}
+                {firstName ? `, ${firstName}` : ''}
+              </h2>
+              <p className={styles.helloSub}>{!items ? '\u00a0' : todays.length ? 'Bugünün planı hazır.' : 'Bugün için randevu yok.'}</p>
               <div className={styles.tiles}>
-                <Link transitionTypes={TAB} href="/randevularim" className={`card ${styles.tile} ${waiting.length ? styles.tileAlert : ''}`}>
+                <Link transitionTypes={TAB} href="/randevularim?sekme=takvim" className={styles.tile}>
+                  <span className={styles.tileValue}>{items ? todays.length : '–'}</span>
+                  <span className={`${styles.tileIcon} ${styles.tileInfo}`} aria-hidden>
+                    <Icon name="randevular" size={20} strokeWidth={2} />
+                  </span>
+                  <span className={styles.tileLabel}>Randevu</span>
+                </Link>
+                <Link transitionTypes={TAB} href="/randevularim" className={styles.tile}>
                   <span className={styles.tileValue}>{items ? waiting.length : '–'}</span>
+                  <span className={`${styles.tileIcon} ${styles.tileWarn}`} aria-hidden>
+                    <Icon name="clock" size={20} strokeWidth={2} />
+                  </span>
                   <span className={styles.tileLabel}>Bekleyen talep</span>
                 </Link>
-                <Link transitionTypes={TAB} href="/randevularim" className={`card ${styles.tile}`}>
-                  <span className={styles.tileValue}>{items ? todays.length : '–'}</span>
-                  <span className={styles.tileLabel}>Bugünkü randevu</span>
+              </div>
+              {waiting.length > 0 && (
+                <Link transitionTypes={TAB} href="/randevularim" className={styles.requests}>
+                  <Icon name="clock" size={20} strokeWidth={2.2} />
+                  <span>{waiting.length} yeni randevu talebi</span>
+                  <em>
+                    İncele <Icon name="chevron" size={16} strokeWidth={2.4} />
+                  </em>
+                </Link>
+              )}
+              <div className={styles.nextHead}>
+                <h3>Sıradaki randevu</h3>
+                <Link transitionTypes={TAB} href="/randevularim?sekme=takvim">
+                  Tümünü gör
                 </Link>
               </div>
               {!items && !error && <SkeletonList rows={1} label="Randevular yükleniyor" />}
-              {items && (
-                <div className={`card ${styles.next} motion-fade`}>
-                  <p className={styles.nextTitle}>Sıradaki randevular</p>
-                  {next.length === 0 ? (
-                    <p className="muted">Bugün başka randevu yok.</p>
-                  ) : (
-                    <ul role="list">
-                      {next.map((a) => (
-                        <li key={a.id}>
-                          <span className={styles.nextTime}>{formatTime(a.starts_at)}</span>
-                          <span className={styles.nextText}>
-                            <strong>{a.guest_name ?? a.customer_name}</strong>
-                            <span>
-                              {(a.services ?? []).map((s) => s.name).join(' + ')}
-                              {owner ? ` · ${a.staff_name}` : ''}
-                            </span>
-                          </span>
-                          {a.status !== 'confirmed' && <span className="badge badge-warning">{a.status === 'pending' ? 'Onay bekliyor' : 'Öneri'}</span>}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <Link transitionTypes={TAB} href="/randevularim" className={styles.more}>
-                    Talepler ve takvim ›
-                  </Link>
-                </div>
-              )}
+              {items && !next[0] && <p className="muted">Bugün başka randevu yok.</p>}
+              {next[0] && <NextCard a={next[0]} />}
             </section>
 
             <section aria-labelledby="salon-title" className={styles.section}>
@@ -148,6 +158,39 @@ export function Salonum() {
         )}
       </div>
     </>
+  );
+}
+
+const STATUS: Partial<Record<ShopAppointment['status'], { label: string; tone: 'ok' | 'warn' | 'info' }>> = {
+  confirmed: { label: 'Onaylandı', tone: 'ok' },
+  pending: { label: 'Onay bekliyor', tone: 'warn' },
+  offered: { label: 'Yeni saat önerildi', tone: 'info' },
+};
+
+/** The next appointment, large: time, customer, services and length, status, who and the price. */
+function NextCard({ a }: { a: ShopAppointment }) {
+  const minutes = Math.round((new Date(a.ends_at).getTime() - new Date(a.starts_at).getTime()) / 60_000);
+  const status = STATUS[a.status];
+  return (
+    <Link transitionTypes={TAB} href="/randevularim?sekme=takvim" className={styles.nextCard}>
+      <span className={styles.nextTop}>
+        <span className={styles.nextMain}>
+          <strong className={styles.nextTimeRange}>
+            {formatTime(a.starts_at)} – {formatTime(a.ends_at)}
+          </strong>
+          <strong className={styles.nextName}>{a.guest_name ?? a.customer_name}</strong>
+          <span className="muted">
+            {(a.services ?? []).map((x) => x.name).join(' + ')} · {formatDuration(minutes)}
+          </span>
+        </span>
+        {status && <span className={`${styles.status} ${styles[`status_${status.tone}`]}`}>{status.label}</span>}
+      </span>
+      <span className={styles.nextFoot}>
+        <Icon name="profil" size={18} />
+        <span>{a.staff_name}</span>
+        {a.total_price_kurus > 0 && <strong>{formatPrice(a.total_price_kurus, a.price_is_starting_from)}</strong>}
+      </span>
+    </Link>
   );
 }
 

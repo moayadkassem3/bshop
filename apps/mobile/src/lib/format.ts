@@ -93,3 +93,12 @@ export function daysLeft(end: string | null): number {
 export function formatFullDate(iso: string | Date): string {
   return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ }).format(new Date(iso));
 }
+
+/** "Günaydın" and the like by the hour in Türkiye (Salonum's greeting, founder 14 November 2026). */
+export function greeting(now = new Date()): string {
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Istanbul', hour: '2-digit', hour12: false }).format(now)) % 24;
+  if (hour >= 5 && hour < 12) return 'Günaydın';
+  if (hour >= 12 && hour < 18) return 'İyi günler';
+  if (hour >= 18 && hour < 22) return 'İyi akşamlar';
+  return 'İyi geceler';
+}

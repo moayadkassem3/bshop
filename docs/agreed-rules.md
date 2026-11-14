@@ -150,7 +150,13 @@ Go through this list for every change before committing:
 
 ### 6.1 Salonum
 
-Four separate cards, the same for owners, Ortak and staff:
+At the top, one card for today (founder's design, 14 November 2026): "Günaydın / İyi günler /
+İyi akşamlar / İyi geceler, {ad}" by the hour in Türkiye, "Bugünün planı hazır." (or "Bugün için
+randevu yok."), two tiles with icons ("N Randevu" today, "N Bekleyen talep"), an amber "N yeni
+randevu talebi · İncele" bar while requests wait, and "Sıradaki randevu · Tümünü gör" with the next
+appointment as a large card (time range, customer, services · length, status, staff, price).
+
+Below it, four separate cards, the same for owners, Ortak and staff:
 
 1. Haritada gör · QR kod · Kesim fotoğrafı paylaş
 2. İstatistikler (staff: İstatistiklerim) · Değerlendirmeler
@@ -161,9 +167,15 @@ Four separate cards, the same for owners, Ortak and staff:
 
 - Talepler and Takvim, switched by tapping or swiping sideways.
 - A waiting request has a compact "Müşteri geldi mi? [Gelmedi] [Geldi]" row once it has started.
-- **Takvim:** tapping the date slides down a month calendar with each day's number of appointments;
-  tapping a day shows it below. A small "Saat kapat" pill sits under the date. Both the month view
-  and Saat kapat **close when the user goes to Talepler or another screen**.
+- **Takvim** (founder's design, 14 November 2026):
+  - The month with arrows (a week at a time).
+  - A row of day boxes (weekday and date, a dot on days with appointments) that opens on today,
+    with one day before it at the left, so **the coming days always show**; it scrolls sideways.
+  - The **month calendar slides down** from the handle under the row (tap or drag down; tapping
+    the month name works too), with each day's number of appointments.
+  - Staff chips start with "Tüm ekip".
+  - **"Saat kapat" is a large dashed button at the bottom** of the day.
+  - The month view and Saat kapat **close when the user goes to Talepler or another screen**.
 - **Geçmiş** tab: past appointments and every cancellation, with a red count of new cancellations.
 
 ### 6.3 Salon bilgileri and settings

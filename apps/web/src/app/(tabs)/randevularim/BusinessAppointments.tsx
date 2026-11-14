@@ -1,6 +1,6 @@
 'use client';
 
-import { addMonths, MonthCalendar } from './MonthCalendar';
+import { addMonths, MonthCalendar, monthTitle } from './MonthCalendar';
 import { startTransition, useCallback, useEffect, useRef, useState, ViewTransition, type TouchEvent } from 'react';
 import { api, errorMessage } from '@/lib/api';
 import { formatLongDate, formatPrice, formatTime, turkeyDate } from '@/lib/format';
@@ -34,6 +34,10 @@ function addDays(date: string, days: number) {
 export function BusinessAppointments() {
   const { shops, shop, shopId, selectShop, error: shopsError } = useBusinessShops();
   const [tab, setTab] = useState<'requests' | 'calendar'>('requests');
+  // Salonum's "Randevu" tile and "Tümünü gör" open Takvim (?sekme=takvim).
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('sekme') === 'takvim') setTab('calendar');
+  }, []);
   const [requests, setRequests] = useState<Appointment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -191,11 +195,14 @@ function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string;
   const [month, setMonth] = useState(today.slice(0, 7));
   const [counts, setCounts] = useState<Record<string, number> | null>(null);
 
-  // How many appointments each day of the shown month has (declined and cancelled ones aside).
+  // How many appointments each day has (declined and cancelled ones aside): dots under the days
+  // in the row, numbers in the month view. Covers the row's days and the month shown.
+  const monthEnd = addDays(`${addMonths(month, 1)}-01`, -1);
+  const rangeFrom = [addDays(today, -STRIP_BEFORE), addDays(date, -STRIP_BEFORE), `${month}-01`].sort()[0]!;
+  const rangeTo = [addDays(today, STRIP_AFTER), addDays(date, 30), monthEnd].sort()[2]!;
   useEffect(() => {
-    if (!calendar) return;
     let stale = false;
-    const range = `from=${dayStart(`${month}-01`).toISOString()}&to=${dayStart(`${addMonths(month, 1)}-01`).toISOString()}`;
+    const range = `from=${dayStart(rangeFrom).toISOString()}&to=${dayStart(addDays(rangeTo, 1)).toISOString()}`;
     api<Appointment[]>(`/staff/shops/${props.shopId}/appointments?${range}${staffId ? `&staffId=${staffId}` : ''}`)
       .then((list) => {
         if (stale) return;
@@ -212,7 +219,15 @@ function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string;
       stale = true;
     };
     // `items` too: the counts follow the day's list when it is refreshed or answered.
-  }, [calendar, props.shopId, month, staffId, items]);
+  }, [props.shopId, rangeFrom, rangeTo, staffId, items]);
+
+  const toggleCalendar = () => {
+    setMonth(date.slice(0, 7));
+    setCalendar((v) => !v);
+  };
+  // Dragging the handle down opens the month view, up closes it.
+  const drag = useRef<number | null>(null);
+  const dragged = useRef(false);
 
   useEffect(() => {
     if (!props.isOwner) return;
@@ -244,36 +259,67 @@ function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string;
     return () => clearInterval(timer);
   }, [load]);
 
-  const label = date === today ? 'Bugün' : date === addDays(today, 1) ? 'Yarın' : date === addDays(today, -1) ? 'Dün' : null;
   const active = (items ?? []).filter((a) => a.status !== 'declined' && a.status !== 'cancelled');
   const dropped = (items ?? []).filter((a) => a.status === 'declined' || a.status === 'cancelled');
 
   return (
     <>
+      {/* Takvim (founder's design, 14 November 2026): the month with arrows (a week at a time), a
+          row of days starting just before today so the coming days show, and the month calendar
+          sliding down from the handle (tap or drag down). */}
       <div className={biz.dayNav}>
-        <button type="button" className={biz.dayArrow} onClick={() => setDate(addDays(date, -1))} aria-label="Önceki gün">
+        <button type="button" className={biz.dayArrow} onClick={() => setDate(addDays(date, -7))} aria-label="Önceki hafta">
           ‹
         </button>
         <button
           type="button"
           className={`${biz.dayLabel} ${biz.dayLabelButton}`}
           aria-expanded={calendar}
-          aria-label={`${formatLongDate(dayStart(date))}, takvimi ${calendar ? 'kapat' : 'aç'}`}
-          onClick={() => {
-            setMonth(date.slice(0, 7));
-            setCalendar((v) => !v);
-          }}
+          aria-label={`${monthTitle(date.slice(0, 7))}, takvimi ${calendar ? 'kapat' : 'aç'}`}
+          onClick={toggleCalendar}
         >
-          <strong>{label ?? formatLongDate(dayStart(date))}</strong>
-          {label && <span>{formatLongDate(dayStart(date))}</span>}
+          <strong>{monthTitle(date.slice(0, 7))}</strong>
           <span className={biz.dayCaret} aria-hidden>
             <Icon name="chevron" size={14} strokeWidth={2.4} />
           </span>
         </button>
-        <button type="button" className={biz.dayArrow} onClick={() => setDate(addDays(date, 1))} aria-label="Sonraki gün">
+        <button type="button" className={biz.dayArrow} onClick={() => setDate(addDays(date, 7))} aria-label="Sonraki hafta">
           ›
         </button>
       </div>
+      <DayStrip date={date} today={today} counts={counts} onPick={setDate} />
+      <button
+        type="button"
+        className={biz.handle}
+        aria-label={calendar ? 'Takvimi kapat' : 'Takvimi aç'}
+        aria-expanded={calendar}
+        onClick={() => {
+          // A drag already opened or closed it.
+          if (dragged.current) dragged.current = false;
+          else toggleCalendar();
+        }}
+        onPointerDown={(e) => {
+          // Keep following the finger when it leaves the handle while dragging.
+          e.currentTarget.setPointerCapture(e.pointerId);
+          drag.current = e.clientY;
+          dragged.current = false;
+        }}
+        onPointerUp={(e) => {
+          if (drag.current == null) return;
+          const dy = e.clientY - drag.current;
+          drag.current = null;
+          if (dy > 24) {
+            dragged.current = true;
+            setMonth(date.slice(0, 7));
+            setCalendar(true);
+          } else if (dy < -24) {
+            dragged.current = true;
+            setCalendar(false);
+          }
+        }}
+      >
+        <span aria-hidden />
+      </button>
       <MonthCalendar
         open={calendar}
         month={month}
@@ -284,29 +330,20 @@ function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string;
           setCounts(null);
           setMonth(m);
         }}
-        onPick={setDate}
+        onPick={(d) => {
+          setDate(d);
+          setCalendar(false);
+        }}
       />
-      {/* Under the date: back to today, and a small "Saat kapat" (it used to be a dashed
-          full-width button that read like an empty slot; review, 12 November 2026). */}
-      <div className={biz.dayTools}>
-        {date !== today ? (
-          <button type="button" className={biz.todayLink} onClick={() => setDate(today)}>
-            Bugüne dön
-          </button>
-        ) : (
-          <span />
-        )}
-        {!blocking && (
-          <button type="button" className={biz.blockLink} onClick={() => setBlocking(true)}>
-            <Icon name="clock" size={16} />
-            Saat kapat
-          </button>
-        )}
-      </div>
+      {date !== today && (
+        <button type="button" className={biz.todayLink} onClick={() => setDate(today)}>
+          Bugüne dön
+        </button>
+      )}
 
       {members.length > 1 && (
         <div className={`${styles.chips} ${biz.staffChips}`} role="radiogroup" aria-label="Personel">
-          {[{ id: null, display_name: 'Herkes' }, ...members].map((m) => (
+          {[{ id: null, display_name: 'Tüm ekip' }, ...members].map((m) => (
             <button
               key={m.id ?? 'all'}
               type="button"
@@ -319,21 +356,6 @@ function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string;
             </button>
           ))}
         </div>
-      )}
-
-      {blocking && (
-        <BlockForm
-          shopId={props.shopId}
-          date={date}
-          members={members}
-          myMemberId={props.myMemberId}
-          isOwner={props.isOwner}
-          onClose={() => setBlocking(false)}
-          onDone={() => {
-            setBlocking(false);
-            load();
-          }}
-        />
       )}
 
       {error && <p className="alert alert-danger">{error}</p>}
@@ -360,6 +382,28 @@ function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string;
             }}
           />
         ))}
+        {/* Saat kapat at the bottom, large (founder, 14 November 2026). */}
+        {!blocking && (
+          <button type="button" className={biz.blockBig} onClick={() => setBlocking(true)}>
+            <Icon name="clock" size={20} />
+            Saat kapat
+          </button>
+        )}
+        {blocking && (
+          <BlockForm
+            shopId={props.shopId}
+            date={date}
+            members={members}
+            myMemberId={props.myMemberId}
+            isOwner={props.isOwner}
+            onClose={() => setBlocking(false)}
+            onDone={() => {
+              setBlocking(false);
+              load();
+            }}
+          />
+        )}
+
         {dropped.length > 0 && (
           <details className={biz.dropped}>
             <summary>İptal edilen ve reddedilenler ({dropped.length})</summary>
@@ -372,6 +416,54 @@ function Calendar(props: { shopId: string; isOwner: boolean; myMemberId: string;
         )}
       </div>
     </>
+  );
+}
+
+/** The row of days: this many before today, and this many after (the row scrolls sideways). */
+const STRIP_BEFORE = 7;
+const STRIP_AFTER = 60;
+const WEEKDAY = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+
+/**
+ * The days in a row (founder's design, 14 November 2026): weekday and date, the chosen one in
+ * blue, today outlined, a dot on days with appointments. The chosen day sits second from the
+ * left, so today and the days after it show.
+ */
+function DayStrip(props: { date: string; today: string; counts: Record<string, number> | null; onPick: (d: string) => void }) {
+  const row = useRef<HTMLDivElement>(null);
+  const first = [addDays(props.today, -STRIP_BEFORE), addDays(props.date, -STRIP_BEFORE)].sort()[0]!;
+  const last = [addDays(props.today, STRIP_AFTER), addDays(props.date, 30)].sort()[1]!;
+  const days: string[] = [];
+  for (let d = first; d <= last && days.length < 400; d = addDays(d, 1)) days.push(d);
+  const placed = useRef(false);
+  useEffect(() => {
+    const el = row.current?.querySelector<HTMLElement>(`[data-day="${addDays(props.date, -1)}"]`) ?? row.current?.querySelector<HTMLElement>(`[data-day="${props.date}"]`);
+    if (el && row.current) row.current.scrollTo({ left: el.offsetLeft - row.current.offsetLeft, behavior: placed.current ? 'smooth' : 'auto' });
+    placed.current = true;
+  }, [props.date]);
+  return (
+    <div ref={row} className={biz.strip} role="radiogroup" aria-label="Günler">
+      {days.map((d) => {
+        const on = d === props.date;
+        const count = props.counts?.[d] ?? 0;
+        return (
+          <button
+            key={d}
+            type="button"
+            data-day={d}
+            role="radio"
+            aria-checked={on}
+            aria-label={`${formatLongDate(dayStart(d))}${count ? `, ${count} randevu` : ''}`}
+            className={`${biz.stripDay} ${d === props.today ? biz.stripToday : ''} ${on ? biz.stripOn : ''}`}
+            onClick={() => props.onPick(d)}
+          >
+            <span>{WEEKDAY[new Date(`${d}T12:00:00Z`).getUTCDay()]}</span>
+            <strong>{Number(d.slice(8))}</strong>
+            <i className={count ? biz.stripDot : undefined} aria-hidden />
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

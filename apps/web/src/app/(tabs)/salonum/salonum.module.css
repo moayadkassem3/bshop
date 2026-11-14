@@ -180,3 +180,196 @@
   font-size: 13px;
   color: var(--muted);
 }
+
+/* Today at a glance (founder's design, 14 November 2026). */
+.today {
+  display: grid;
+  gap: 14px;
+  padding: 20px 18px;
+  margin-bottom: 24px;
+}
+
+.hello {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.helloSub {
+  margin: -10px 0 0;
+  color: var(--muted);
+}
+
+.today .tiles {
+  margin: 0;
+}
+
+.today .tile {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.tileIcon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.tileInfo {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.tileWarn {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.requests {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.requests span {
+  flex: 1;
+}
+
+.requests em {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-style: normal;
+  color: var(--primary);
+}
+
+.nextHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.nextHead h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.nextHead a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nextCard {
+  display: grid;
+  gap: 12px;
+  padding: 14px 14px 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.nextTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.nextMain {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.nextTimeRange {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.nextName {
+  font-size: 17px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status_ok {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.status_warn {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.status_info {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.nextFoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2, var(--muted));
+}
+
+.nextFoot span {
+  flex: 1;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nextFoot strong {
+  font-size: 17px;
+  color: var(--ink);
+}

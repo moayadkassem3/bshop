@@ -8,7 +8,7 @@ import { ShopPicker } from '@/components/ShopPicker';
 import { Alert, Badge, Button, Card, Empty, Screen, Text } from '@/components/ui';
 import { api, errorMessage, WEB_URL } from '@/lib/api';
 import { useBusinessShops } from '@/lib/business';
-import { daysLeft, formatFullDate, formatTime, turkeyDate } from '@/lib/format';
+import { daysLeft, formatDuration, formatFullDate, formatPrice, formatTime, greeting, turkeyDate } from '@/lib/format';
 import { useSession } from '@/lib/session';
 import { colors, radius, themed } from '@/lib/theme';
 import type { BusinessShop, ShopAppointment } from '@/lib/types';
@@ -59,49 +59,48 @@ export default function SalonumScreen() {
         <>
           <Notice shop={shop} />
           <AlarmSetup />
-          <Text size={20} weight="heavy">
-            Bugün
-          </Text>
+          {/* Today at a glance (founder's design, 14 November 2026): a greeting, two tiles, the
+              requests waiting and the next appointment. */}
           <Appear>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Tile value={items ? waiting.length : null} label="Bekleyen talep" alert={waiting.length > 0} onPress={() => router.push('/randevular')} />
-              <Tile value={items ? todays.length : null} label="Bugünkü randevu" onPress={() => router.push('/randevular?tab=takvim')} />
-            </View>
-          </Appear>
-          {!items && !error ? <SkeletonList rows={1} /> : null}
-          {items ? (
-            <Appear index={1}>
-              <Card style={{ gap: 12 }}>
-                <Text weight="bold">Sıradaki randevular</Text>
-                {next.length === 0 ? (
-                  <Text color={colors.muted}>Bugün başka randevu yok.</Text>
-                ) : (
-                  next.map((a) => (
-                    <View key={a.id} style={styles.nextRow}>
-                      <Text weight="bold" style={{ width: 52 }}>
-                        {formatTime(a.starts_at)}
-                      </Text>
-                      <View style={{ flex: 1 }}>
-                        <Text weight="semibold" numberOfLines={1}>
-                          {a.guest_name ?? a.customer_name}
-                        </Text>
-                        <Text size={13} color={colors.muted} numberOfLines={1}>
-                          {(a.services ?? []).map((s) => s.name).join(' + ')}
-                          {owner ? ` · ${a.staff_name}` : ''}
-                        </Text>
-                      </View>
-                      {a.status !== 'confirmed' ? <Badge label={a.status === 'pending' ? 'Onay bekliyor' : 'Öneri'} tone="warning" /> : null}
-                    </View>
-                  ))
-                )}
-                <Pressable onPress={() => router.push('/randevular')} hitSlop={8} style={{ alignSelf: 'flex-start' }}>
-                  <Text size={14} weight="bold" color={colors.primary}>
-                    Talepler ve takvim ›
+            <Card style={{ gap: 14, padding: 18 }}>
+              <View style={{ gap: 2 }}>
+                <Text size={26} weight="heavy" style={{ letterSpacing: -0.4 }}>
+                  {greeting()}
+                  {me.first_name ? `, ${me.first_name}` : ''}
+                </Text>
+                <Text color={colors.muted}>{!items ? ' ' : todays.length ? 'Bugünün planı hazır.' : 'Bugün için randevu yok.'}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Tile value={items ? todays.length : null} label="Randevu" icon="randevular" tone="info" onPress={() => router.push('/randevular?tab=takvim')} />
+                <Tile value={items ? waiting.length : null} label="Bekleyen talep" icon="clock" tone="warning" onPress={() => router.push('/randevular')} />
+              </View>
+              {waiting.length > 0 ? (
+                <Pressable onPress={() => router.push('/randevular')} style={({ pressed }) => [styles.requests, pressed && { opacity: 0.85 }]} accessibilityRole="button">
+                  <Icon name="clock" size={20} color={colors.warning} strokeWidth={2.2} />
+                  <Text weight="bold" color={colors.warning} style={{ flex: 1 }}>
+                    {waiting.length} yeni randevu talebi
+                  </Text>
+                  <Text weight="bold" color={colors.primary}>
+                    İncele
+                  </Text>
+                  <Icon name="chevron" size={16} color={colors.primary} strokeWidth={2.4} />
+                </Pressable>
+              ) : null}
+              <View style={styles.nextHead}>
+                <Text size={18} weight="heavy">
+                  Sıradaki randevu
+                </Text>
+                <Pressable onPress={() => router.push('/randevular?tab=takvim')} hitSlop={10}>
+                  <Text weight="bold" color={colors.primary}>
+                    Tümünü gör
                   </Text>
                 </Pressable>
-              </Card>
-            </Appear>
-          ) : null}
+              </View>
+              {!items && !error ? <SkeletonList rows={1} /> : null}
+              {items && !next[0] ? <Text color={colors.muted}>Bugün başka randevu yok.</Text> : null}
+              {next[0] ? <NextCard a={next[0]} /> : null}
+            </Card>
+          </Appear>
 
           <Text size={20} weight="heavy" style={{ marginTop: 8 }}>
             Salonunuz
@@ -246,15 +245,71 @@ function Shortcut(props: { icon: IconName; label: string; hint: string; onPress:
   );
 }
 
-function Tile(props: { value: number | null; label: string; alert?: boolean; onPress: () => void }) {
+function Tile(props: { value: number | null; label: string; icon: IconName; tone: 'info' | 'warning'; onPress: () => void }) {
+  const fg = props.tone === 'info' ? colors.primary : colors.warning;
+  const bg = props.tone === 'info' ? colors.primarySoft : colors.warningSoft;
   return (
-    <Pressable onPress={props.onPress} style={({ pressed }) => [styles.tile, props.alert && styles.tileAlert, pressed && { opacity: 0.85 }]}>
-      <Text size={36} weight="heavy" color={props.alert ? colors.warning : colors.ink}>
-        {props.value ?? '–'}
-      </Text>
+    <Pressable onPress={props.onPress} style={({ pressed }) => [styles.tile, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityLabel={`${props.value ?? ''} ${props.label}`}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <Text size={34} weight="heavy">
+          {props.value ?? '–'}
+        </Text>
+        <View style={[styles.tileIcon, { backgroundColor: bg }]}>
+          <Icon name={props.icon} size={20} color={fg} strokeWidth={2} />
+        </View>
+      </View>
       <Text size={14} weight="semibold" color={colors.ink2}>
         {props.label}
       </Text>
+    </Pressable>
+  );
+}
+
+const STATUS: Partial<Record<ShopAppointment['status'], { label: string; tone: 'success' | 'warning' | 'info' }>> = {
+  confirmed: { label: 'Onaylandı', tone: 'success' },
+  pending: { label: 'Onay bekliyor', tone: 'warning' },
+  offered: { label: 'Yeni saat önerildi', tone: 'info' },
+};
+
+/** The next appointment, large: time, customer, services and length, status, who and the price. */
+function NextCard({ a }: { a: ShopAppointment }) {
+  const minutes = Math.round((new Date(a.ends_at).getTime() - new Date(a.starts_at).getTime()) / 60_000);
+  const status = STATUS[a.status];
+  const tone = status?.tone === 'success' ? [colors.successSoft, colors.success] : status?.tone === 'warning' ? [colors.warningSoft, colors.warning] : [colors.primarySoft, colors.primary];
+  return (
+    <Pressable onPress={() => router.push('/randevular?tab=takvim')} style={({ pressed }) => [styles.nextCard, pressed && { opacity: 0.9 }]} accessibilityRole="button">
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text size={18} weight="heavy">
+            {formatTime(a.starts_at)} – {formatTime(a.ends_at)}
+          </Text>
+          <Text size={17} weight="bold" numberOfLines={1}>
+            {a.guest_name ?? a.customer_name}
+          </Text>
+          <Text size={14} color={colors.muted} numberOfLines={2}>
+            {(a.services ?? []).map((x) => x.name).join(' + ')} · {formatDuration(minutes)}
+          </Text>
+        </View>
+        {status ? (
+          <View style={[styles.status, { backgroundColor: tone[0] }]}>
+            <View style={[styles.dot, { backgroundColor: tone[1] }]} />
+            <Text size={13} weight="bold" color={tone[1]}>
+              {status.label}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.nextFoot}>
+        <Icon name="profil" size={18} color={colors.muted} />
+        <Text weight="semibold" color={colors.ink2} style={{ flex: 1 }} numberOfLines={1}>
+          {a.staff_name}
+        </Text>
+        {a.total_price_kurus > 0 ? (
+          <Text size={17} weight="heavy">
+            {formatPrice(a.total_price_kurus, a.price_is_starting_from)}
+          </Text>
+        ) : null}
+      </View>
     </Pressable>
   );
 }
@@ -271,9 +326,24 @@ export function SignInFirst() {
 
 const styles = themed(() =>
   StyleSheet.create({
-    tile: { flex: 1, padding: 16, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
-    tileAlert: { borderColor: colors.warningLine, backgroundColor: colors.warningSoft },
-    nextRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    tile: { flex: 1, gap: 2, padding: 14, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
+    tileIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+    requests: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 14, borderRadius: radius.sm, backgroundColor: colors.warningSoft },
+    nextHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+    nextCard: {
+      gap: 12,
+      padding: 14,
+      paddingLeft: 16,
+      borderRadius: radius.sm,
+      borderWidth: 1,
+      borderColor: colors.line,
+      borderLeftWidth: 5,
+      borderLeftColor: colors.primary,
+      backgroundColor: colors.surface,
+    },
+    nextFoot: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.line },
+    status: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
+    dot: { width: 8, height: 8, borderRadius: 4 },
     notice: { padding: 14, borderRadius: radius.md, gap: 4 },
     share: {
       flexDirection: 'row',

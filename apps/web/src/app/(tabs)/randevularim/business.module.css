@@ -468,3 +468,109 @@
     transition: none;
   }
 }
+
+/* Takvim's row of days (founder's design, 14 November 2026). */
+.strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0;
+  margin-top: 4px;
+}
+
+.strip::-webkit-scrollbar {
+  display: none;
+}
+
+.stripDay {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+  width: 52px;
+  height: 74px;
+  padding: 0;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.stripDay span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.stripDay strong {
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.stripDay i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.stripDay .stripDot {
+  background: var(--primary);
+}
+
+.stripToday {
+  border-color: var(--primary);
+}
+
+.stripOn,
+.stripOn span {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.stripOn .stripDot {
+  background: #fff;
+}
+
+/* The handle under the days: tap or drag down for the month view. */
+.handle {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 22px;
+  margin: 2px auto 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.handle span {
+  width: 44px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+/* Saat kapat: large, at the bottom of the day (founder, 14 November 2026). */
+.blockBig {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 64px;
+  border: 1.5px dashed var(--primary);
+  border-radius: var(--radius);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
