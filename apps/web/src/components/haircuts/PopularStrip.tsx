@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import { useAudience } from '@/lib/audience';
+import { photoAudience, useAudience } from '@/lib/audience';
 import { haircutPhotoUrl } from '@/lib/shop';
 import type { PopularPost } from '@/lib/types';
 import { shopHref } from '@/lib/views';
@@ -14,10 +14,11 @@ import { FORWARD } from '@/lib/motion';
 /**
  * "Popüler kesimler" as a horizontal slider at the bottom of Favoriler (v1.7);
  * each photo opens the salon that made it. Follows the customer's Erkek/Kadın
- * choice. Hidden until there are posts.
+ * choice; men customers always see men's cuts. Hidden until there are posts.
  */
 export function PopularStrip() {
-  const [audience] = useAudience();
+  const [picked, , menOnly] = useAudience();
+  const audience = photoAudience(picked, menOnly);
   const [posts, setPosts] = useState<PopularPost[]>([]);
 
   useEffect(() => {

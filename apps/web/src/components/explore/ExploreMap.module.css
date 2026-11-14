@@ -87,6 +87,11 @@
   cursor: pointer;
 }
 
+.chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .chipOn {
   background: var(--primary);
   color: #fff;

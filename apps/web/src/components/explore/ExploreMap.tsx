@@ -33,7 +33,7 @@ export function ExploreMap() {
   const [center, setCenter] = useState<LatLng>(KADIKOY);
   const [user, setUser] = useState<LatLng | null>(null);
   const [query, setQuery] = useState('');
-  const [audience, pickAudience] = useAudience();
+  const [audience, pickAudience, menOnly] = useAudience();
   const [shops, setShops] = useState<NearbyShop[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
@@ -257,6 +257,8 @@ export function ExploreMap() {
                 type="button"
                 role="radio"
                 aria-checked={audience === value}
+                // Men customers cannot pick women's salons (founder, 14 November 2026): greyed out.
+                disabled={menOnly && value === 'women'}
                 className={`${styles.chip} ${audience === value ? styles.chipOn : ''}`}
                 onClick={() => pickAudience(value)}
               >

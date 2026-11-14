@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { HaircutCard } from '@/components/haircuts/HaircutCard';
 import grid from '@/components/haircuts/haircuts.module.css';
 import { api } from '@/lib/api';
-import { useAudience } from '@/lib/audience';
+import { photoAudience, useAudience } from '@/lib/audience';
 import { useLikes } from '@/lib/likes';
 import type { HaircutStyle, PopularPost } from '@/lib/types';
 import styles from '../randevularim/appointments.module.css';
@@ -19,7 +19,9 @@ import { BACK } from '@/lib/motion';
  * newest first. Every photo leads to the salon that made it.
  */
 export function PopularHaircuts() {
-  const [audience, pickAudience] = useAudience();
+  const [picked, pickAudience, menOnly] = useAudience();
+  // Men customers see men's cuts only, without the Tümü/Kadın choice (founder, 14 November 2026).
+  const audience = photoAudience(picked, menOnly);
   const [style, setStyle] = useState<string | null>(null);
   const [styleList, setStyleList] = useState<HaircutStyle[]>([]);
   const [posts, setPosts] = useState<PopularPost[] | null>(null);
@@ -55,29 +57,31 @@ export function PopularHaircuts() {
         </div>
       </header>
       <div className={`container narrow ${styles.body}`}>
-        <div className={`${styles.chips} ${own.scroll}`} role="radiogroup" aria-label="Salon türü">
-          {(
-            [
-              ['all', 'Tümü'],
-              ['men', 'Erkek'],
-              ['women', 'Kadın'],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              role="radio"
-              aria-checked={audience === value}
-              className={`${styles.chip} ${audience === value ? styles.chipOn : ''}`}
-              onClick={() => {
-                pickAudience(value);
-                setStyle(null);
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {!menOnly && (
+          <div className={`${styles.chips} ${own.scroll}`} role="radiogroup" aria-label="Salon türü">
+            {(
+              [
+                ['all', 'Tümü'],
+                ['men', 'Erkek'],
+                ['women', 'Kadın'],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={audience === value}
+                className={`${styles.chip} ${audience === value ? styles.chipOn : ''}`}
+                onClick={() => {
+                  pickAudience(value);
+                  setStyle(null);
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
         {styleChoices.length > 0 && (
           <div className={own.styles} role="radiogroup" aria-label="Kesim">
             {styleChoices.map((s) => (

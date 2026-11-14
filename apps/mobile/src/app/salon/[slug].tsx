@@ -18,7 +18,7 @@ import { api, errorMessage } from '@/lib/api';
 import { formatDuration, formatPrice } from '@/lib/format';
 import { formatPhone } from '@/lib/phone';
 import { useLikes } from '@/lib/likes';
-import { useSession } from '@/lib/session';
+import { useMenOnly, useSession } from '@/lib/session';
 import { colors, radius, themed } from '@/lib/theme';
 import { AUDIENCE, type RatingsSummary, type ShopProfile } from '@/lib/types';
 
@@ -37,6 +37,7 @@ const counted = new Set<string>();
 export default function SalonScreen() {
   const { slug, kaynak } = useLocalSearchParams<{ slug: string; kaynak?: string }>();
   const { me, business } = useSession();
+  const menOnly = useMenOnly();
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<ShopProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +95,7 @@ export default function SalonScreen() {
     );
   }
   if (!profile) return <PageSkeleton photo />;
+  const shownPosts = (profile.posts ?? []).filter((p) => !menOnly || p.style_audience !== 'women');
 
   const weekday = turkeyWeekday();
   const today = profile.openingHours.find((h) => h.weekday === weekday);
@@ -215,12 +217,13 @@ export default function SalonScreen() {
             </Appear>
           ) : null}
 
-          {profile.posts?.length ? (
+          {/* Men customers see only men's cuts, also on a unisex salon's page (founder, 14 November 2026). */}
+          {shownPosts.length ? (
             <Appear index={4}>
               <Card style={{ gap: 12 }}>
                 <SectionTitle>Çalışmalarımız</SectionTitle>
                 <View style={styles.posts}>
-                  {profile.posts.map((p) => (
+                  {shownPosts.map((p) => (
                     <View key={p.id} style={{ width: '47.5%' }}>
                       <HaircutCard post={p} liked={liked.has(p.id)} onToggleLike={toggleLike} onPress={() => router.push(`/randevu/${profile.slug}`)} />
                     </View>

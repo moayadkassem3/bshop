@@ -1,3 +1,4 @@
+import { useMenOnly } from '@/lib/session';
 import { Camera, Map, Marker, type CameraRef } from '@maplibre/maplibre-react-native';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
@@ -58,7 +59,9 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
   const [start, setStart] = useState<LatLng | null>(home);
   const [center, setCenter] = useState<LatLng>(home ?? KADIKOY);
   const [user, setUser] = useState<LatLng | null>(home);
-  const [audience, setAudience] = useState<Audience>(props.initialAudience ?? 'all');
+  const menOnly = useMenOnly();
+  const [chosenType, setAudience] = useState<Audience>(props.initialAudience ?? 'all');
+  const audience: Audience = menOnly && chosenType === 'women' ? 'men' : chosenType;
   const [shops, setShops] = useState<NearbyShop[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
@@ -267,8 +270,17 @@ export function ExploreMap(props: { initialAudience?: Audience; home?: BusinessS
             ] as const
           ).map(([value, label]) => {
             const on = audience === value;
+            // Men customers cannot pick women's salons (founder, 14 November 2026): greyed out.
+            const off = menOnly && value === 'women';
             return (
-              <Pressable key={value} onPress={() => setAudience(value)} style={[styles.chip, on && styles.chipOn]} accessibilityRole="radio" accessibilityState={{ checked: on }}>
+              <Pressable
+                key={value}
+                onPress={() => setAudience(value)}
+                disabled={off}
+                style={[styles.chip, on && styles.chipOn, off && { opacity: 0.4 }]}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: on, disabled: off }}
+              >
                 <Text size={14} weight="bold" color={on ? colors.white : colors.ink}>
                   {label}
                 </Text>

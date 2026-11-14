@@ -7,7 +7,7 @@ import { Appear, SkeletonList } from '@/components/motion';
 import { Chip, Empty, Screen } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useLikes } from '@/lib/likes';
-import { useSession } from '@/lib/session';
+import { useMenOnly, useSession } from '@/lib/session';
 import type { HaircutStyle, PopularPost } from '@/lib/types';
 
 type Audience = 'all' | 'men' | 'women';
@@ -19,7 +19,10 @@ type Audience = 'all' | 'men' | 'women';
  */
 export default function PopularHaircutsScreen() {
   const { me } = useSession();
-  const [audience, setAudience] = useState<Audience>(me?.gender === 'female' ? 'women' : me?.gender === 'male' ? 'men' : 'all');
+  // Men customers see men's cuts only, without the Tümü/Kadın choice (founder, 14 November 2026).
+  const menOnly = useMenOnly();
+  const [picked, setAudience] = useState<Audience>(me?.gender === 'female' ? 'women' : me?.gender === 'male' ? 'men' : 'all');
+  const audience: Audience = menOnly ? 'men' : picked;
   const [style, setStyle] = useState<string | null>(null);
   const [styles, setStyles] = useState<HaircutStyle[]>([]);
   const [posts, setPosts] = useState<PopularPost[] | null>(null);
@@ -46,6 +49,7 @@ export default function PopularHaircutsScreen() {
 
   return (
     <Screen title="Popüler kesimler" subtitle="Salonların son çalışmaları. Beğendiğiniz kesime dokunun, salonundan randevu alın." back={<BackLink label="Geri" />} onRefresh={load} refreshing={false}>
+      {menOnly ? null : (
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {(
           [
@@ -65,6 +69,7 @@ export default function PopularHaircutsScreen() {
           />
         ))}
       </View>
+      )}
       {choices.length ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} accessibilityLabel="Kesim">
           {choices.map((s) => (

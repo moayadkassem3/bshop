@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from './api';
-import { getToken, rememberPortal } from './session';
+import { getToken, rememberPortal, useBusinessMode } from './session';
 import type { Me } from './types';
 
 export type Audience = 'all' | 'men' | 'women';
@@ -18,23 +18,57 @@ function readPicked(): Audience | null {
   }
 }
 
+// One /me per signed-in session for every screen that asks for the gender.
+let cached: { token: string; gender: Promise<Me['gender'] | null> } | null = null;
+function loadGender(): Promise<Me['gender'] | null> {
+  const token = getToken();
+  if (!token) return Promise.resolve(null);
+  if (cached?.token !== token) {
+    cached = {
+      token,
+      gender: api<Me>('/me')
+        .then((me) => {
+          rememberPortal(me.portal);
+          return me.gender ?? null;
+        })
+        .catch(() => null),
+    };
+  }
+  return cached.gender;
+}
+
+/**
+ * Men customers see only men's haircut photos and cannot pick "Kadın kuaförü"
+ * (founder, 14 November 2026). Signed-out visitors, women and business mode are not limited.
+ */
+export function useMenOnly(): boolean {
+  const business = useBusinessMode();
+  const [male, setMale] = useState(false);
+  useEffect(() => {
+    let live = true;
+    loadGender().then((g) => live && setMale(g === 'male'));
+    return () => {
+      live = false;
+    };
+  }, []);
+  return male && !business;
+}
+
 /** Keşfet's salon-type filter, shared with Popüler kesimler. */
-export function useAudience(): [Audience, (value: Audience) => void] {
+export function useAudience(): [Audience, (value: Audience) => void, boolean] {
   const [audience, setAudience] = useState<Audience>('all');
+  const menOnly = useMenOnly();
 
   useEffect(() => {
     const picked = readPicked();
-    if (picked) return setAudience(picked);
-    if (!getToken()) return;
-    api<Me>('/me')
-      .then((me) => {
-        rememberPortal(me.portal);
-        if (me.gender && !readPicked()) setAudience(me.gender === 'male' ? 'men' : 'women');
-      })
-      .catch(() => undefined);
+    if (picked) setAudience(picked);
+    loadGender().then((gender) => {
+      if (!readPicked() && gender) setAudience(gender === 'male' ? 'men' : 'women');
+    });
   }, []);
 
   function pick(value: Audience) {
+    if (menOnly && value === 'women') return;
     setAudience(value);
     try {
       window.sessionStorage.setItem(KEY, value);
@@ -43,5 +77,11 @@ export function useAudience(): [Audience, (value: Audience) => void] {
     }
   }
 
-  return [audience, pick];
+  // A "Kadın" choice made before signing in does not carry over for men.
+  return [menOnly && audience === 'women' ? 'men' : audience, pick, menOnly];
+}
+
+/** The audience for haircut photos: men customers always get men's. */
+export function photoAudience(audience: Audience, menOnly: boolean): Audience {
+  return menOnly ? 'men' : audience;
 }

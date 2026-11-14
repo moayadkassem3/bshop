@@ -199,14 +199,7 @@ export default async function ShopProfilePage({ params, searchParams }: Props) {
           </section>
         )}
 
-        {profile.posts.length > 0 && (
-          <section className={`card ${styles.section}`} aria-labelledby="work-title">
-            <h2 id="work-title" className={styles.sectionTitle}>
-              Çalışmalarımız
-            </h2>
-            <ShopWork posts={profile.posts} bookUrl={bookUrl} />
-          </section>
-        )}
+        {profile.posts.length > 0 && <ShopWork posts={profile.posts} bookUrl={bookUrl} sectionClass={`card ${styles.section}`} titleClass={styles.sectionTitle} />}
 
         <section className={`card ${styles.section}`} aria-labelledby="hours-title">
           <h2 id="hours-title" className={styles.sectionTitle}>

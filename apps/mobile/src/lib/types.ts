@@ -62,7 +62,7 @@ export type BusinessShop = {
   city?: string | null;
 };
 
-export type HaircutPost = { id: string; style: string; style_name: string; caption: string | null; width: number; height: number; created_at: string; like_count: number };
+export type HaircutPost = { id: string; style: string; style_name: string; style_audience?: 'men' | 'women' | null; caption: string | null; width: number; height: number; created_at: string; like_count: number };
 export type HaircutStyle = { key: string; name: string; audience: 'men' | 'women' };
 /** A post in Popüler kesimler, with the salon that made it. */
 export type PopularPost = HaircutPost & { shop_name: string; shop_slug: string; shop_verified?: boolean; district: string | null; city: string | null };

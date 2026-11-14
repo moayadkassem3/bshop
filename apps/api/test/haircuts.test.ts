@@ -20,6 +20,8 @@ describe('Popüler kesimler (v1.7)', () => {
     expect(posts.map((p: { style_name: string }) => p.style_name).sort()).toEqual(['Crop', 'Mullet']);
     const popular = (await t.call('GET', '/public/haircuts?audience=men')).body;
     expect(popular.map((p: { style_name: string }) => p.style_name).sort()).toEqual(['Crop', 'Mullet']);
+    // Each post says whose style it is, so men customers can be shown men's only (founder, 14 November 2026).
+    expect(popular.every((p: { style_audience: string }) => p.style_audience === 'men')).toBe(true);
   });
 
   it("a salon posts only its own customers' styles", async () => {

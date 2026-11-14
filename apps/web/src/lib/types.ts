@@ -116,6 +116,8 @@ export type HaircutPost = {
   id: string;
   style: string;
   style_name: string;
+  /** Men's or women's style; men customers see only men's photos. */
+  style_audience?: 'men' | 'women' | null;
   caption: string | null;
   width: number;
   height: number;

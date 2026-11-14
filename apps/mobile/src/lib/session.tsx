@@ -148,3 +148,12 @@ export function useSession(): Session {
   if (!s) throw new Error('useSession outside SessionProvider');
   return s;
 }
+
+/**
+ * Men customers see only men's haircut photos and cannot pick "Kadın kuaförü" (founder,
+ * 14 November 2026). Signed-out visitors, women and business mode are not limited.
+ */
+export function useMenOnly(): boolean {
+  const { me, business } = useSession();
+  return me?.gender === 'male' && !business;
+}

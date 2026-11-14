@@ -14,6 +14,7 @@ export type HaircutPost = {
   id: string;
   style: string;
   style_name: string;
+  style_audience: 'men' | 'women' | null;
   caption: string | null;
   width: number;
   height: number;
@@ -23,7 +24,12 @@ export type HaircutPost = {
 
 const styleName = (key: string) => HAIRCUT_STYLES.find((s) => s.key === key)?.name ?? key;
 /** The name shown on a photo: the salon's own name for the cut when it wrote one. */
-const withStyleName = <T extends { style: string; custom_name?: string | null }>({ custom_name, ...row }: T) => ({ ...row, style_name: custom_name || styleName(row.style) });
+const withStyleName = <T extends { style: string; custom_name?: string | null }>({ custom_name, ...row }: T) => ({
+  ...row,
+  style_name: custom_name || styleName(row.style),
+  // Men's or women's style: men customers see only men's photos (founder, 14 November 2026).
+  style_audience: HAIRCUT_STYLES.find((s) => s.key === row.style)?.audience ?? null,
+});
 
 const POST_COLUMNS = `p.id, p.style, p.custom_name, p.caption, p.width, p.height, p.created_at,
   (SELECT count(*)::int FROM haircut_likes l WHERE l.post_id = p.id) AS like_count`;

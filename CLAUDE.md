@@ -4,6 +4,10 @@ Turkish salon booking SaaS: `apps/api` (Fastify, PostgreSQL), `apps/web` (Next.j
 `apps/mobile` — the native Android/iOS app (Expo SDK 54, Expo Router, React Native). The full
 product record is `docs/salon-app-handoff.md`; read it before changing a workflow.
 
+**Before every build, read `docs/agreed-rules.md`** — every rule the founder agreed, as it stands
+now, with a checklist (both platforms, every role, store rule, men see only men's haircut photos,
+APK link in Turkish time). Update it in the same commit when a rule changes.
+
 ## Native app (`apps/mobile`) — founder decision, 3 November 2026
 
 Fully native screens (not a WebView of the website), for a stable, smooth experience. It talks to
@@ -63,5 +67,6 @@ Before submitting to the stores: check every native screen against the rules abo
 ## Working conventions
 
 - UI text is Turkish; code, comments and docs are English.
-- Record each change as a row in Section 15 of `docs/salon-app-handoff.md`.
+- Record each change as a row in Section 15 of `docs/salon-app-handoff.md`, and update
+  `docs/agreed-rules.md` when a rule changes.
 - Tests: `apps/api` with vitest (needs PostgreSQL); typecheck both apps with `npx tsc --noEmit -p .`.
