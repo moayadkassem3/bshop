@@ -171,6 +171,8 @@ Below it, four separate cards, the same for owners, Ortak and staff:
   - The month with arrows (a week at a time).
   - A row of day boxes (weekday and date, a dot on days with appointments) that opens on today,
     with one day before it at the left, so **the coming days always show**; it scrolls sideways.
+    **Tapping a day that is showing does not move the row**; it moves only for the last day showing
+    on the right, the first on the left, or a day out of view (arrows, month calendar).
   - The **month calendar slides down** from the handle under the row (tap or drag down; tapping
     the month name works too), with each day's number of appointments.
   - Staff chips start with "Tüm ekip".

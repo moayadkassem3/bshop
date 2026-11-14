@@ -391,10 +391,29 @@ function DayStrip(props: { date: string; today: string; counts: Record<string, n
   const days: string[] = [];
   for (let d = first; d <= last && days.length < 400; d = addDays(d, 1)) days.push(d);
   const index = days.indexOf(props.date);
+  const STEP = CHIP + CHIP_GAP;
+  // Where the row is scrolled and how wide it is, to tell whether the chosen day is in view.
+  const offset = useRef(Math.max(0, index - 1) * STEP);
+  const width = useRef(0);
+  const placed = useRef(false);
+  // The row stays still while the chosen day is in view (founder, 14 November 2026). It moves only
+  // when the chosen day is the last one showing on the right, the first on the left, or out of
+  // view (arrows, month calendar): then the day goes second from the left.
   useEffect(() => {
-    const t = setTimeout(() => ref.current?.scrollTo({ x: Math.max(0, index - 1) * (CHIP + CHIP_GAP), animated: true }), 0);
+    if (!placed.current) {
+      placed.current = true;
+      return;
+    }
+    const x = index * STEP;
+    const left = offset.current;
+    const right = left + width.current;
+    const inView = x >= left && x + CHIP <= right;
+    const lastOnRight = x + STEP + CHIP > right;
+    const firstOnLeft = index > 0 && x - STEP < left;
+    if (inView && !lastOnRight && !firstOnLeft) return;
+    const t = setTimeout(() => ref.current?.scrollTo({ x: Math.max(0, index - 1) * STEP, animated: true }), 0);
     return () => clearTimeout(t);
-  }, [index]);
+  }, [index, STEP]);
   return (
     <ScrollView
       ref={ref as never}
@@ -402,6 +421,13 @@ function DayStrip(props: { date: string; today: string; counts: Record<string, n
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ gap: CHIP_GAP, paddingVertical: 2 }}
       contentOffset={{ x: Math.max(0, index - 1) * (CHIP + CHIP_GAP), y: 0 }}
+      onLayout={(e) => {
+        width.current = e.nativeEvent.layout.width;
+      }}
+      onScroll={(e) => {
+        offset.current = e.nativeEvent.contentOffset.x;
+      }}
+      scrollEventThrottle={32}
       accessibilityLabel="Günler"
     >
       {days.map((d) => {

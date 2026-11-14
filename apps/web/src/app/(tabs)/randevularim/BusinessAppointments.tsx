@@ -436,9 +436,25 @@ function DayStrip(props: { date: string; today: string; counts: Record<string, n
   const days: string[] = [];
   for (let d = first; d <= last && days.length < 400; d = addDays(d, 1)) days.push(d);
   const placed = useRef(false);
+  // The row stays still while the chosen day is in view (founder, 14 November 2026). It moves only
+  // when the chosen day is the last one showing on the right, the first on the left, or out of
+  // view (arrows, month calendar): then the day goes second from the left.
   useEffect(() => {
-    const el = row.current?.querySelector<HTMLElement>(`[data-day="${addDays(props.date, -1)}"]`) ?? row.current?.querySelector<HTMLElement>(`[data-day="${props.date}"]`);
-    if (el && row.current) row.current.scrollTo({ left: el.offsetLeft - row.current.offsetLeft, behavior: placed.current ? 'smooth' : 'auto' });
+    const box = row.current;
+    const chosen = box?.querySelector<HTMLElement>(`[data-day="${props.date}"]`);
+    if (!box || !chosen) return;
+    if (placed.current) {
+      const x = chosen.offsetLeft - box.offsetLeft;
+      const step = chosen.offsetWidth + 8;
+      const left = box.scrollLeft;
+      const right = left + box.clientWidth;
+      const inView = x >= left && x + chosen.offsetWidth <= right;
+      const lastOnRight = x + step + chosen.offsetWidth > right;
+      const firstOnLeft = x - step < left && chosen.previousElementSibling !== null;
+      if (inView && !lastOnRight && !firstOnLeft) return;
+    }
+    const before = (chosen.previousElementSibling as HTMLElement | null) ?? chosen;
+    box.scrollTo({ left: before.offsetLeft - box.offsetLeft, behavior: placed.current ? 'smooth' : 'auto' });
     placed.current = true;
   }, [props.date]);
   return (
