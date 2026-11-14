@@ -116,7 +116,11 @@ export async function listPhotosForStaff(deps: Deps, user: User, shopId: string)
 }
 
 export async function readPhoto(deps: Deps, photoId: string): Promise<Buffer> {
-  const { rows } = await deps.db.query<{ storage_key: string }>('SELECT storage_key FROM shop_photos WHERE id = $1', [photoId]);
+  // A gallery photo, or a salon's profile photo (both are shown as the salon's picture).
+  const { rows } = await deps.db.query<{ storage_key: string }>(
+    'SELECT storage_key FROM shop_photos WHERE id = $1 UNION ALL SELECT logo_key FROM shops WHERE logo_id = $1 LIMIT 1',
+    [photoId],
+  );
   const data = rows[0] ? await deps.photos.get(rows[0].storage_key) : null;
   if (!data) throw notFound('Photo');
   return data;
@@ -166,4 +170,39 @@ export async function readStaffPhoto(deps: Deps, photoId: string): Promise<Buffe
   const data = rows[0] ? await deps.photos.get(rows[0].photo_key) : null;
   if (!data) throw notFound('Photo');
   return data;
+}
+
+/**
+ * A salon's profile photo (founder, 14 November 2026): the owners set it in Salon bilgileri. A
+ * 512 px square, shown in place of the first gallery photo wherever the salon appears small.
+ * Replacing or removing it deletes the old file.
+ */
+export async function setShopLogo(deps: Deps, user: User, shopId: string, data: Buffer): Promise<{ logo_id: string }> {
+  await requireOwner(deps.db, user, shopId);
+  const processed = await processImage(data, 'avatar');
+  const logoId = randomUUID();
+  const key = `${shopId}/logo/${logoId}.webp`;
+  await deps.photos.put(key, processed.data);
+  const old = await withTx(deps.db, async (tx) => {
+    const { rows } = await tx.query<{ logo_key: string | null }>('SELECT logo_key FROM shops WHERE id = $1 FOR UPDATE', [shopId]);
+    if (!rows[0]) throw notFound('Shop');
+    await tx.query('UPDATE shops SET logo_id = $2, logo_key = $3 WHERE id = $1', [shopId, logoId, key]);
+    return rows[0].logo_key;
+  }).catch(async (err) => {
+    await deps.photos.delete(key);
+    throw err;
+  });
+  if (old) await deps.photos.delete(old);
+  return { logo_id: logoId };
+}
+
+export async function deleteShopLogo(deps: Deps, user: User, shopId: string) {
+  await requireOwner(deps.db, user, shopId);
+  const { rows } = await deps.db.query<{ logo_key: string | null }>(
+    `UPDATE shops s SET logo_id = NULL, logo_key = NULL FROM (SELECT id, logo_key FROM shops WHERE id = $1 FOR UPDATE) old
+     WHERE s.id = old.id RETURNING old.logo_key`,
+    [shopId],
+  );
+  if (!rows[0]) throw notFound('Shop');
+  if (rows[0].logo_key) await deps.photos.delete(rows[0].logo_key);
 }

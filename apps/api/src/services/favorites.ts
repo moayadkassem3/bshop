@@ -5,7 +5,7 @@ import { RATING_COLUMNS } from '../domain/ratings.js';
 
 const MAX_FAVORITES = 30;
 const SUMMARY_COLUMNS = `s.slug, s.name, s.district, s.city, s.audience, s.verified_at IS NOT NULL AS verified, ${RATING_COLUMNS},
-  (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id`;
+  COALESCE(s.logo_id, (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1)) AS cover_photo_id`;
 
 /**
  * "Salonlarım" on the home page: the customer's favourite shops first, then

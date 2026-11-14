@@ -417,7 +417,8 @@ function MyShopCard({ shop }: { shop: BusinessShop }) {
         SALONUM
       </Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Thumb photo={null} name={shop.name} />
+        {/* The salon photo (or the first gallery photo), else the initial (founder, 14 November 2026). */}
+        <Thumb photo={shop.cover_photo_id ?? null} name={shop.name} />
         <View style={{ flex: 1 }}>
           <Text weight="bold" size={16} numberOfLines={1}>
             {shop.name}

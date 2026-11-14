@@ -448,6 +448,28 @@ describe('shop profile page (handoff v1.3)', () => {
     expect((await t.call('GET', `/public/photos/${reversed[0]}`)).status).toBe(404);
   });
 
+  it('the salon profile photo: owners set it, it stands for the salon everywhere (founder, 14 November 2026)', async () => {
+    const shop = await setupShop(t);
+    const cumali = await t.login(PHONES.cumali, { portal: 'staff' });
+    const thumb = async () => (await t.call('GET', '/public/nearby?lat=40.99&lng=29.03')).body.find((s: { slug: string }) => s.slug === shop.slug).cover_photo_id as string | null;
+    // Staff cannot set it.
+    expect((await t.call('POST', `${shop.base}/logo`, { token: cumali, body: await jpeg(600, 600), contentType: 'image/jpeg' })).status).toBe(403);
+    const set = await t.call('POST', `${shop.base}/logo`, { token: shop.tokens.owner, body: await jpeg(1200, 800), contentType: 'image/jpeg' });
+    expect(set.status).toBe(201);
+    // Lists show it, it is served square without metadata, the gallery does not include it.
+    expect(await thumb()).toBe(set.body.logo_id);
+    const meta = await sharp((await t.call('GET', `/public/photos/${set.body.logo_id}`)).raw).metadata();
+    expect([meta.format, meta.width, meta.height, meta.exif]).toEqual(['webp', 512, 512, undefined]);
+    const profile = (await t.call('GET', `/public/shops/${shop.slug}`)).body;
+    expect(profile.logo_id).toBe(set.body.logo_id);
+    expect(profile.photos.some((p: { id: string }) => p.id === set.body.logo_id)).toBe(false);
+    expect((await t.call('GET', '/staff/shops', { token: shop.tokens.owner })).body.find((s: { id: string }) => s.id === shop.shopId).logo_id).toBe(set.body.logo_id);
+    // Removing it brings back the first gallery photo (none here) and deletes the file.
+    expect((await t.call('DELETE', `${shop.base}/logo`, { token: shop.tokens.owner })).status).toBe(204);
+    expect(await thumb()).toBeNull();
+    expect((await t.call('GET', `/public/photos/${set.body.logo_id}`)).status).toBe(404);
+  });
+
   it('staff photos: each sets their own, owners set anyone’s; customers see them (founder, 8 November 2026)', async () => {
     const shop = await setupShop(t);
     const cumali = await t.login(PHONES.cumali, { portal: 'staff' });

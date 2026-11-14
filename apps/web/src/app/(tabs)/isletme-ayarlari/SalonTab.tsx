@@ -1,5 +1,6 @@
 'use client';
 
+import { SalonPhoto } from './SalonPhoto';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import reg from '@/components/register/register.module.css';
@@ -257,6 +258,12 @@ export function SalonTab({ shopId, slug, visible }: { shopId: string; slug: stri
               <span className={reg.fieldLabel}>Haritadaki yeri</span>
               <LocationPicker key={shopId} value={form.point} onChange={(point) => update({ point })} focus={focusFor(form.city, form.district)} />
             </div>
+          </section>
+
+          <section className={`card ${own.section} ${own.card}`} aria-labelledby="s-logo">
+            <h2 id="s-logo">Salon fotoğrafı</h2>
+            <p className={reg.help}>Müşteriler salonunuzu listelerde, haritada ve Favoriler’de bu fotoğrafla görür. Logonuz ya da vitrininiz olabilir.</p>
+            <SalonPhoto shopId={shopId} name={form.name} />
           </section>
 
           <section className={`card ${own.section} ${own.card}`} aria-labelledby="s-photos">

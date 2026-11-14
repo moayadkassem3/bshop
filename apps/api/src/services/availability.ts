@@ -127,6 +127,8 @@ export async function getShopProfile(deps: Deps, slug: string) {
   return {
     slug: shop.slug,
     name: shop.name,
+    // The salon's profile photo (founder, 14 November 2026); null until the owners set one.
+    logo_id: shop.logo_id ?? null,
     rating: rated.rows[0]!.rating,
     ratingCount: rated.rows[0]!.rating_count,
     about: shop.about,

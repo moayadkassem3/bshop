@@ -118,7 +118,8 @@ Go through this list for every change before committing:
   opening on the customer's gender. It opens on Kadıköy until a location is shared, remembers the
   last location for 7 days and never asks for location on page load.
 - The chosen pin shows the name, then "4,6 ★ · 350 m" (rating once the salon has enough).
-- **Men customers:** "Kadın kuaförü" is **greyed out and cannot be tapped**.
+- **Men** (customer and business mode, including Haritada gör): "Kadın kuaförü" is **greyed out
+  and cannot be tapped**.
 - **Tapping the search bar** opens the search screen: Popüler kesimler for the customer's gender,
   Favorilerim cards, nearby salons as cards; while typing, results nearest first, then matches
   elsewhere in Türkiye.
@@ -135,9 +136,11 @@ Go through this list for every change before committing:
 
 - Shown on Favoriler, on the search screen, at `/kesimler`, and as Çalışmalarımız on salon pages.
 - They follow the customer's gender.
-- **Men customers never see women's haircut photos:** no Tümü / Kadın choice on Popüler kesimler,
-  only men's styles in the strips, and women's photos hidden on a unisex salon's page (the section
-  goes when none is left). Signed-out visitors, women and business mode are not limited.
+- **Men never see women's haircut photos**, in customer *and* business mode: no Tümü / Kadın
+  choice on Popüler kesimler, only men's styles in the strips, and women's photos hidden on a
+  unisex salon's page (the section goes when none is left). It follows the account's gender, so an
+  account without a gender (e.g. an owner who registered a salon) is not limited until it sets one
+  in Profil → Profili düzenle. Signed-out visitors and women are not limited.
 - Sharing a cut: pick a style for the salon's type, or **"Diğer (kendi adınızı yazın)"** with the
   salon's own name for the cut (up to 40 letters).
 
@@ -171,8 +174,10 @@ Below it, four separate cards, the same for owners, Ortak and staff:
   - The month with arrows (a week at a time).
   - A row of day boxes (weekday and date, a dot on days with appointments) that opens on today,
     with one day before it at the left, so **the coming days always show**; it scrolls sideways.
-    **Tapping a day that is showing does not move the row**; it moves only for the last day showing
-    on the right, the first on the left, or a day out of view (arrows, month calendar).
+    **Tapping a day that is showing does not move the row**: on the 14th (13–18 showing), tapping
+    15, 16 or 17 keeps it still; tapping 18, the last one showing, slides it (the chosen day goes
+    second from the left). Also for the first day showing, and for a day out of view (arrows,
+    month calendar).
   - The **month calendar slides down** from the handle under the row (tap or drag down; tapping
     the month name works too), with each day's number of appointments.
   - Staff chips start with "Tüm ekip".
@@ -181,6 +186,10 @@ Below it, four separate cards, the same for owners, Ortak and staff:
 - **Geçmiş** tab: past appointments and every cancellation, with a red count of new cancellations.
 
 ### 6.3 Salon bilgileri and settings
+
+- **Salon fotoğrafı** (owners, Salon tab): the salon's profile photo, a square shown wherever the
+  salon appears small (lists, the map's Salonum card, Favoriler, search). Until one is set, the
+  first gallery photo stands in, then the initial. Kept apart from the gallery (Fotoğraflar).
 
 - Tabs Salon · Hizmetler · Personel. The save bar appears only when something changed; the "saved"
   message clears itself.

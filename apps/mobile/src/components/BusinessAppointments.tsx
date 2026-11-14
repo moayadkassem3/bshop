@@ -392,42 +392,44 @@ function DayStrip(props: { date: string; today: string; counts: Record<string, n
   for (let d = first; d <= last && days.length < 400; d = addDays(d, 1)) days.push(d);
   const index = days.indexOf(props.date);
   const STEP = CHIP + CHIP_GAP;
-  // Where the row is scrolled and how wide it is, to tell whether the chosen day is in view.
-  const offset = useRef(Math.max(0, index - 1) * STEP);
-  const width = useRef(0);
+  // The first day showing at the left, and how many days fit: kept here rather than guessed, so
+  // the row knows exactly which days are in view (founder, 14 November 2026).
+  const firstShown = useRef(Math.max(0, index - 1));
+  const fits = useRef(6);
   const placed = useRef(false);
-  // The row stays still while the chosen day is in view (founder, 14 November 2026). It moves only
-  // when the chosen day is the last one showing on the right, the first on the left, or out of
-  // view (arrows, month calendar): then the day goes second from the left.
+  const scrollToFirst = (animated: boolean) => ref.current?.scrollTo({ x: firstShown.current * STEP, animated });
+  // The row stays still while the chosen day is in view. It moves only when the chosen day is
+  // the last one showing on the right (or the first on the left, or out of view after the
+  // arrows or the month calendar): then the chosen day goes second from the left.
   useEffect(() => {
-    if (!placed.current) {
-      placed.current = true;
-      return;
-    }
-    const x = index * STEP;
-    const left = offset.current;
-    const right = left + width.current;
-    const inView = x >= left && x + CHIP <= right;
-    const lastOnRight = x + STEP + CHIP > right;
-    const firstOnLeft = index > 0 && x - STEP < left;
-    if (inView && !lastOnRight && !firstOnLeft) return;
-    const t = setTimeout(() => ref.current?.scrollTo({ x: Math.max(0, index - 1) * STEP, animated: true }), 0);
-    return () => clearTimeout(t);
-  }, [index, STEP]);
+    if (!placed.current) return;
+    const first = firstShown.current;
+    const last = first + fits.current - 1;
+    if (index > first && index < last) return;
+    firstShown.current = Math.max(0, index - 1);
+    scrollToFirst(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
   return (
     <ScrollView
       ref={ref as never}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ gap: CHIP_GAP, paddingVertical: 2 }}
-      contentOffset={{ x: Math.max(0, index - 1) * (CHIP + CHIP_GAP), y: 0 }}
       onLayout={(e) => {
-        width.current = e.nativeEvent.layout.width;
+        // Whole days that fit; the row is placed once it has a size (Android ignores contentOffset).
+        fits.current = Math.max(3, Math.floor((e.nativeEvent.layout.width + CHIP_GAP) / STEP));
+        if (!placed.current) {
+          placed.current = true;
+          scrollToFirst(false);
+        }
       }}
-      onScroll={(e) => {
-        offset.current = e.nativeEvent.contentOffset.x;
+      onMomentumScrollEnd={(e) => {
+        firstShown.current = Math.round(e.nativeEvent.contentOffset.x / STEP);
       }}
-      scrollEventThrottle={32}
+      onScrollEndDrag={(e) => {
+        firstShown.current = Math.round(e.nativeEvent.contentOffset.x / STEP);
+      }}
       accessibilityLabel="Günler"
     >
       {days.map((d) => {

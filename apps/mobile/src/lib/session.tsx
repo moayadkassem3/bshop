@@ -150,10 +150,11 @@ export function useSession(): Session {
 }
 
 /**
- * Men customers see only men's haircut photos and cannot pick "Kadın kuaförü" (founder,
- * 14 November 2026). Signed-out visitors, women and business mode are not limited.
+ * Men see only men's haircut photos and cannot pick "Kadın kuaförü" (founder, 14 November
+ * 2026), in customer and in business mode alike. Signed-out visitors, women and accounts
+ * without a gender are not limited.
  */
 export function useMenOnly(): boolean {
-  const { me, business } = useSession();
-  return me?.gender === 'male' && !business;
+  const { me } = useSession();
+  return me?.gender === 'male';
 }

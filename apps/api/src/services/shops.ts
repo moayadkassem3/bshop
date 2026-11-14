@@ -13,6 +13,8 @@ import { RATING_COLUMNS } from '../domain/ratings.js';
 export type Shop = {
   id: string;
   slug: string;
+  /** The salon's profile photo (founder, 14 November 2026). */
+  logo_id?: string | null;
   name: string;
   phone: string | null;
   address: string | null;
@@ -39,7 +41,7 @@ export type Shop = {
 const SHOP_COLUMNS = `s.id, s.slug, s.name, s.phone, s.address, s.district, s.city, s.whatsapp, s.instagram, s.about,
   s.latitude, s.longitude, s.timezone, s.audience,
   s.cancellation_cutoff_minutes, s.min_lead_minutes, s.buffer_minutes, s.slot_step_minutes,
-  s.booking_horizon_days, s.max_future_bookings, s.reviewed_at, s.verified_at`;
+  s.booking_horizon_days, s.max_future_bookings, s.reviewed_at, s.verified_at, s.logo_id`;
 
 /**
  * Public = published (at registration, v1.7), not taken down by our team, and
@@ -74,7 +76,7 @@ export async function getPublicShopBySlug(q: Queryable, now: Date, slug: string)
 export async function searchPublicShops(deps: Deps, query: string) {
   const { rows } = await deps.db.query(
     `SELECT s.slug, s.name, s.address, s.district, s.city, s.audience, s.verified_at IS NOT NULL AS verified, ${RATING_COLUMNS},
-       (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id
+       COALESCE(s.logo_id, (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1)) AS cover_photo_id
      FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
      WHERE ${PUBLIC_CONDITION} AND (s.name ILIKE $2 OR s.address ILIKE $2 OR s.district ILIKE $2 OR s.city ILIKE $2)
      ORDER BY s.name COLLATE "tr-x-icu" LIMIT 20`,
@@ -104,7 +106,7 @@ export async function nearbyShops(deps: Deps, q: NearbyQuery) {
   const { rows } = await deps.db.query(
     `SELECT * FROM (
        SELECT s.slug, s.name, s.district, s.city, s.audience, s.latitude, s.longitude, s.verified_at IS NOT NULL AS verified, ${RATING_COLUMNS},
-         (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id,
+         COALESCE(s.logo_id, (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1)) AS cover_photo_id,
          round(${distance})::int AS distance_m
        FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
        WHERE ${PUBLIC_CONDITION} AND s.latitude IS NOT NULL AND s.longitude IS NOT NULL
@@ -418,7 +420,7 @@ export async function improveShopLinks(deps: Deps) {
 export async function listingShops(deps: Deps, input: { city: string; district?: string; audience?: 'men' | 'women' }) {
   const { rows } = await deps.db.query(
     `SELECT s.slug, s.name, s.address, s.district, s.city, s.audience, s.verified_at IS NOT NULL AS verified, ${RATING_COLUMNS},
-       (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id
+       COALESCE(s.logo_id, (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1)) AS cover_photo_id
      FROM shops s JOIN subscriptions sub ON sub.shop_id = s.id
      WHERE ${PUBLIC_CONDITION} AND lower(s.city) = lower($2) AND ($3::text IS NULL OR lower(s.district) = lower($3))
        AND ($4::text IS NULL OR s.audience IN ($4, 'unisex'))

@@ -8,6 +8,7 @@ import { MapPickerModal, MapPreview, type MapFocus, type Point } from '@/compone
 import { Appear, SkeletonList } from '@/components/motion';
 import { PhotoManager } from '@/components/PhotoManager';
 import { SAVE_BAR_SPACE, SaveBar, type SaveBarState } from '@/components/SaveBar';
+import { SalonPhoto } from '@/components/SalonPhoto';
 import { SelectField } from '@/components/SelectField';
 import { ShopInfoStaff } from '@/components/ShopInfoStaff';
 import { ShopPicker } from '@/components/ShopPicker';
@@ -276,6 +277,12 @@ function SalonTab({ shopId, onBar }: { shopId: string; onBar: (bar: SaveBarState
       <Text size={13} color={colors.muted}>
         Salonunuzun bağlantısı ve QR kodu ad değişse de aynı kalır.
       </Text>
+
+      <Section title="Salon fotoğrafı" />
+      <Text size={13} color={colors.muted}>
+        Müşteriler salonunuzu listelerde, haritada ve Favoriler’de bu fotoğrafla görür. Logonuz ya da vitrininiz olabilir.
+      </Text>
+      <SalonPhoto shopId={shopId} name={form.name} />
 
       <Section title={`Fotoğraflar (${photoCount}/12)`} />
       <PhotoManager shopId={shopId} onCountChange={setPhotoCount} />

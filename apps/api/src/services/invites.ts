@@ -168,7 +168,7 @@ export async function resendInvite(deps: Deps, user: User, shopId: string, id: s
 export async function myInvites(deps: Deps, user: User) {
   const { rows } = await deps.db.query(
     `SELECT i.id, i.role, i.owner_label, i.display_name, i.created_at, s.id AS shop_id, s.name AS shop_name, s.slug,
-       (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id,
+       COALESCE(s.logo_id, (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1)) AS cover_photo_id,
        (SELECT m.display_name FROM shop_members m WHERE m.shop_id = s.id AND m.user_id = i.invited_by) AS invited_by
      FROM staff_invites i JOIN shops s ON s.id = i.shop_id
      WHERE i.user_id = $1 AND i.status = 'pending' ORDER BY i.created_at DESC`,

@@ -39,6 +39,9 @@ export type BusinessShop = {
   id: string;
   name: string;
   slug: string;
+  /** The salon photo, or the first gallery photo (founder, 14 November 2026). */
+  cover_photo_id?: string | null;
+  logo_id?: string | null;
   member_id: string;
   display_name?: string;
   /** This person's staff photo here (founder, 8 November 2026). */

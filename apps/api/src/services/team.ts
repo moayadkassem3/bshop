@@ -18,8 +18,8 @@ export async function listMyShops(deps: Deps, user: User) {
        (${PUBLIC_CONDITION.replaceAll('$1', '$2')}) AS visible,
        (SELECT max(r.created_at) FROM subscription_requests r WHERE r.shop_id = s.id) AS subscription_requested_at,
        -- For Keşfet in business mode (v1.7): the map starts at the salon and shows its card.
-       s.latitude, s.longitude, s.district, s.city, s.audience,
-       (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1) AS cover_photo_id,
+       s.latitude, s.longitude, s.district, s.city, s.audience, s.logo_id,
+       COALESCE(s.logo_id, (SELECT p.id FROM shop_photos p WHERE p.shop_id = s.id ORDER BY p.position LIMIT 1)) AS cover_photo_id,
        -- Billing seats, for "Paketler ve fiyatlar" (v1.7): the plan follows the bookable staff count.
        (SELECT count(*)::int FROM shop_members b WHERE b.shop_id = s.id AND b.active AND b.bookable) AS seats
      FROM shop_members m JOIN shops s ON s.id = m.shop_id JOIN subscriptions sub ON sub.shop_id = s.id
