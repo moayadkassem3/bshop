@@ -1,0 +1,234 @@
+.hero {
+  position: relative;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.slide {
+  flex: 0 0 100%;
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  border: 0;
+  background: var(--line);
+  scroll-snap-align: start;
+  cursor: zoom-in;
+}
+
+.slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (min-width: 720px) {
+  .hero {
+    margin-top: 16px;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+}
+
+.counter {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(11 17 32 / 0.7);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.placeholder {
+  display: grid;
+  place-items: center;
+  max-width: 720px;
+  margin: 0 auto;
+  aspect-ratio: 16 / 7;
+  background: radial-gradient(circle at 30% 20%, var(--dark-2), var(--night));
+  color: var(--primary-light);
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: rgb(11 17 32 / 0.88);
+  backdrop-filter: blur(6px);
+  animation: var(--dur-2) var(--ease-out) both lightbox-fade;
+}
+
+.lightboxTop {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.lightboxTop > * {
+  pointer-events: auto;
+}
+
+/* The photos side by side; the middle one snaps to the centre and the next ones peek in. */
+.carousel {
+  --slide: min(80vw, 440px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-inline: calc((100% - var(--slide)) / 2);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  animation: var(--dur-3) var(--ease-out) both lightbox-pop;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.card {
+  --away: 0;
+  flex: 0 0 var(--slide);
+  padding: 0;
+  border: 0;
+  background: none;
+  scroll-snap-align: center;
+  cursor: pointer;
+  opacity: calc(1 - var(--away) * 0.5);
+  transform: scale(calc(1 - var(--away) * 0.12));
+  transition: opacity 120ms linear;
+}
+
+.card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 62vh;
+  object-fit: cover;
+  border-radius: 20px;
+  background: rgb(255 255 255 / 0.06);
+}
+
+.close,
+.nav {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.nav {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+}
+
+.prev {
+  left: 12px;
+}
+
+.next {
+  right: 12px;
+}
+
+/* On phones the photos are swiped; the arrows are for mouse users. */
+@media (hover: none) {
+  .nav {
+    display: none;
+  }
+}
+
+.lightboxCounter {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.35);
+  transition: width var(--dur-2) var(--ease-out);
+}
+
+.dots .dotOn {
+  width: 18px;
+  background: #fff;
+}
+
+@keyframes lightbox-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes lightbox-pop {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.thumb {
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--line);
+  cursor: zoom-in;
+}
+
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

@@ -1,0 +1,173 @@
+.page {
+  padding-bottom: 150px;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--primary-light);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 14px;
+  padding: 16px;
+}
+
+.big {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.big strong {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.big span:last-child {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.bars {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bars li {
+  display: grid;
+  grid-template-columns: 12px 1fr 24px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.bars li span:last-child {
+  text-align: right;
+}
+
+.track {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.track span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--star);
+}
+
+.notYet {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.reply {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--bg);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.actions {
+  display: flex;
+  gap: 18px;
+}
+
+.link {
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.danger {
+  color: var(--danger);
+}
+
+.form {
+  display: grid;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.form textarea {
+  min-height: 84px;
+  padding: 10px 14px;
+  resize: vertical;
+}
+
+.counter {
+  justify-self: end;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.formActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.footnote {
+  margin: 14px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}

@@ -1,0 +1,553 @@
+:root {
+  /* Main navigation: a bottom bar on phones, a rail on the left on big screens (v1.7). */
+  --nav-bottom: calc(64px + env(safe-area-inset-bottom));
+  --nav-left: 0px;
+  /* The subscription warning bar's height on business screens (v1.7). */
+  --banner-h: 0px;
+  /* Brand theme (v1.6): blue and near-black, from the founder's mockups. */
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --surface-2: #f5f8ff;
+  --ink: #0b1120;
+  --ink-2: #3a3f48;
+  --muted: #666c78;
+  --line: #e1e5eb;
+  --primary: #1f48c9;
+  --primary-hover: #1a3cab;
+  --primary-ink: #ffffff;
+  --primary-soft: #e7edfc;
+  --primary-light: #8daeff;
+  --dark-2: #172033;
+  --dark-muted: #9ba4b5;
+  --success: #15803d;
+  --success-soft: #e5f5ea;
+  --warning: #b45309;
+  --warning-soft: #fdf0e1;
+  --danger: #c62828;
+  --danger-soft: #fdecec;
+  /* Red behind white text (buttons, the warning bar, counters). */
+  --danger-strong: #c62828;
+  /* Dark panels (headers, avatars, time badges): navy in both themes. */
+  --night: #0b1120;
+  /* A selected chip, day or tab. */
+  --chip-on: #0b1120;
+  /* Buttons floating over photos, the map's loading colour, favourites and notice borders. */
+  --float: rgb(255 255 255 / 0.92);
+  --map-bg: #e9edf3;
+  --heart: #d1344a;
+  --heart-soft: #fdf0f2;
+  --heart-line: #f4c7cf;
+  --success-line: #b9e4c5;
+  --warning-line: #f6d28a;
+  --danger-line: #f2c9c9;
+  --star: #f2a516;
+  color-scheme: light;
+  --radius: 20px;
+  --radius-sm: 14px;
+  --shadow: 0 1px 2px rgb(11 17 32 / 0.04), 0 8px 24px rgb(11 17 32 / 0.05);
+  /* Motion (v1.7): short and calm; everything off with “reduce motion”. */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 240ms;
+  --font: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Dark navy (founder, 8 November 2026): Profil → Görünüm. The website starts light; the
+   choice is kept in this browser and set on <html data-theme> before the page draws. */
+:root[data-theme='dark'] {
+  --bg: #0d1424;
+  --surface: #151d30;
+  --surface-2: #1a2439;
+  --ink: #eef1f6;
+  --ink-2: #c3cad6;
+  --muted: #8f99ab;
+  --line: #253149;
+  --primary: #3d6ef2;
+  --primary-hover: #3462e0;
+  --primary-soft: #1b2a52;
+  --primary-light: #8daeff;
+  --dark-2: #1a2439;
+  --success: #3cc47c;
+  --success-soft: #0f2a1f;
+  --warning: #f2b84b;
+  --warning-soft: #2d2210;
+  --danger: #f07f7f;
+  --danger-soft: #2e1418;
+  --danger-strong: #b73535;
+  --night: #0a0f1d;
+  --chip-on: #3d6ef2;
+  --float: rgb(21 29 48 / 0.92);
+  --map-bg: #0d1424;
+  --heart: #f0657a;
+  --heart-soft: #2e1620;
+  --heart-line: #4a2430;
+  --success-line: #1d4a33;
+  --warning-line: #5a4416;
+  --danger-line: #4a2428;
+  --star: #f2b84b;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.2), 0 8px 24px rgb(0 0 0 / 0.25);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Slide-in animations (tabs, booking steps) must never widen the page: phone browsers keep
+   the wider layout afterwards and the tab bar ends up partly off screen (12 November 2026). */
+html,
+body {
+  overflow-x: clip;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.narrow {
+  max-width: 600px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform var(--dur-1) var(--ease-out);
+}
+
+.btn:hover {
+  border-color: var(--ink-2);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-ink);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+/* A primary button that cannot be pressed yet is grey with readable text, not a washed-out
+   blue with white text (review, 12 November 2026). */
+.btn-primary:disabled {
+  opacity: 1;
+  background: var(--line);
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.input {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 16px;
+  width: 100%;
+}
+
+.input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-info {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.badge-success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.badge-warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.badge-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.badge-muted {
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.alert {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.alert-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.alert-info {
+  background: var(--primary-soft);
+  color: var(--primary-hover);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --nav-bottom: 0px;
+    --nav-left: 88px;
+  }
+}
+
+/* ---------- Motion (v1.7) ---------- */
+
+/* Page transitions, by navigation type (components/PageMotion.tsx, lib/motion.ts).
+   The rest of the screen (tab bar, banner) does not move. */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(.nav-forward) {
+  animation:
+    var(--dur-1) var(--ease-in) both motion-fade-out,
+    var(--dur-3) var(--ease-out) both motion-to-left;
+}
+
+::view-transition-new(.nav-forward) {
+  animation:
+    var(--dur-2) var(--ease-out) 60ms both motion-fade-in,
+    var(--dur-3) var(--ease-out) both motion-from-right;
+}
+
+::view-transition-old(.nav-back) {
+  animation:
+    var(--dur-1) var(--ease-in) both motion-fade-out,
+    var(--dur-3) var(--ease-out) both motion-to-right;
+}
+
+::view-transition-new(.nav-back) {
+  animation:
+    var(--dur-2) var(--ease-out) 60ms both motion-fade-in,
+    var(--dur-3) var(--ease-out) both motion-from-left;
+}
+
+::view-transition-old(.nav-tab) {
+  animation: var(--dur-1) var(--ease-in) both motion-fade-out;
+}
+
+::view-transition-new(.nav-tab) {
+  animation: var(--dur-2) var(--ease-out) both motion-fade-in;
+}
+
+/* The search screen grows out of Keşfet's search bar at the top. */
+::view-transition-old(.nav-expand) {
+  animation: var(--dur-2) var(--ease-in) both motion-fade-out;
+}
+
+::view-transition-new(.nav-expand) {
+  transform-origin: 50% 0;
+  animation:
+    var(--dur-2) var(--ease-out) both motion-fade-in,
+    var(--dur-3) var(--ease-out) both motion-expand;
+}
+
+@keyframes motion-expand {
+  from {
+    transform: scale(0.94);
+  }
+}
+
+/* A list item leaving (an answered request): slides right and fades. */
+::view-transition-old(.leave) {
+  animation: var(--dur-3) var(--ease-in) both motion-leave;
+}
+
+::view-transition-new(.arrive) {
+  animation: var(--dur-2) var(--ease-out) both motion-reveal;
+}
+
+::view-transition-group(.move) {
+  animation-duration: var(--dur-3);
+  animation-timing-function: var(--ease-out);
+}
+
+/* Tab content arriving from the side it comes from (Randevular: Talepler ↔ Takvim). */
+.motion-slide-from-right {
+  animation:
+    var(--dur-2) var(--ease-out) both motion-fade-in,
+    var(--dur-3) var(--ease-out) both motion-from-right;
+}
+
+.motion-slide-from-left {
+  animation:
+    var(--dur-2) var(--ease-out) both motion-fade-in,
+    var(--dur-3) var(--ease-out) both motion-from-left;
+}
+
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes motion-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes motion-from-right {
+  from {
+    translate: 32px 0;
+  }
+}
+
+@keyframes motion-from-left {
+  from {
+    translate: -32px 0;
+  }
+}
+
+@keyframes motion-to-left {
+  to {
+    translate: -24px 0;
+  }
+}
+
+@keyframes motion-to-right {
+  to {
+    translate: 24px 0;
+  }
+}
+
+@keyframes motion-leave {
+  to {
+    opacity: 0;
+    translate: 48px 0;
+  }
+}
+
+/* Something opening (a form, an editor, a panel): fades in and settles. */
+.motion-reveal,
+details[open] > :not(summary) {
+  animation: motion-reveal var(--dur-2) var(--ease-out) both;
+}
+
+@keyframes motion-reveal {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+
+/* Booking steps: in from the side they come from. */
+.motion-step-forward {
+  animation: motion-step-forward var(--dur-3) var(--ease-out) both;
+}
+
+.motion-step-back {
+  animation: motion-step-back var(--dur-3) var(--ease-out) both;
+}
+
+@keyframes motion-step-forward {
+  from {
+    opacity: 0;
+    translate: 24px 0;
+  }
+}
+
+@keyframes motion-step-back {
+  from {
+    opacity: 0;
+    translate: -24px 0;
+  }
+}
+
+/* Content that just arrived after loading. */
+.motion-fade {
+  animation: motion-fade-in var(--dur-2) var(--ease-out) both;
+}
+
+/* A small confirmation: “Kaydedildi”, a new badge. */
+.motion-pop {
+  animation: motion-pop 280ms var(--ease-out) both;
+}
+
+@keyframes motion-pop {
+  0% {
+    opacity: 0;
+    scale: 0.6;
+  }
+  60% {
+    opacity: 1;
+    scale: 1.08;
+  }
+}
+
+/* Loading placeholders in the shape of what is coming. */
+.skeleton {
+  display: block;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--line) 25%, color-mix(in srgb, var(--line) 45%, var(--surface)) 50%, var(--line) 75%);
+  background-size: 200% 100%;
+  animation: motion-shimmer 1.3s linear infinite;
+}
+
+.skeleton-list {
+  display: grid;
+  gap: 12px;
+}
+
+.skeleton-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  box-shadow: none;
+}
+
+@keyframes motion-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

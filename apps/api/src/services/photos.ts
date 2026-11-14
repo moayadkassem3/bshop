@@ -1,0 +1,208 @@
+import { randomUUID } from 'node:crypto';
+import sharp from 'sharp';
+import type { Deps } from '../deps.js';
+import { withTx } from '../db.js';
+import { badRequest, conflict, notFound } from '../errors.js';
+import { requireMember, requireOwner, requireSelfOrOwner } from './access.js';
+import type { User } from './auth.js';
+
+export const MAX_PHOTOS = 12;
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+export type Photo = { id: string; width: number; height: number };
+
+/**
+ * How uploads are stored (v1.7). Shop photos open full screen in the gallery;
+ * haircut posts are only ever shown at phone width, so they are kept smaller.
+ * WebP at quality 78 looks the same as the original on a phone and is about a
+ * tenth of a phone camera's JPEG. A very detailed photo (hair, patterned walls)
+ * that still comes out above `maxBytes` is encoded once more at `minQuality`;
+ * quality never goes below that, so nothing turns blocky.
+ */
+export const IMAGE_PRESETS = {
+  photo: { maxSide: 1600, quality: 78, minQuality: 70, maxBytes: 300 * 1024 },
+  post: { maxSide: 1280, quality: 78, minQuality: 70, maxBytes: 220 * 1024 },
+  // Staff photos are shown in small circles: cropped square around the middle.
+  avatar: { maxSide: 512, quality: 80, minQuality: 72, maxBytes: 80 * 1024 },
+} as const;
+export type ImageKind = keyof typeof IMAGE_PRESETS;
+
+/**
+ * Every upload is re-encoded: turned upright, scaled down to the preset's size,
+ * and saved as WebP without its metadata, so a phone photo's hidden GPS
+ * location never reaches the public page.
+ */
+export async function processImage(data: Buffer, kind: ImageKind = 'photo'): Promise<{ data: Buffer; info: { width: number; height: number } }> {
+  const preset = IMAGE_PRESETS[kind];
+  try {
+    const upright = await sharp(data, { limitInputPixels: 50_000_000 })
+      .rotate()
+      .resize(
+        kind === 'avatar'
+          ? { width: preset.maxSide, height: preset.maxSide, fit: 'cover', position: 'attention' }
+          : { width: preset.maxSide, height: preset.maxSide, fit: 'inside', withoutEnlargement: true },
+      )
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const encode = (quality: number) =>
+      sharp(upright.data, { raw: upright.info })
+        .webp({ quality, effort: 5, smartSubsample: true })
+        .toBuffer({ resolveWithObject: true });
+    let out = await encode(preset.quality);
+    if (out.data.length > preset.maxBytes) out = await encode(preset.minQuality);
+    return { data: out.data, info: { width: out.info.width, height: out.info.height } };
+  } catch {
+    throw badRequest('INVALID_IMAGE', 'Upload a JPEG, PNG, or WebP photo');
+  }
+}
+
+export async function addPhoto(deps: Deps, user: User, shopId: string, data: Buffer): Promise<Photo> {
+  await requireOwner(deps.db, user, shopId);
+  const processed = await processImage(data);
+  const key = `${shopId}/${randomUUID()}.webp`;
+  return withTx(deps.db, async (tx) => {
+    await tx.query('SELECT id FROM shops WHERE id = $1 FOR UPDATE', [shopId]);
+    const { rows } = await tx.query<{ n: number; next: number }>(
+      'SELECT count(*)::int AS n, COALESCE(max(position), 0) + 1 AS next FROM shop_photos WHERE shop_id = $1',
+      [shopId],
+    );
+    if (rows[0]!.n >= MAX_PHOTOS) throw conflict('PHOTO_LIMIT', `A shop can have up to ${MAX_PHOTOS} photos`);
+    await deps.photos.put(key, processed.data);
+    const inserted = await tx.query<Photo>(
+      `INSERT INTO shop_photos (shop_id, storage_key, width, height, position)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id, width, height`,
+      [shopId, key, processed.info.width, processed.info.height, rows[0]!.next],
+    );
+    return inserted.rows[0]!;
+  });
+}
+
+export async function deletePhoto(deps: Deps, user: User, shopId: string, photoId: string) {
+  await requireOwner(deps.db, user, shopId);
+  const { rows } = await deps.db.query<{ storage_key: string }>(
+    'DELETE FROM shop_photos WHERE id = $1 AND shop_id = $2 RETURNING storage_key',
+    [photoId, shopId],
+  );
+  if (!rows[0]) throw notFound('Photo');
+  await deps.photos.delete(rows[0].storage_key);
+}
+
+/** The first photo is the cover on the profile page. */
+export async function reorderPhotos(deps: Deps, user: User, shopId: string, photoIds: string[]) {
+  await requireOwner(deps.db, user, shopId);
+  await withTx(deps.db, async (tx) => {
+    const { rows } = await tx.query<{ id: string }>('SELECT id FROM shop_photos WHERE shop_id = $1', [shopId]);
+    const current = new Set(rows.map((r) => r.id));
+    if (photoIds.length !== current.size || !photoIds.every((id) => current.has(id))) {
+      throw badRequest('PHOTO_ORDER', 'List every photo of the shop exactly once');
+    }
+    for (const [i, id] of photoIds.entries()) {
+      await tx.query('UPDATE shop_photos SET position = $2 WHERE id = $1', [id, i + 1]);
+    }
+  });
+}
+
+export async function listPhotos(deps: Deps, shopId: string): Promise<Photo[]> {
+  const { rows } = await deps.db.query<Photo>(
+    'SELECT id, width, height FROM shop_photos WHERE shop_id = $1 ORDER BY position',
+    [shopId],
+  );
+  return rows;
+}
+
+export async function listPhotosForStaff(deps: Deps, user: User, shopId: string) {
+  await requireMember(deps.db, user, shopId);
+  return listPhotos(deps, shopId);
+}
+
+export async function readPhoto(deps: Deps, photoId: string): Promise<Buffer> {
+  // A gallery photo, or a salon's profile photo (both are shown as the salon's picture).
+  const { rows } = await deps.db.query<{ storage_key: string }>(
+    'SELECT storage_key FROM shop_photos WHERE id = $1 UNION ALL SELECT logo_key FROM shops WHERE logo_id = $1 LIMIT 1',
+    [photoId],
+  );
+  const data = rows[0] ? await deps.photos.get(rows[0].storage_key) : null;
+  if (!data) throw notFound('Photo');
+  return data;
+}
+
+/**
+ * A staff member's photo (founder, 8 November 2026): the staff member sets their own,
+ * the salon's owners set anyone's. Replacing or removing it deletes the old file.
+ */
+export async function setStaffPhoto(deps: Deps, user: User, shopId: string, memberId: string, data: Buffer): Promise<{ photo_id: string }> {
+  requireSelfOrOwner(await requireMember(deps.db, user, shopId), memberId);
+  const processed = await processImage(data, 'avatar');
+  const photoId = randomUUID();
+  const key = `${shopId}/staff/${photoId}.webp`;
+  await deps.photos.put(key, processed.data);
+  const old = await withTx(deps.db, async (tx) => {
+    const { rows } = await tx.query<{ photo_key: string | null }>(
+      'SELECT photo_key FROM shop_members WHERE id = $1 AND shop_id = $2 AND active FOR UPDATE',
+      [memberId, shopId],
+    );
+    if (!rows[0]) throw notFound('Member');
+    await tx.query('UPDATE shop_members SET photo_id = $2, photo_key = $3 WHERE id = $1', [memberId, photoId, key]);
+    return rows[0].photo_key;
+  }).catch(async (err) => {
+    await deps.photos.delete(key);
+    throw err;
+  });
+  if (old) await deps.photos.delete(old);
+  return { photo_id: photoId };
+}
+
+export async function deleteStaffPhoto(deps: Deps, user: User, shopId: string, memberId: string) {
+  requireSelfOrOwner(await requireMember(deps.db, user, shopId), memberId);
+  const { rows } = await deps.db.query<{ photo_key: string | null }>(
+    `UPDATE shop_members m SET photo_id = NULL, photo_key = NULL
+     FROM (SELECT id, photo_key FROM shop_members WHERE id = $1 AND shop_id = $2 FOR UPDATE) old
+     WHERE m.id = old.id RETURNING old.photo_key`,
+    [memberId, shopId],
+  );
+  if (!rows[0]) throw notFound('Member');
+  if (rows[0].photo_key) await deps.photos.delete(rows[0].photo_key);
+}
+
+/** Only photos of people who still work at the salon are served. */
+export async function readStaffPhoto(deps: Deps, photoId: string): Promise<Buffer> {
+  const { rows } = await deps.db.query<{ photo_key: string }>('SELECT photo_key FROM shop_members WHERE photo_id = $1 AND active', [photoId]);
+  const data = rows[0] ? await deps.photos.get(rows[0].photo_key) : null;
+  if (!data) throw notFound('Photo');
+  return data;
+}
+
+/**
+ * A salon's profile photo (founder, 14 November 2026): the owners set it in Salon bilgileri. A
+ * 512 px square, shown in place of the first gallery photo wherever the salon appears small.
+ * Replacing or removing it deletes the old file.
+ */
+export async function setShopLogo(deps: Deps, user: User, shopId: string, data: Buffer): Promise<{ logo_id: string }> {
+  await requireOwner(deps.db, user, shopId);
+  const processed = await processImage(data, 'avatar');
+  const logoId = randomUUID();
+  const key = `${shopId}/logo/${logoId}.webp`;
+  await deps.photos.put(key, processed.data);
+  const old = await withTx(deps.db, async (tx) => {
+    const { rows } = await tx.query<{ logo_key: string | null }>('SELECT logo_key FROM shops WHERE id = $1 FOR UPDATE', [shopId]);
+    if (!rows[0]) throw notFound('Shop');
+    await tx.query('UPDATE shops SET logo_id = $2, logo_key = $3 WHERE id = $1', [shopId, logoId, key]);
+    return rows[0].logo_key;
+  }).catch(async (err) => {
+    await deps.photos.delete(key);
+    throw err;
+  });
+  if (old) await deps.photos.delete(old);
+  return { logo_id: logoId };
+}
+
+export async function deleteShopLogo(deps: Deps, user: User, shopId: string) {
+  await requireOwner(deps.db, user, shopId);
+  const { rows } = await deps.db.query<{ logo_key: string | null }>(
+    `UPDATE shops s SET logo_id = NULL, logo_key = NULL FROM (SELECT id, logo_key FROM shops WHERE id = $1 FOR UPDATE) old
+     WHERE s.id = old.id RETURNING old.logo_key`,
+    [shopId],
+  );
+  if (!rows[0]) throw notFound('Shop');
+  if (rows[0].logo_key) await deps.photos.delete(rows[0].logo_key);
+}

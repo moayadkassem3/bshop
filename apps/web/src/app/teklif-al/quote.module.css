@@ -1,0 +1,104 @@
+.page {
+  padding-bottom: 60px;
+}
+
+.back {
+  display: inline-block;
+  margin-top: calc(20px + env(safe-area-inset-top));
+  color: var(--primary);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.head {
+  padding: 18px 0 14px;
+}
+
+.head h1 {
+  margin: 0;
+  font-size: clamp(28px, 6vw, 36px);
+  letter-spacing: -0.02em;
+}
+
+.kicker {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.lead {
+  margin: 8px 0 0;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  gap: 10px;
+}
+
+.textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.muted {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.muted a {
+  color: var(--primary);
+  font-weight: 650;
+}
+
+.problem {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--warning);
+}
+
+.done {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 20px;
+}
+
+.done h1 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.done p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.done a:not(:global(.btn)) {
+  color: var(--primary);
+  font-weight: 650;
+}

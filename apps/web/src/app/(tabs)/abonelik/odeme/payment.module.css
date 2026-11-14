@@ -1,0 +1,178 @@
+.months {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.months button {
+  min-height: 44px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.months button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.months .monthOn {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-weight: 600;
+}
+
+.total strong {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.methods {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.method {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.methodOn {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+/* Not ready yet: listed, greyed out. */
+.methodOff {
+  opacity: 0.55;
+}
+
+.methodIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.methodOn .methodIcon {
+  background: var(--surface);
+}
+
+.methodText {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+}
+
+.methodText span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.methodCheck {
+  color: var(--primary);
+}
+
+.details {
+  display: grid;
+  margin: 0;
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+
+.detail:first-child {
+  border-top: 0;
+}
+
+.detail dt {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.detail dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.detailStrong dd {
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.copy {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.referenceNote {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  border: 1px solid var(--warning-line);
+  font-size: 14px;
+}
+
+.steps {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.textButton {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}

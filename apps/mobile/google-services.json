@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "205378467182",
+    "project_id": "salon-randevu-8f260",
+    "storage_bucket": "salon-randevu-8f260.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:205378467182:android:f09642b300cd8aedcf3d7f",
+        "android_client_info": {
+          "package_name": "com.salonrandevu.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKutSU3Eu_15xLBk6t--YPhBWlw_vAWGw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
